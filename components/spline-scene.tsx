@@ -1,0 +1,134 @@
+"use client"
+
+import type { CSSProperties } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import dynamic from "next/dynamic"
+import type { Application } from "@splinetool/runtime"
+
+const Spline = dynamic(() => import("@splinetool/react-spline"), { ssr: false })
+
+type SplineSceneProps = {
+  scene: string
+  className?: string
+  style?: CSSProperties
+  onLoad?: (spline: Application) => void
+  transparent?: boolean
+  bustCache?: boolean
+  revealDelay?: number
+  lazy?: boolean
+  lazyThreshold?: number
+  globalEvents?: boolean
+}
+
+function withCacheBuster(scene: string) {
+  const separator = scene.includes("?") ? "&" : "?"
+  return `${scene}${separator}v=${Date.now()}`
+}
+
+export function SplineScene({
+  scene,
+  className,
+  style,
+  onLoad,
+  transparent = true,
+  bustCache = true,
+  revealDelay = 650,
+  lazy = true,
+  lazyThreshold = 0.12,
+  globalEvents = true,
+}: SplineSceneProps) {
+  const [ready, setReady] = useState(false)
+  const [shouldLoad, setShouldLoad] = useState(!lazy)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const resolvedScene = useMemo(() => (bustCache ? withCacheBuster(scene) : scene), [bustCache, scene])
+
+  useEffect(() => {
+    setReady(false)
+    return () => {
+      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
+    }
+  }, [resolvedScene])
+
+  useEffect(() => {
+    if (!lazy) {
+      setShouldLoad(true)
+      return
+    }
+
+    const element = wrapperRef.current
+    if (!element || shouldLoad) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: lazyThreshold },
+    )
+
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [lazy, lazyThreshold, shouldLoad])
+
+  const handleLoad = useCallback(
+    (spline: Application) => {
+      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
+
+      if (globalEvents) {
+        spline.setGlobalEvents(true)
+      }
+
+      spline.canvas.style.pointerEvents = "auto"
+
+      if (transparent) {
+        spline.canvas.style.background = "transparent"
+        spline.canvas.style.backgroundColor = "transparent"
+        spline.setBackgroundColor("rgba(0, 0, 0, 0)")
+
+        requestAnimationFrame(() => {
+          spline.canvas.style.background = "transparent"
+          spline.canvas.style.backgroundColor = "transparent"
+          spline.setBackgroundColor("rgba(0, 0, 0, 0)")
+        })
+      }
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          spline.canvas.style.background = "transparent"
+          spline.canvas.style.backgroundColor = "transparent"
+          spline.canvas.style.pointerEvents = "auto"
+          window.dispatchEvent(new Event("resize"))
+
+          revealTimeoutRef.current = setTimeout(() => {
+            setReady(true)
+            onLoad?.(spline)
+          }, revealDelay)
+        })
+      })
+    },
+    [globalEvents, onLoad, revealDelay, transparent],
+  )
+
+  return (
+    <div ref={wrapperRef} className={className} style={{ ...style, background: "transparent", pointerEvents: "auto" }}>
+      {shouldLoad && (
+        <Spline
+          key={resolvedScene}
+          scene={resolvedScene}
+          onLoad={handleLoad}
+          renderOnDemand={false}
+          style={{
+            width: "100%",
+            height: "100%",
+            background: "transparent",
+            opacity: ready ? 1 : 0,
+            transition: "opacity 350ms ease",
+          }}
+        />
+      )}
+    </div>
+  )
+}
