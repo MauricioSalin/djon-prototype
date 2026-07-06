@@ -100,6 +100,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [])
 
   useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileMenuOpen])
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)")
+    const closeOnDesktop = () => {
+      if (media.matches) {
+        setMobileMenuOpen(false)
+      }
+    }
+
+    closeOnDesktop()
+    media.addEventListener("change", closeOnDesktop)
+
+    return () => media.removeEventListener("change", closeOnDesktop)
+  }, [])
+
+  useEffect(() => {
     if (!user || user.role === "student") return
     loadPendingRequests()
     const interval = window.setInterval(loadPendingRequests, 5000)
@@ -109,7 +134,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Close search bar on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setSearchBarOpen(false); setSearchQuery(""); setSearchResults([]) }
+      if (e.key === "Escape") {
+        setSearchBarOpen(false)
+        setSearchQuery("")
+        setSearchResults([])
+        setMobileMenuOpen(false)
+      }
     }
     document.addEventListener("keydown", handler)
     return () => document.removeEventListener("keydown", handler)
@@ -117,6 +147,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const openSearch = useCallback(() => {
     setRequestsOpen(false)
+    setDropdownOpen(false)
+    setMobileMenuOpen(false)
     setSearchBarOpen(true)
     setTimeout(() => searchInputRef.current?.focus(), 50)
   }, [])
@@ -126,6 +158,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setSearchQuery("")
     setSearchResults([])
   }, [])
+
+  const toggleMobileMenu = useCallback(() => {
+    setMobileMenuOpen((v) => {
+      const next = !v
+      if (next) {
+        closeSearch()
+        setRequestsOpen(false)
+        setDropdownOpen(false)
+      }
+      return next
+    })
+  }, [closeSearch])
 
   const runSearch = useCallback((q: string) => {
     setSearchQuery(q)
@@ -168,20 +212,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const canReviewRequests = user.role === "admin" || user.role === "professor"
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-xl border-b border-white/8">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
+    <div className="min-h-screen bg-djon-page">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-djon-page/95 backdrop-blur-xl border-b border-djon-text/8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 h-16 flex items-center gap-2 sm:gap-4 lg:gap-6">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0 mr-2">
+          <Link href="/" className="flex items-center gap-2 shrink-0 sm:mr-2">
             <Image
               src="/images/djon-verde.png"
               alt="DJ ON Academy"
               width={88}
               height={28}
-              className="h-7 w-auto"
+              className="h-6 w-auto sm:h-7"
             />
-            <span className="text-[9px] text-[#AFFF00] font-black tracking-[0.2em] uppercase hidden sm:block">Portal</span>
+            <span className="text-djon-caption text-djon-accent font-black tracking-[0.2em] uppercase hidden sm:block">Portal</span>
           </Link>
+
+          <button
+            className="cursor-pointer md:hidden text-djon-text/60 hover:text-djon-text p-2"
+            onClick={toggleMobileMenu}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+          >
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 flex-1">
@@ -196,8 +249,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   href={item.href}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold tracking-wide transition-all ${
                     active
-                      ? "bg-[#AFFF00] text-[#121212]"
-                      : "text-white/50 hover:text-white hover:bg-white/8"
+                      ? "bg-djon-accent text-djon-ink"
+                      : "text-djon-text/50 hover:text-djon-text hover:bg-djon-text/8"
                   }`}
                 >
                   <item.icon size={13} />
@@ -216,18 +269,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <button
                 onClick={() => {
                   loadPendingRequests()
+                  setMobileMenuOpen(false)
+                  setDropdownOpen(false)
                   setRequestsOpen((v) => {
                     const next = !v
                     if (next) closeSearch()
                     return next
                   })
                 }}
-                className={`cursor-pointer relative p-2 rounded-full transition-all ${requestsOpen ? "bg-[#AFFF00] text-[#121212]" : "text-white/40 hover:text-white hover:bg-white/8"}`}
+                className={`cursor-pointer relative p-2 rounded-full transition-all ${requestsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:text-djon-text hover:bg-djon-text/8"}`}
                 aria-label="Solicitações pendentes"
               >
                 <Bell size={16} />
                 {pendingRequests.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-[#AFFF00] text-[#121212] text-[9px] font-black flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-djon-accent text-djon-ink text-djon-caption font-black flex items-center justify-center">
                     {pendingRequests.length}
                   </span>
                 )}
@@ -236,23 +291,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <AnimatePresence>
                 {requestsOpen && (
                   <motion.div
-                    className="absolute right-0 top-[calc(100%+18px)] w-[360px] z-50 rounded-2xl overflow-hidden border border-white/10 bg-[#111]/95 backdrop-blur-xl shadow-2xl"
+                    className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(360px,calc(100vw-1rem))] rounded-2xl overflow-hidden border border-djon-text/10 bg-djon-calendar-cell/95 backdrop-blur-xl shadow-2xl max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:w-auto"
                     initial={{ opacity: 0, y: -6, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -6, scale: 0.98 }}
                     transition={{ duration: 0.15, ease: "easeOut" }}
                   >
-                    <div className="px-4 py-3 border-b border-white/8">
-                      <p className="text-white text-sm font-black tracking-tight">Solicitações de treino</p>
-                      <p className="text-white/30 text-[11px] font-bold mt-0.5">
+                    <div className="px-4 py-3 border-b border-djon-text/8">
+                      <p className="text-djon-text text-sm font-black tracking-tight">Solicitações de treino</p>
+                      <p className="text-djon-text/30 text-djon-meta font-bold mt-0.5">
                         {pendingRequests.length === 0 ? "Nenhuma pendência agora" : `${pendingRequests.length} aguardando aprovação`}
                       </p>
                     </div>
 
                     {pendingRequests.length === 0 ? (
                       <div className="px-4 py-8 text-center">
-                        <CheckCircle size={24} className="text-[#AFFF00]/60 mx-auto mb-2" />
-                        <p className="text-white/30 text-xs font-bold">Tudo em dia.</p>
+                        <CheckCircle size={24} className="text-djon-accent/60 mx-auto mb-2" />
+                        <p className="text-djon-text/30 text-xs font-bold">Tudo em dia.</p>
                       </div>
                     ) : (
                       <div
@@ -266,33 +321,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         {pendingRequests.map((request) => {
                           const student = store.getUserById(request.userId)
                           return (
-                            <div key={request.id} className="rounded-xl px-3 py-3 bg-white/4 border border-white/6">
+                            <div key={request.id} className="rounded-xl px-3 py-3 bg-djon-text/4 border border-djon-text/6">
                               <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-full bg-[#AFFF00]/15 flex items-center justify-center shrink-0">
-                                  <span className="text-[#AFFF00] text-xs font-black">{student?.name.charAt(0) ?? "?"}</span>
+                                <div className="w-8 h-8 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0">
+                                  <span className="text-djon-accent text-xs font-black">{student?.name.charAt(0) ?? "?"}</span>
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-white text-xs font-black truncate">{request.title}</p>
-                                  <p className="text-white/35 text-[11px] font-bold mt-0.5 truncate">{student?.name ?? "Aluno"}</p>
-                                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-white/35 text-[10px] font-bold">
+                                  <p className="text-djon-text text-xs font-black truncate">{request.title}</p>
+                                  <p className="text-djon-text/35 text-djon-meta font-bold mt-0.5 truncate">{student?.name ?? "Aluno"}</p>
+                                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-djon-text/35 text-djon-label font-bold">
                                     <span className="flex items-center gap-1"><Calendar size={10} />{new Date(request.date + "T00:00:00").toLocaleDateString("pt-BR")}</span>
                                     <span className="flex items-center gap-1"><Clock size={10} />{request.time}</span>
                                   </div>
                                   {request.notes && (
-                                    <p className="text-white/25 text-[11px] leading-relaxed mt-2 line-clamp-2">{request.notes}</p>
+                                    <p className="text-djon-text/25 text-djon-meta leading-relaxed mt-2 line-clamp-2">{request.notes}</p>
                                   )}
                                 </div>
                               </div>
                               <div className="flex gap-2 mt-3">
                                 <button
                                   onClick={() => handleApproveRequest(request.id)}
-                                  className="cursor-pointer flex-1 bg-[#AFFF00] text-[#121212] rounded-lg py-2 text-[10px] font-black tracking-widest"
+                                  className="cursor-pointer flex-1 bg-djon-accent text-djon-ink rounded-lg py-2 text-djon-label font-black tracking-widest"
                                 >
                                   APROVAR
                                 </button>
                                 <button
                                   onClick={() => handleRejectRequest(request.id)}
-                                  className="cursor-pointer flex-1 border border-red-400/20 text-red-400/70 hover:text-red-300 hover:bg-red-500/10 rounded-lg py-2 text-[10px] font-black tracking-widest text-center"
+                                  className="cursor-pointer flex-1 border border-djon-danger/20 text-djon-danger/70 hover:text-djon-danger hover:bg-djon-danger/10 rounded-lg py-2 text-djon-label font-black tracking-widest text-center"
                                 >
                                   RECUSAR
                                 </button>
@@ -310,7 +365,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <button
             onClick={searchBarOpen ? closeSearch : openSearch}
-            className={`cursor-pointer p-2 rounded-full transition-all ${searchBarOpen ? "bg-[#AFFF00] text-[#121212]" : "text-white/40 hover:text-white hover:bg-white/8"}`}
+            className={`cursor-pointer p-2 rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:text-djon-text hover:bg-djon-text/8"}`}
             aria-label="Buscar"
           >
             {searchBarOpen ? <X size={16} /> : <Search size={16} />}
@@ -320,7 +375,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <AnimatePresence>
             {searchBarOpen && (
               <motion.div
-                className="absolute right-0 top-[calc(100%+18px)] w-[480px] z-50 rounded-2xl overflow-hidden"
+                className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(480px,calc(100vw-1rem))] rounded-2xl overflow-hidden max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:w-auto"
                 style={{ background: "rgba(12,12,12,0.85)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
                 initial={{ opacity: 0, y: -6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -329,20 +384,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <div className="px-3 py-3">
                   {/* Input pill */}
-                  <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-full px-4 py-2.5">
-                    <Search size={14} className="text-white/30 shrink-0" />
+                  <div className="flex items-center gap-3 bg-djon-surface-3 rounded-full px-4 py-2.5">
+                    <Search size={14} className="text-djon-text/30 shrink-0" />
                     <input
                       ref={searchInputRef}
                       type="text"
                       value={searchQuery}
                       onChange={(e) => runSearch(e.target.value)}
                       placeholder="Buscar alunos, professores, eventos..."
-                      className="bg-transparent text-white text-sm font-medium placeholder:text-white/25 outline-none flex-1"
+                      className="bg-transparent text-djon-text text-sm font-medium placeholder:text-djon-text/25 outline-none flex-1"
                     />
                     {searchQuery && (
                       <button
                         onClick={() => { setSearchQuery(""); setSearchResults([]); searchInputRef.current?.focus() }}
-                        className="cursor-pointer text-white/25 hover:text-white transition-colors"
+                        className="cursor-pointer text-djon-text/25 hover:text-djon-text transition-colors"
                       >
                         <X size={13} />
                       </button>
@@ -375,18 +430,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                               key={i}
                               href={href}
                               onClick={closeSearch}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/6 transition-colors"
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-djon-text/6 transition-colors"
                             >
-                              <div className="w-7 h-7 rounded-full bg-[#AFFF00]/15 flex items-center justify-center shrink-0 overflow-hidden">
+                              <div className="w-7 h-7 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0 overflow-hidden">
                                 {u.avatar
                                   // eslint-disable-next-line @next/next/no-img-element
                                   ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" />
-                                  : <span className="text-[#AFFF00] text-[11px] font-black">{u.name.charAt(0)}</span>
+                                  : <span className="text-djon-accent text-djon-meta font-black">{u.name.charAt(0)}</span>
                                 }
                               </div>
                               <div className="min-w-0">
-                                <p className="text-white text-xs font-bold truncate">{u.name}</p>
-                                <p className="text-white/30 text-[10px] tracking-widest uppercase">{rLabel}</p>
+                                <p className="text-djon-text text-xs font-bold truncate">{u.name}</p>
+                                <p className="text-djon-text/30 text-djon-label tracking-widest uppercase">{rLabel}</p>
                               </div>
                             </Link>
                           )
@@ -397,14 +452,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             key={i}
                             href="/dashboard/mural"
                             onClick={closeSearch}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/6 transition-colors"
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-djon-text/6 transition-colors"
                           >
-                            <div className="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center shrink-0">
-                              <Music2 size={12} className="text-white/40" />
+                            <div className="w-7 h-7 rounded-full bg-djon-text/8 flex items-center justify-center shrink-0">
+                              <Music2 size={12} className="text-djon-text/40" />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-white text-xs font-bold truncate">{ev.title}</p>
-                              <p className="text-white/30 text-[10px] truncate">{ev.location}</p>
+                              <p className="text-djon-text text-xs font-bold truncate">{ev.title}</p>
+                              <p className="text-djon-text/30 text-djon-label truncate">{ev.location}</p>
                             </div>
                           </Link>
                         )
@@ -413,7 +468,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   )}
                   {searchQuery.trim().length >= 2 && searchResults.length === 0 && (
                     <motion.p
-                      className="px-4 pb-4 text-white/20 text-xs text-center"
+                      className="px-4 pb-4 text-djon-text/20 text-xs text-center"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     >
@@ -429,51 +484,56 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center gap-2">
             <div className="relative" ref={dropdownRef}>
               <motion.button
-                onClick={() => setDropdownOpen((v) => !v)}
-                className="cursor-pointer flex items-center gap-2.5 bg-white/6 hover:bg-white/10 border border-white/10 rounded-full pl-1 pr-3 py-1 transition-all"
+                onClick={() => {
+                  closeSearch()
+                  setRequestsOpen(false)
+                  setMobileMenuOpen(false)
+                  setDropdownOpen((v) => !v)
+                }}
+                className="cursor-pointer flex items-center gap-2 bg-djon-text/6 hover:bg-djon-text/10 border border-djon-text/10 rounded-full pl-1 pr-2 py-1 transition-all sm:gap-2.5 sm:pr-3"
                 whileTap={{ scale: 0.97 }}
               >
-                <div className="w-8 h-8 rounded-full bg-[#AFFF00]/20 border border-[#AFFF00]/40 flex items-center justify-center overflow-hidden shrink-0">
+                <div className="w-8 h-8 rounded-full bg-djon-accent/20 border border-djon-accent/40 flex items-center justify-center overflow-hidden shrink-0">
                   {user.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-[#AFFF00] text-xs font-black">{user.name.charAt(0)}</span>
+                    <span className="text-djon-accent text-xs font-black">{user.name.charAt(0)}</span>
                   )}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-white text-xs font-bold leading-tight truncate max-w-[120px]">
+                  <p className="text-djon-text text-xs font-bold leading-tight truncate max-w-[120px]">
                     {user.name.split(" ").slice(0, 2).join(" ")}
                   </p>
-                  <p className="text-[#AFFF00] text-[9px] font-black tracking-widest uppercase leading-tight">{roleLabel}</p>
+                  <p className="text-djon-accent text-djon-caption font-black tracking-widest uppercase leading-tight">{roleLabel}</p>
                 </div>
-                <ChevronDown size={12} className={`text-white/40 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+                <ChevronDown size={12} className={`text-djon-text/40 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
               </motion.button>
 
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
-                    className="absolute right-0 top-full mt-2 w-52 bg-[#141414] border border-white/12 rounded-2xl py-2 shadow-2xl overflow-hidden"
+                    className="absolute right-0 top-full mt-2 w-[min(13rem,calc(100vw-1rem))] bg-djon-surface border border-djon-text/12 rounded-2xl py-2 shadow-2xl overflow-hidden"
                     initial={{ opacity: 0, y: -8, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.97 }}
                     transition={{ duration: 0.15 }}
                   >
-                    <div className="px-4 py-3 border-b border-white/8 mb-1">
-                      <p className="text-white text-sm font-black truncate">{user.name}</p>
-                      <p className="text-white/40 text-xs truncate mt-0.5">{user.email}</p>
+                    <div className="px-4 py-3 border-b border-djon-text/8 mb-1">
+                      <p className="text-djon-text text-sm font-black truncate">{user.name}</p>
+                      <p className="text-djon-text/40 text-xs truncate mt-0.5">{user.email}</p>
                     </div>
                     <Link
                       href={perfilHref}
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-white/60 hover:text-white hover:bg-white/6 text-xs font-bold tracking-wide transition-all"
+                      className="flex items-center gap-3 px-4 py-2.5 text-djon-text/60 hover:text-djon-text hover:bg-djon-text/6 text-xs font-bold tracking-wide transition-all"
                     >
                       <User size={13} />
                       Editar Perfil
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="cursor-pointer w-full flex items-center gap-3 px-4 py-2.5 text-red-400/70 hover:text-red-400 hover:bg-red-500/10 text-xs font-bold tracking-wide transition-all"
+                      className="cursor-pointer w-full flex items-center gap-3 px-4 py-2.5 text-djon-danger/70 hover:text-djon-danger hover:bg-djon-danger/10 text-xs font-bold tracking-wide transition-all"
                     >
                       <LogOut size={13} />
                       Sair
@@ -483,12 +543,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </AnimatePresence>
             </div>
 
-            <button
-              className="cursor-pointer md:hidden text-white/60 hover:text-white p-2"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-            >
-              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
           </div>
           </div>
         </div>
@@ -496,22 +550,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
-              className="md:hidden border-t border-white/8 bg-[#0a0a0a]"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              className="fixed inset-x-0 bottom-0 top-16 z-40 bg-djon-mobile-overlay md:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              onClick={() => setMobileMenuOpen(false)}
             >
-              <nav className="px-4 py-3 flex flex-col gap-1">
+              <motion.nav
+                className="djon-scroll max-h-full overflow-y-auto border-t border-djon-text/8 bg-djon-page px-3 py-5 pb-10 sm:px-4"
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+                onClick={(e) => e.stopPropagation()}
+                data-lenis-prevent
+                data-lenis-prevent-wheel
+                data-lenis-prevent-touch
+              >
+                <div className="flex flex-col gap-1">
                 {nav.map((item) => {
-                  const active = pathname === item.href
+                  const isHome = item.label === "Início"
+                  const active = isHome
+                    ? pathname === item.href
+                    : pathname === item.href || pathname.startsWith(item.href + "/")
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-wide transition-all ${
-                        active ? "bg-[#AFFF00] text-[#121212]" : "text-white/50 hover:text-white hover:bg-white/5"
+                        active ? "bg-djon-accent text-djon-ink" : "text-djon-text/50 hover:text-djon-text hover:bg-djon-text/5"
                       }`}
                     >
                       <item.icon size={14} />
@@ -519,13 +588,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                   )
                 })}
-              </nav>
+                </div>
+              </motion.nav>
             </motion.div>
           )}
         </AnimatePresence>
       </header>
 
-      <main className="pt-16">{children}</main>
+      <main className="pt-16 overflow-x-hidden">{children}</main>
     </div>
   )
 }

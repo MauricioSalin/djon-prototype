@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Trash2, Edit2, X, Music2, MapPin, Clock, Instagram, Star } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
 
-const inp = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#AFFF00]/50 transition-all"
+const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
 
 type FormState = { title: string; date: string; time: string; location: string; instagram: string; description: string; type: DJEvent["type"] }
 const emptyForm: FormState = { title: "", date: "", time: "", location: "", instagram: "", description: "", type: "djOn" }
@@ -50,14 +50,14 @@ export default function AdminEventosPage() {
   const displayed = events.filter((e) => e.type === tab)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[#AFFF00] text-xs tracking-wide font-bold mb-0.5">ADMINISTRAÇÃO</p>
-          <h1 className="text-3xl font-black text-white tracking-tighter">Gerenciar Eventos</h1>
+          <p className="text-djon-accent text-xs tracking-wide font-bold mb-0.5">ADMINISTRAÇÃO</p>
+          <h1 className="text-3xl font-black text-djon-text tracking-tighter">Gerenciar Eventos</h1>
         </div>
         <motion.button onClick={openNew}
-          className="bg-[#AFFF00] text-[#121212] px-5 py-2.5 rounded-full font-black text-xs tracking-wide flex items-center gap-2"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-wide text-djon-ink sm:w-auto"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
           <Plus size={14} />
           NOVO EVENTO
@@ -65,11 +65,11 @@ export default function AdminEventosPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(["djOn", "student"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-wide transition-all ${
-              tab === t ? "bg-[#AFFF00] text-[#121212]" : "bg-white/5 text-white/50 border border-white/10 hover:text-white"
+              tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:text-djon-text"
             }`}>
             {t === "djOn" ? <><Star size={11} /> EVENTOS DJ ON</> : <><Music2 size={11} /> EVENTOS ALUNOS</>}
           </button>
@@ -79,23 +79,23 @@ export default function AdminEventosPage() {
       {/* Modal */}
       <AnimatePresence>
         {showForm && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          <motion.div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="bg-[#161616] border border-white/10 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            <motion.div className="djon-scroll my-4 max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:my-6 sm:p-6"
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}>
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-black text-white tracking-tighter">{editingId ? "Editar Evento" : "Novo Evento"}</h2>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer text-white/40 hover:text-white"><X size={18} /></button>
+                <h2 className="text-xl font-black text-djon-text tracking-tighter">{editingId ? "Editar Evento" : "Novo Evento"}</h2>
+                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:text-djon-text"><X size={18} /></button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Type selector */}
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">TIPO DE EVENTO</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">TIPO DE EVENTO</label>
                   <div className="flex gap-2">
                     {(["djOn", "student"] as const).map((t) => (
                       <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
                         className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
-                          form.type === t ? "bg-[#AFFF00] text-[#121212]" : "bg-white/5 text-white/50 border border-white/10 hover:text-white"
+                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:text-djon-text"
                         }`}>
                         {t === "djOn" ? "DJ ON" : "ALUNO"}
                       </button>
@@ -103,40 +103,40 @@ export default function AdminEventosPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">NOME DO EVENTO</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">NOME DO EVENTO</label>
                   <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
                     placeholder="Nome do evento" className={inp} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">DATA</label>
+                    <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">DATA</label>
                     <input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inp} />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">HORÁRIO</label>
+                    <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">HORÁRIO</label>
                     <input type="time" required value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className={inp} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">LOCAL</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">LOCAL</label>
                   <input required value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })}
                     placeholder="Local / Endereço" className={inp} />
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">INSTAGRAM</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">INSTAGRAM</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-sm">@</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30 text-sm">@</span>
                     <input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })}
                       placeholder="handle" className={`${inp} pl-8`} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">DESCRIÇÃO</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">DESCRIÇÃO</label>
                   <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                     rows={3} placeholder="Descreva o evento..." className={`${inp} resize-none`} />
                 </div>
                 <motion.button type="submit"
-                  className="w-full bg-[#AFFF00] text-[#121212] rounded-xl py-3 font-black text-sm tracking-wide"
+                  className="w-full bg-djon-accent text-djon-ink rounded-xl py-3 font-black text-sm tracking-wide"
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
                   {editingId ? "SALVAR ALTERAÇÕES" : "CRIAR EVENTO"}
                 </motion.button>
@@ -148,40 +148,40 @@ export default function AdminEventosPage() {
 
       {/* List */}
       {displayed.length === 0 ? (
-        <div className="bg-[#161616] border border-white/8 rounded-2xl p-10 text-center">
-          <Music2 size={32} className="text-white/20 mx-auto mb-3" />
-          <p className="text-white/30 text-sm">Nenhum evento {tab === "djOn" ? "da DJ ON" : "de alunos"} cadastrado.</p>
+        <div className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-10 text-center">
+          <Music2 size={32} className="text-djon-text/20 mx-auto mb-3" />
+          <p className="text-djon-text/30 text-sm">Nenhum evento {tab === "djOn" ? "da DJ ON" : "de alunos"} cadastrado.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {displayed.map((ev, i) => (
             <motion.div key={ev.id}
-              className={`bg-[#161616] border rounded-2xl px-5 py-4 flex items-start gap-4 ${ev.type === "djOn" ? "border-[#AFFF00]/20" : "border-white/8"}`}
+              className={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border bg-djon-surface-2 px-4 py-4 sm:flex sm:px-5 ${ev.type === "djOn" ? "border-djon-accent/20" : "border-djon-text/8"}`}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               {ev.type === "djOn" && (
-                <div className="w-9 h-9 rounded-xl bg-[#AFFF00]/15 flex items-center justify-center shrink-0">
-                  <Star size={16} className="text-[#AFFF00]" />
+                <div className="w-9 h-9 rounded-xl bg-djon-accent/15 flex items-center justify-center shrink-0">
+                  <Star size={16} className="text-djon-accent" />
                 </div>
               )}
               {ev.type === "student" && (
-                <div className="w-9 h-9 rounded-xl bg-[#38BDF8]/15 flex items-center justify-center shrink-0">
-                  <Music2 size={16} className="text-[#38BDF8]" />
+                <div className="w-9 h-9 rounded-xl bg-djon-info/15 flex items-center justify-center shrink-0">
+                  <Music2 size={16} className="text-djon-info" />
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-white font-black text-base truncate">{ev.title}</p>
-                <p className="text-white/40 text-xs truncate">{ev.createdByName}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-djon-text font-black text-base truncate">{ev.title}</p>
+                <p className="text-djon-text/40 text-xs truncate">{ev.createdByName}</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
-                  <span className="text-white/30 text-xs flex items-center gap-1"><Clock size={10} /> {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR")} {ev.time}</span>
-                  <span className="text-white/30 text-xs flex items-center gap-1"><MapPin size={10} /> {ev.location}</span>
-                  {ev.instagram && <span className="text-[#38BDF8] text-xs flex items-center gap-1"><Instagram size={10} /> @{ev.instagram}</span>}
+                  <span className="text-djon-text/30 text-xs flex items-center gap-1"><Clock size={10} /> {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR")} {ev.time}</span>
+                  <span className="text-djon-text/30 text-xs flex items-center gap-1"><MapPin size={10} /> {ev.location}</span>
+                  {ev.instagram && <span className="text-djon-info text-xs flex items-center gap-1"><Instagram size={10} /> @{ev.instagram}</span>}
                 </div>
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button onClick={() => openEdit(ev)} className="cursor-pointer text-white/20 hover:text-[#AFFF00] transition-colors p-1.5">
+              <div className="col-span-2 flex w-full items-center justify-end gap-1 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
+                <button onClick={() => openEdit(ev)} className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1.5">
                   <Edit2 size={14} />
                 </button>
-                <button onClick={() => handleDelete(ev.id)} className="cursor-pointer text-white/20 hover:text-red-400 transition-colors p-1.5">
+                <button onClick={() => handleDelete(ev.id)} className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1.5">
                   <Trash2 size={14} />
                 </button>
               </div>

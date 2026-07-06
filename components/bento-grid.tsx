@@ -11,21 +11,21 @@ const features = [
     title: "3",
     subtitle: "Módulos de Curso",
     description: "DJ, Produção Musical e Marketing",
-    accent: "#AFFF00",
+    accent: "var(--djon-color-accent)",
   },
   {
     icon: Users,
     title: "+1000",
     subtitle: "Alunos Formados",
     description: "DJs e produtores prontos para o mercado",
-    accent: "#00D4FF",
+    accent: "var(--djon-color-cyan)",
   },
   {
     icon: Trophy,
     title: "2018",
     subtitle: "Fundada em",
     description: "8 anos de experiência formando talentos",
-    accent: "#FF6B35",
+    accent: "var(--djon-color-orange)",
   },
 ]
 
@@ -75,7 +75,7 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
           filter: "blur(8px)",
         }}
       />
-      <div className="relative bg-[#1a1a1a] rounded-2xl p-5 border border-white/10 overflow-hidden h-full">
+      <div className="relative bg-djon-surface-3 rounded-2xl p-5 border border-djon-text/10 overflow-hidden h-full">
         <motion.div
           className="absolute inset-0 opacity-0 group-hover:opacity-100"
           initial={false}
@@ -109,7 +109,7 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
           </motion.div>
           <div className="flex-1">
             <motion.div
-              className="text-3xl font-black tracking-tight text-white"
+              className="text-3xl font-black tracking-tight text-djon-text"
               initial={{ opacity: 0, scale: 0.5 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -117,8 +117,8 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
             >
               <span style={{ color: feature.accent }}>{feature.title}</span>
             </motion.div>
-            <h3 className="text-sm font-semibold text-white mt-1">{feature.subtitle}</h3>
-            <p className="text-xs text-white/50 mt-1">{feature.description}</p>
+            <h3 className="text-sm font-semibold text-djon-text mt-1">{feature.subtitle}</h3>
+            <p className="text-xs text-djon-text/50 mt-1">{feature.description}</p>
           </div>
           <motion.div
             className="h-[2px] rounded-full mt-4"
@@ -136,12 +136,12 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
 
 export function BentoGrid() {
   return (
-    <section id="formula" className="relative py-16 bg-[#0a0a0a] overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#121212] via-[#0a0a0a] to-[#121212]" />
-      <div className="max-w-5xl mx-auto px-6 relative z-10">
+    <section id="formula" className="relative py-16 bg-djon-page overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-djon-ink via-djon-page to-djon-ink" />
+      <div className="max-w-5xl mx-auto px-4 relative z-10 sm:px-6">
         <div className="text-center mb-10">
           <motion.span
-            className="inline-block text-[#AFFF00] text-xs tracking-wide uppercase font-bold"
+            className="inline-block text-djon-accent text-xs tracking-wide uppercase font-bold"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true, amount: 0 }}
@@ -150,7 +150,7 @@ export function BentoGrid() {
             A ACADEMIA
           </motion.span>
           <motion.h2
-            className="text-3xl md:text-5xl font-black text-white tracking-tighter mt-2"
+            className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0 }}
@@ -159,7 +159,7 @@ export function BentoGrid() {
             DJ ON em Números
           </motion.h2>
           <motion.div
-            className="h-[3px] w-10 bg-[#AFFF00] mx-auto mt-3 rounded-full"
+            className="h-[3px] w-10 bg-djon-accent mx-auto mt-3 rounded-full"
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true, amount: 0 }}

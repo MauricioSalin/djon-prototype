@@ -36,11 +36,11 @@ export default function PublicPerfilPage() {
   return (
     <div>
       {/* Back bar */}
-      <div className="border-b border-white/8 bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto px-6 h-12 flex items-center">
+      <div className="border-b border-djon-text/8 bg-djon-page">
+        <div className="max-w-7xl mx-auto px-4 h-12 flex items-center sm:px-6">
           <Link
             href="/dashboard/mural"
-            className="flex items-center gap-2 text-white/40 hover:text-white text-xs font-bold tracking-wide transition-colors"
+            className="flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-bold tracking-wide transition-colors"
           >
             <ArrowLeft size={13} /> Voltar ao Mural
           </Link>

@@ -37,7 +37,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-svh flex flex-col items-center justify-[safe_center] px-4 py-8 sm:py-10 relative overflow-x-hidden overflow-y-auto noise-overlay bg-[#0a0a0a]">
+    <div className="min-h-svh flex flex-col items-center justify-[safe_center] px-4 py-8 sm:py-10 relative overflow-x-hidden overflow-y-auto noise-overlay bg-djon-page">
       {/* Hero background image */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -48,13 +48,13 @@ export default function LoginPage() {
           priority
         />
         {/* Heavy dark overlay so content is readable */}
-        <div className="absolute inset-0 bg-[#0a0a0a]/75" />
+        <div className="absolute inset-0 bg-djon-page/75" />
       </div>
 
       {/* Back button */}
       <Link
         href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-white/50 hover:text-white text-xs font-bold tracking-wide transition-colors z-10"
+        className="absolute top-6 left-6 flex items-center gap-2 text-djon-text/50 hover:text-djon-text text-xs font-bold tracking-wide transition-colors z-10"
       >
         <ArrowLeft size={14} />
         VOLTAR
@@ -79,18 +79,18 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#161616] border border-white/10 rounded-2xl p-8">
-          <p className="text-[#AFFF00] text-xs tracking-wide font-bold mb-2">ÁREA DO ALUNO</p>
-          <h1 className="text-3xl font-black text-white tracking-tighter mb-1">Acessar Portal</h1>
-          <div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mb-6" />
-          <p className="text-white/40 text-sm leading-relaxed mb-8">
+        <div className="bg-djon-surface-2 border border-djon-text/10 rounded-2xl p-8">
+          <p className="text-djon-accent text-xs tracking-wide font-bold mb-2">ÁREA DO ALUNO</p>
+          <h1 className="text-3xl font-black text-djon-text tracking-tighter mb-1">Acessar Portal</h1>
+          <div className="h-[3px] w-10 bg-djon-accent rounded-full mb-6" />
+          <p className="text-djon-text/40 text-sm leading-relaxed mb-8">
             Entre com o e-mail cadastrado pelo administrador da DJ ON Academy para acessar o portal.
           </p>
 
           {/* Google mock button */}
           <motion.button
             type="button"
-            className="w-full flex items-center justify-center gap-3 bg-white text-[#121212] rounded-xl py-3.5 font-bold text-sm mb-6"
+            className="w-full flex items-center justify-center gap-3 bg-djon-text text-djon-ink rounded-xl py-3.5 font-bold text-sm mb-6"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => {
@@ -111,27 +111,27 @@ export default function LoginPage() {
           </motion.button>
 
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-white/30 text-xs">ou entre com e-mail</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-djon-text/10" />
+            <span className="text-djon-text/30 text-xs">ou entre com e-mail</span>
+            <div className="flex-1 h-px bg-djon-text/10" />
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="text-white/50 text-xs font-bold tracking-wide mb-2 block">E-MAIL</label>
+              <label className="text-djon-text/50 text-xs font-bold tracking-wide mb-2 block">E-MAIL</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#AFFF00]/50 focus:bg-white/8 transition-all"
+                className="w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all"
               />
             </div>
 
             {error && (
               <motion.p
-                className="text-red-400 text-xs leading-relaxed"
+                className="text-djon-danger text-xs leading-relaxed"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
               >
@@ -142,13 +142,13 @@ export default function LoginPage() {
             <motion.button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#AFFF00] text-[#121212] rounded-xl py-3.5 font-black text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
             >
               {loading ? (
                 <motion.div
-                  className="w-4 h-4 border-2 border-[#121212] border-t-transparent rounded-full"
+                  className="w-4 h-4 border-2 border-djon-ink border-t-transparent rounded-full"
                   animate={{ rotate: 360 }}
                   transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
                 />
@@ -162,8 +162,8 @@ export default function LoginPage() {
           </form>
 
           {/* Demo hint */}
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <p className="text-white/30 text-xs mb-2 font-bold tracking-wide">DEMO — E-MAILS DE TESTE:</p>
+          <div className="mt-6 pt-6 border-t border-djon-text/10">
+            <p className="text-djon-text/30 text-xs mb-2 font-bold tracking-wide">DEMO — E-MAILS DE TESTE:</p>
             <div className="space-y-1">
               {store.getAllowedEmails().map((em) => {
                 const u = store.getUsers().find((u) => u.email === em)
@@ -172,9 +172,9 @@ export default function LoginPage() {
                     key={em}
                     type="button"
                     onClick={() => setEmail(em)}
-                    className="cursor-pointer block w-full text-left text-white/40 hover:text-[#AFFF00] text-xs font-mono transition-colors py-0.5"
+                    className="cursor-pointer block w-full text-left text-djon-text/40 hover:text-djon-accent text-xs font-mono transition-colors py-0.5"
                   >
-                    {em} <span className="text-white/20">({u?.role})</span>
+                    {em} <span className="text-djon-text/20">({u?.role})</span>
                   </button>
                 )
               })}

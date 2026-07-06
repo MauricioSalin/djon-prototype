@@ -21,6 +21,31 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileMenuOpen])
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)")
+    const closeOnDesktop = () => {
+      if (media.matches) {
+        setMobileMenuOpen(false)
+      }
+    }
+
+    closeOnDesktop()
+    media.addEventListener("change", closeOnDesktop)
+
+    return () => media.removeEventListener("change", closeOnDesktop)
+  }, [])
+
   const scrollToSection = (id: string) => {
     const element = document.querySelector<HTMLElement>(id)
     if (element && lenis) {
@@ -42,10 +67,14 @@ export function Navigation() {
       animate={{ y: 0 }}
       transition={{ type: "spring" as const, stiffness: 100, damping: 20 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? "bg-[#121212]/95 backdrop-blur-md border-b border-white/10" : "bg-[#121212]/60 backdrop-blur-sm"
+        mobileMenuOpen
+          ? "bg-djon-page border-b border-djon-text/10"
+          : scrolled
+            ? "bg-djon-ink/95 backdrop-blur-md border-b border-djon-text/10"
+            : "bg-djon-ink/60 backdrop-blur-sm"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between sm:px-6">
         <button onClick={() => scrollToSection("#hero")} className="cursor-pointer">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -67,7 +96,7 @@ export function Navigation() {
             <motion.button
               key={item.label}
               onClick={() => scrollToSection(item.href)}
-              className="cursor-pointer text-xs font-bold tracking-widest transition-colors relative text-white/80 hover:text-[#AFFF00]"
+              className="cursor-pointer text-xs font-bold tracking-widest transition-colors relative text-djon-text/80 hover:text-djon-accent"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1, duration: 0.4, ease: [0.25, 0.4, 0.25, 1] as const }}
@@ -76,7 +105,7 @@ export function Navigation() {
             >
               {item.label}
               <motion.span
-                className="absolute -bottom-1 left-0 w-full h-0.5 bg-[#AFFF00] origin-left"
+                className="absolute -bottom-1 left-0 w-full h-0.5 bg-djon-accent origin-left"
                 initial={{ scaleX: 0 }}
                 whileHover={{ scaleX: 1 }}
                 transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] as const }}
@@ -89,13 +118,13 @@ export function Navigation() {
           <LocationDropdown />
           <motion.button
             onClick={() => scrollToSection("#contato")}
-            className="cursor-pointer bg-[#AFFF00] text-[#121212] px-6 py-2.5 rounded-full font-black text-xs tracking-widest relative overflow-hidden"
+            className="cursor-pointer bg-djon-accent text-djon-ink px-6 py-2.5 rounded-full font-black text-xs tracking-widest relative overflow-hidden"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
           >
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full"
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-djon-text/30 to-transparent -translate-x-full"
               animate={{ x: ["-100%", "200%"] }}
               transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 3 }}
             />
@@ -103,7 +132,7 @@ export function Navigation() {
           </motion.button>
           <Link href="/login">
             <motion.div
-              className="flex items-center gap-1.5 border border-white/20 text-white/70 hover:text-white hover:border-white/40 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
+              className="flex items-center gap-1.5 border border-djon-text/20 text-djon-text/70 hover:text-djon-text hover:border-djon-text/40 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -128,7 +157,7 @@ export function Navigation() {
                 exit={{ rotate: 90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <X className="text-white" />
+                <X className="text-djon-text" />
               </motion.div>
             ) : (
               <motion.div
@@ -138,7 +167,7 @@ export function Navigation() {
                 exit={{ rotate: -90, opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Menu className="text-white" />
+                <Menu className="text-djon-text" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -148,18 +177,19 @@ export function Navigation() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] as const }}
-            className="md:hidden bg-[#121212]/95 backdrop-blur-md border-t border-white/10 overflow-hidden"
+            className="djon-scroll fixed inset-x-0 bottom-0 top-16 overflow-y-auto border-t border-djon-text/10 bg-djon-page md:hidden"
+            data-lenis-prevent
           >
-            <div className="px-6 py-4 space-y-4">
+            <div className="min-h-full space-y-5 px-4 py-6 pb-10 sm:px-6">
               {navLinks.map((item, i) => (
                 <motion.button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="cursor-pointer block w-full text-left text-white/80 hover:text-[#AFFF00] text-base font-black tracking-widest py-2"
+                  className="cursor-pointer block w-full text-left text-djon-text/80 hover:text-djon-accent text-base font-black tracking-widest py-2"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
@@ -170,7 +200,7 @@ export function Navigation() {
               <LocationDropdown align="left" mobile />
               <motion.button
                 onClick={() => scrollToSection("#contato")}
-                className="cursor-pointer w-full bg-[#AFFF00] text-[#121212] px-6 py-3 rounded-full font-black text-xs tracking-widest mt-4"
+                className="cursor-pointer w-full bg-djon-accent text-djon-ink px-6 py-3 rounded-full font-black text-xs tracking-widest mt-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -179,7 +209,7 @@ export function Navigation() {
               </motion.button>
               <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                 <motion.div
-                  className="w-full flex items-center justify-center gap-2 border border-white/20 text-white/70 px-6 py-3 rounded-full font-black text-xs tracking-widest mt-2"
+                  className="w-full flex items-center justify-center gap-2 border border-djon-text/20 text-djon-text/70 px-6 py-3 rounded-full font-black text-xs tracking-widest mt-2"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}

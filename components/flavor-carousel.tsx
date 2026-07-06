@@ -13,8 +13,8 @@ const courses = [
     tagline: "Do Zero ao Profissional",
     description: "Aqui você vai aprender tudo que precisa para se tornar um DJ. Por hobby ou profissão, nossa metodologia prática e teórica abrange tudo o que você vai precisar para discotecar de maneira profissional e com confiança.",
     image: "/images/djon-course-dj.png",
-    bgColor: "from-[#AFFF00]/15 via-[#AFFF00]/5 to-transparent",
-    accentColor: "#AFFF00",
+    bgColor: "from-djon-accent/15 via-djon-accent/5 to-transparent",
+    accentColor: "var(--djon-color-accent)",
     items: [
       "Mixagem de Música Eletrônica",
       "Todas as funções do mixer e do CDJ",
@@ -32,8 +32,8 @@ const courses = [
     tagline: "Do Beat à Track Final",
     description: "O curso de produção musical vai elevar suas habilidades criativas e transformar sua paixão pela música em resultados extraordinários. Explore técnicas incríveis e domine as ferramentas indispensáveis.",
     image: "/images/djon-course-producao.png",
-    bgColor: "from-[#00D4FF]/15 via-[#00D4FF]/5 to-transparent",
-    accentColor: "#00D4FF",
+    bgColor: "from-djon-cyan/15 via-djon-cyan/5 to-transparent",
+    accentColor: "var(--djon-color-cyan)",
     items: [
       "Software Ableton Live 11",
       "Construção da sua primeira track do zero",
@@ -50,8 +50,8 @@ const courses = [
     tagline: "Construa sua Carreira",
     description: "A mentoria de marketing especializada para DJs vai impulsionar sua carreira e expandir sua presença no mercado da música eletrônica. Aprenda a promover sua imagem e conquistar novas oportunidades.",
     image: "/images/djon-course-marketing.png",
-    bgColor: "from-[#FF6B35]/15 via-[#FF6B35]/5 to-transparent",
-    accentColor: "#FF6B35",
+    bgColor: "from-djon-orange/15 via-djon-orange/5 to-transparent",
+    accentColor: "var(--djon-color-orange)",
     items: [
       "Mindset de artista",
       "Dominar as redes sociais",
@@ -114,7 +114,7 @@ export function FlavorCarousel() {
   }
 
   return (
-    <section id="cursos" className="relative py-16 bg-[#121212] overflow-hidden">
+    <section id="cursos" className="relative py-16 bg-djon-ink overflow-hidden">
       <motion.div
         className={`absolute inset-0 bg-gradient-to-br ${currentCourse.bgColor}`}
         initial={{ opacity: 0 }}
@@ -123,7 +123,7 @@ export function FlavorCarousel() {
         key={currentCourse.id}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -143,7 +143,7 @@ export function FlavorCarousel() {
             NOSSOS CURSOS
           </motion.span>
           <motion.h2
-            className="text-3xl md:text-5xl font-black text-white tracking-tighter mt-2"
+            className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -161,7 +161,7 @@ export function FlavorCarousel() {
             viewport={{ once: true }}
           />
           <motion.p
-            className="text-sm text-white/50 mt-3 max-w-xl mx-auto leading-relaxed"
+            className="text-sm text-djon-text/50 mt-3 max-w-xl mx-auto leading-relaxed"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -176,7 +176,7 @@ export function FlavorCarousel() {
           <div className="flex items-center justify-center gap-6">
             <motion.button
               onClick={() => paginate(-1)}
-              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-white/20 items-center justify-center hover:border-[#AFFF00] hover:text-[#AFFF00] text-white transition-colors"
+              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:border-djon-accent hover:text-djon-accent text-djon-text transition-colors"
               whileHover={{ scale: 1.1, rotate: -5 }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -196,14 +196,14 @@ export function FlavorCarousel() {
                 style={{ perspective: 1000 }}
               >
                 <motion.div
-                  className="bg-[#1a1a1a] rounded-3xl p-6 md:p-8 border border-white/10 shadow-2xl"
+                  className="rounded-3xl border border-djon-text/10 bg-djon-surface-3 p-4 shadow-2xl sm:p-6 md:p-8"
                   style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
                   onMouseMove={handleMouseMove}
                   onMouseLeave={handleMouseLeave}
                 >
                   <div className="grid md:grid-cols-2 gap-6 items-stretch">
                     <motion.div
-                      className="relative rounded-2xl overflow-hidden min-h-[260px]"
+                      className="relative min-h-[220px] overflow-hidden rounded-2xl sm:min-h-[260px]"
                       whileHover={{ scale: 1.02 }}
                       transition={{ type: "spring" as const, stiffness: 300, damping: 20 }}
                     >
@@ -213,7 +213,7 @@ export function FlavorCarousel() {
                         fill
                         className="object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/60 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-djon-ink/60 to-transparent" />
                     </motion.div>
 
                     <div className="space-y-4">
@@ -228,7 +228,7 @@ export function FlavorCarousel() {
                           {currentCourse.tagline}
                         </motion.span>
                         <motion.h3
-                          className="text-2xl md:text-3xl font-black text-white tracking-tighter mt-1"
+                          className="text-2xl md:text-3xl font-black text-djon-text tracking-tighter mt-1"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3, type: "spring" as const, stiffness: 100 }}
@@ -238,7 +238,7 @@ export function FlavorCarousel() {
                       </div>
 
                       <motion.p
-                        className="text-xs text-white/60 leading-relaxed"
+                        className="text-xs text-djon-text/60 leading-relaxed"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.4 }}
@@ -259,7 +259,7 @@ export function FlavorCarousel() {
                           {currentCourse.items.map((item, i) => (
                             <motion.div
                               key={item}
-                              className="flex items-start gap-2 text-xs text-white/60"
+                              className="flex items-start gap-2 text-xs text-djon-text/60"
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.5 + i * 0.04 }}
@@ -275,8 +275,8 @@ export function FlavorCarousel() {
                         href="https://www.djonacademy.com/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-black text-sm tracking-widest relative overflow-hidden"
-                        style={{ backgroundColor: currentCourse.accentColor, color: "#121212" }}
+                        className="relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 text-sm font-black tracking-widest sm:w-auto"
+                        style={{ backgroundColor: currentCourse.accentColor, color: "var(--djon-color-ink)" }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -284,7 +284,7 @@ export function FlavorCarousel() {
                         animate={{ opacity: 1, y: 0 }}
                       >
                         <motion.span
-                          className="absolute inset-0 bg-white/20"
+                          className="absolute inset-0 bg-djon-text/20"
                           initial={{ x: "-100%" }}
                           whileHover={{ x: "100%" }}
                           transition={{ duration: 0.5 }}
@@ -299,7 +299,7 @@ export function FlavorCarousel() {
 
             <motion.button
               onClick={() => paginate(1)}
-              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-white/20 items-center justify-center hover:border-[#AFFF00] hover:text-[#AFFF00] text-white transition-colors"
+              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:border-djon-accent hover:text-djon-accent text-djon-text transition-colors"
               whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -311,14 +311,14 @@ export function FlavorCarousel() {
           <div className="flex md:hidden justify-center gap-4 mt-6">
             <motion.button
               onClick={() => paginate(-1)}
-              className="cursor-pointer w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center text-white"
+              className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text"
               whileTap={{ scale: 0.9 }}
             >
               <ChevronLeft className="w-4 h-4" />
             </motion.button>
             <motion.button
               onClick={() => paginate(1)}
-              className="cursor-pointer w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center text-white"
+              className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text"
               whileTap={{ scale: 0.9 }}
             >
               <ChevronRight className="w-4 h-4" />

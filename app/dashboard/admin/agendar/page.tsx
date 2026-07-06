@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Trash2, Calendar, Clock, CheckCircle, X, Edit2 } from "lucide-react"
 import { store, type Booking, type User } from "@/lib/store"
 
-const inp = "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#AFFF00]/50 transition-all"
+const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
 
 function StatusBadge({ status }: { status: Booking["status"] }) {
-  const map = { confirmado: "bg-[#AFFF00]/15 text-[#AFFF00]", pendente: "bg-yellow-400/15 text-yellow-400", cancelado: "bg-red-500/15 text-red-400" }
-  return <span className={`text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide ${map[status]}`}>{status.toUpperCase()}</span>
+  const map = { confirmado: "bg-djon-accent/15 text-djon-accent", pendente: "bg-yellow-400/15 text-yellow-400", cancelado: "bg-djon-danger/15 text-djon-danger" }
+  return <span className={`text-djon-label font-black px-2 py-0.5 rounded-full tracking-wide ${map[status]}`}>{status.toUpperCase()}</span>
 }
 
 type FormState = { userId: string; title: string; date: string; time: string; type: "aula" | "treino"; notes: string; status: Booking["status"] }
@@ -57,14 +57,14 @@ export default function AdminAgendarPage() {
   })
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[#AFFF00] text-xs tracking-wide font-bold mb-0.5">Administração</p>
-          <h1 className="text-3xl font-black text-white tracking-tighter">Agendamentos</h1>
+          <p className="text-djon-accent text-xs tracking-wide font-bold mb-0.5">Administração</p>
+          <h1 className="text-3xl font-black text-djon-text tracking-tighter">Agendamentos</h1>
         </div>
         <motion.button onClick={openNew}
-          className="bg-[#AFFF00] text-[#121212] px-5 py-2.5 rounded-full font-black text-xs tracking-wide flex items-center gap-2"
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-wide text-djon-ink sm:w-auto"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
           <Plus size={14} /> NOVO
         </motion.button>
@@ -75,17 +75,17 @@ export default function AdminAgendarPage() {
       {/* Modal */}
       <AnimatePresence>
         {showForm && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          <motion.div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="bg-[#161616] border border-white/10 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+            <motion.div className="djon-scroll my-4 max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:my-6 sm:p-6"
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}>
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-xl font-black text-white tracking-tighter">{editingId ? "Editar Agendamento" : "Novo Agendamento"}</h2>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer text-white/40 hover:text-white"><X size={18} /></button>
+                <h2 className="text-xl font-black text-djon-text tracking-tighter">{editingId ? "Editar Agendamento" : "Novo Agendamento"}</h2>
+                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:text-djon-text"><X size={18} /></button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">ALUNO</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">ALUNO</label>
                   <select required value={form.userId} onChange={(e) => setForm({ ...form, userId: e.target.value })}
                     className={inp}>
                     <option value="">Selecionar aluno...</option>
@@ -93,49 +93,49 @@ export default function AdminAgendarPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">TÍTULO</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">TÍTULO</label>
                   <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
                     placeholder="Ex: Aula de Beat Match" className={inp} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">DATA</label>
+                    <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">DATA</label>
                     <input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={inp} />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">HORÁRIO</label>
+                    <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">HORÁRIO</label>
                     <input type="time" required value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className={inp} />
                   </div>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">TIPO</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">TIPO</label>
                   <div className="flex gap-2">
                     {(["aula", "treino"] as const).map((t) => (
                       <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
                         className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
-                          form.type === t ? "bg-[#AFFF00] text-[#121212]" : "bg-white/5 text-white/50 border border-white/10"
+                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10"
                         }`}>{t.toUpperCase()}</button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">STATUS</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">STATUS</label>
                   <div className="flex gap-2">
                     {(["confirmado", "pendente", "cancelado"] as Booking["status"][]).map((s) => (
                       <button key={s} type="button" onClick={() => setForm({ ...form, status: s })}
-                        className={`cursor-pointer flex-1 py-2 rounded-xl text-[10px] font-black tracking-wide transition-all ${
-                          form.status === s ? "bg-[#AFFF00] text-[#121212]" : "bg-white/5 text-white/40 border border-white/10"
+                        className={`cursor-pointer flex-1 py-2 rounded-xl text-djon-label font-black tracking-wide transition-all ${
+                          form.status === s ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/40 border border-djon-text/10"
                         }`}>{s.toUpperCase()}</button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="text-white/40 text-xs font-bold tracking-wide mb-1.5 block">OBSERVAÇÕES</label>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">OBSERVAÇÕES</label>
                   <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
                     rows={2} className={`${inp} resize-none`} />
                 </div>
                 <motion.button type="submit"
-                  className="w-full bg-[#AFFF00] text-[#121212] rounded-xl py-3 font-black text-sm tracking-wide"
+                  className="w-full bg-djon-accent text-djon-ink rounded-xl py-3 font-black text-sm tracking-wide"
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
                   {editingId ? "SALVAR" : "AGENDAR"}
                 </motion.button>
@@ -147,9 +147,9 @@ export default function AdminAgendarPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="bg-[#161616] border border-white/8 rounded-2xl p-10 text-center">
-          <Calendar size={32} className="text-white/20 mx-auto mb-3" />
-          <p className="text-white/30 text-sm">Nenhum agendamento encontrado.</p>
+        <div className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-10 text-center">
+          <Calendar size={32} className="text-djon-text/20 mx-auto mb-3" />
+          <p className="text-djon-text/30 text-sm">Nenhum agendamento encontrado.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -157,27 +157,27 @@ export default function AdminAgendarPage() {
             const owner = store.getUserById(b.userId)
             return (
               <motion.div key={b.id}
-                className="bg-[#161616] border border-white/8 rounded-2xl px-4 py-4 flex items-center gap-4"
+                className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 px-4 py-4 sm:flex sm:items-center"
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <div className="w-9 h-9 rounded-full bg-[#AFFF00]/10 flex items-center justify-center shrink-0">
-                  <span className="text-[#AFFF00] font-black text-sm">{owner?.name.charAt(0) ?? "?"}</span>
+                <div className="w-9 h-9 rounded-full bg-djon-accent/10 flex items-center justify-center shrink-0">
+                  <span className="text-djon-accent font-black text-sm">{owner?.name.charAt(0) ?? "?"}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-bold truncate">{b.title}</p>
-                  <p className="text-white/40 text-xs">{owner?.name} · <span className="capitalize">{b.type}</span></p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-djon-text text-sm font-bold truncate">{b.title}</p>
+                  <p className="text-djon-text/40 text-xs">{owner?.name} · <span className="capitalize">{b.type}</span></p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="col-span-2 flex w-full flex-wrap items-center justify-end gap-2 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
                   <div className="text-right hidden sm:block">
-                    <div className="flex items-center gap-1 text-white/50 text-xs"><Calendar size={11} />
+                    <div className="flex items-center gap-1 text-djon-text/50 text-xs"><Calendar size={11} />
                       {new Date(b.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
                     </div>
-                    <div className="flex items-center gap-1 text-white/30 text-xs mt-0.5 justify-end"><Clock size={11} />{b.time}</div>
+                    <div className="flex items-center gap-1 text-djon-text/30 text-xs mt-0.5 justify-end"><Clock size={11} />{b.time}</div>
                   </div>
                   <StatusBadge status={b.status} />
-                  <button onClick={() => openEdit(b)} className="cursor-pointer text-white/20 hover:text-[#AFFF00] transition-colors p-1">
+                  <button onClick={() => openEdit(b)} className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1">
                     <Edit2 size={13} />
                   </button>
-                  <button onClick={() => handleDelete(b.id)} className="cursor-pointer text-white/20 hover:text-red-400 transition-colors p-1">
+                  <button onClick={() => handleDelete(b.id)} className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1">
                     <Trash2 size={13} />
                   </button>
                 </div>

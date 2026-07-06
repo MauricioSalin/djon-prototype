@@ -52,11 +52,16 @@ export function HeroSection() {
     }
   }, [])
 
+  const revealSpline = () => {
+    if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
+    revealTimeoutRef.current = setTimeout(() => setSplineLoaded(true), 800)
+  }
+
   return (
     <section
       id="hero"
       ref={ref}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#121212] noise-overlay"
+      className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-djon-ink noise-overlay"
     >
       {/* Background image */}
       <div className="absolute inset-0">
@@ -67,19 +72,19 @@ export function HeroSection() {
           className="object-cover opacity-30"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#121212] via-[#121212]/80 to-[#121212]/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-djon-ink via-djon-ink/80 to-djon-ink/40" />
       </div>
 
 
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-12 w-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-24 pb-12 w-full sm:px-6">
         <div className="grid lg:grid-cols-[5fr_7fr] gap-4 items-center">
           {/* Text Content */}
           <motion.div style={{ opacity }} className="space-y-6 relative z-20">
             <div className="space-y-1 overflow-hidden">
               <motion.h1
                 style={{ x: textX1 }}
-                className="text-5xl md:text-7xl font-black tracking-tighter text-white leading-[0.9]"
+                className="djon-hero-title font-black text-djon-text"
               >
                 <motion.span
                   variants={fadeUpVariants}
@@ -93,14 +98,14 @@ export function HeroSection() {
               </motion.h1>
               <motion.h1
                 style={{ x: textX2 }}
-                className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9]"
+                className="djon-hero-title font-black"
               >
                 <motion.span
                   variants={fadeUpVariants}
                   initial="hidden"
                   animate="visible"
                   custom={2}
-                  className="inline-block text-[#AFFF00]"
+                  className="inline-block text-djon-accent"
                 >
                   COMEÇA AQUI!
                 </motion.span>
@@ -110,7 +115,7 @@ export function HeroSection() {
                 initial="hidden"
                 animate="visible"
                 custom={3}
-                className="text-base md:text-lg text-white/60 tracking-tight pt-3 max-w-md leading-relaxed"
+                className="text-base md:text-lg text-djon-text/60 tracking-tight pt-3 max-w-md leading-relaxed"
               >
                 Nós somos a fronteira entre o sonho e a realização. Se o seu sonho é ser DJ ou Produtor Musical, a DJ ON Academy vai descomplicar tudo para você.
               </motion.p>
@@ -127,13 +132,13 @@ export function HeroSection() {
                 href="https://www.djonacademy.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-[#AFFF00] text-[#121212] px-7 py-3 rounded-full font-black text-sm tracking-widest flex items-center gap-2 group relative overflow-hidden"
+                className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-djon-accent px-7 py-3 text-sm font-black tracking-widest text-djon-ink group sm:w-auto"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full"
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-djon-text/30 to-transparent -translate-x-full"
                   whileHover={{ x: "200%" }}
                   transition={{ duration: 0.6 }}
                 />
@@ -151,8 +156,8 @@ export function HeroSection() {
                 </motion.svg>
               </motion.a>
               <motion.button
-                className="cursor-pointer border-2 border-white/30 text-white px-7 py-3 rounded-full font-black text-sm tracking-widest relative overflow-hidden"
-                whileHover={{ scale: 1.02, borderColor: "#AFFF00", color: "#AFFF00" }}
+                className="relative w-full cursor-pointer overflow-hidden rounded-full border-2 border-djon-text/30 px-7 py-3 text-sm font-black tracking-widest text-djon-text sm:w-auto"
+                whileHover={{ scale: 1.02, borderColor: "var(--djon-color-accent)", color: "var(--djon-color-accent)" }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
                 onClick={() => {
@@ -174,15 +179,39 @@ export function HeroSection() {
               {["Formação DJ", "Produção Musical", "Mentoria de Marketing", "Evento Showcase"].map((benefit, i) => (
                 <motion.div
                   key={benefit}
-                  className="flex items-center gap-2 text-xs text-white/50"
+                  className="flex items-center gap-2 text-xs text-djon-text/50"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.8 + i * 0.1 }}
                 >
-                  <div className="w-1.5 h-1.5 bg-[#AFFF00] rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-djon-accent rounded-full" />
                   {benefit}
                 </motion.div>
               ))}
+            </motion.div>
+
+            <motion.div
+              variants={fadeUpVariants}
+              initial="hidden"
+              animate="visible"
+              custom={6}
+              className="relative mt-5 h-[360px] w-full overflow-visible min-[390px]:h-[390px] sm:h-[430px] lg:hidden"
+            >
+              <motion.div
+                aria-hidden="true"
+                className="absolute left-1/2 top-1/2 h-[520px] w-[700px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] transform-gpu min-[360px]:scale-[0.46] min-[390px]:scale-[0.5] sm:scale-[0.58]"
+                initial={false}
+                animate={{ opacity: splineLoaded ? 1 : 0 }}
+                transition={{ duration: 0.45, ease: "easeOut" }}
+              >
+                <SplineScene
+                  scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
+                  globalEvents
+                  lazyThreshold={0.01}
+                  onLoad={revealSpline}
+                  style={{ width: "100%", height: "100%" }}
+                />
+              </motion.div>
             </motion.div>
           </motion.div>
 
@@ -198,11 +227,8 @@ export function HeroSection() {
               <SplineScene
                 scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
                 globalEvents
-                lazy={false}
-                onLoad={() => {
-                  if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
-                  revealTimeoutRef.current = setTimeout(() => setSplineLoaded(true), 800)
-                }}
+                lazyThreshold={0.01}
+                onLoad={revealSpline}
                 style={{ width: "100%", height: "100%" }}
               />
             </motion.div>

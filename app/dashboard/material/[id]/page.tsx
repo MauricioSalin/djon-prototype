@@ -33,38 +33,38 @@ function PDFViewer({ att, onClose }: { att: MaterialAttachment; onClose: () => v
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex flex-col"
+      className="fixed inset-0 z-[100] bg-djon-page/90 backdrop-blur-sm flex flex-col"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+      <div className="flex flex-col gap-3 border-b border-djon-text/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-3 min-w-0">
-          <FileText size={16} className="text-[#AFFF00] shrink-0" />
-          <p className="text-white font-bold text-sm truncate">{att.name}</p>
+          <FileText size={16} className="text-djon-accent shrink-0" />
+          <p className="text-djon-text font-bold text-sm truncate">{att.name}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
           <button
             onClick={() => triggerDownload(att.url, att.name)}
             disabled={!hasUrl}
-            className="cursor-pointer flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-4 py-2 rounded-full text-xs font-black tracking-widest hover:opacity-90 transition-opacity"
+            className="cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-full bg-djon-accent px-4 py-2 text-xs font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:flex-none"
           >
             <Download size={13} /> BAIXAR
           </button>
           <button
             onClick={onClose}
-            className="cursor-pointer w-9 h-9 rounded-full bg-white/8 hover:bg-white/15 flex items-center justify-center transition-colors"
+            className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:bg-djon-text/15 flex items-center justify-center transition-colors"
           >
-            <X size={16} className="text-white" />
+            <X size={16} className="text-djon-text" />
           </button>
         </div>
       </div>
       <div className="flex-1 p-4">
         {hasUrl ? (
-          <iframe src={att.url} className="w-full h-full rounded-xl border border-white/10" title={att.name} />
+          <iframe src={att.url} className="w-full h-full rounded-xl border border-djon-text/10" title={att.name} />
         ) : (
-          <div className="w-full h-full rounded-xl border border-white/10 bg-white/5 flex items-center justify-center">
-            <p className="text-white/40 text-sm font-bold">Arquivo indisponível.</p>
+          <div className="w-full h-full rounded-xl border border-djon-text/10 bg-djon-text/5 flex items-center justify-center">
+            <p className="text-djon-text/40 text-sm font-bold">Arquivo indisponível.</p>
           </div>
         )}
       </div>
@@ -79,25 +79,25 @@ function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () 
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] bg-black/92 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-djon-page/92 p-4 backdrop-blur-sm sm:p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
-      <div className="absolute top-5 right-5 flex items-center gap-2">
+      <div className="absolute left-4 right-4 top-4 flex items-center justify-end gap-2 sm:left-auto sm:right-5 sm:top-5">
         <button
           onClick={(e) => { e.stopPropagation(); triggerDownload(att.url, att.name) }}
           disabled={!att.url}
-          className="cursor-pointer flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-4 py-2 rounded-full text-xs font-black tracking-widest hover:opacity-90 transition-opacity"
+          className="cursor-pointer flex items-center gap-2 bg-djon-accent text-djon-ink px-4 py-2 rounded-full text-xs font-black tracking-widest hover:opacity-90 transition-opacity"
         >
           <Download size={13} /> BAIXAR
         </button>
         <button
           onClick={onClose}
-          className="cursor-pointer w-9 h-9 rounded-full bg-white/8 hover:bg-white/15 flex items-center justify-center transition-colors"
+          className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:bg-djon-text/15 flex items-center justify-center transition-colors"
         >
-          <X size={16} className="text-white" />
+          <X size={16} className="text-djon-text" />
         </button>
       </div>
       {hasUrl ? (
@@ -114,13 +114,13 @@ function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () 
         />
       ) : (
         <div
-          className="w-full max-w-2xl h-[50vh] rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center"
+          className="w-full max-w-2xl h-[50vh] rounded-2xl border border-djon-text/10 bg-djon-text/5 flex items-center justify-center"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-white/40 text-sm font-bold">Imagem indisponível.</p>
+          <p className="text-djon-text/40 text-sm font-bold">Imagem indisponível.</p>
         </div>
       )}
-      <p className="text-white/50 text-sm mt-4 font-medium">{att.name}</p>
+      <p className="text-djon-text/50 text-sm mt-4 font-medium">{att.name}</p>
     </motion.div>
   )
 }
@@ -148,12 +148,12 @@ export default function MaterialDetailPage() {
 
   if (!material) {
     return (
-      <div className="bg-[#0a0a0a] min-h-screen flex flex-col items-center justify-center px-6">
-        <FileText size={40} className="text-white/10 mb-4" />
-        <p className="text-white/40 font-bold text-lg mb-6">Material não encontrado</p>
+      <div className="bg-djon-page min-h-screen flex flex-col items-center justify-center px-4 text-center sm:px-6">
+        <FileText size={40} className="text-djon-text/10 mb-4" />
+        <p className="text-djon-text/40 font-bold text-lg mb-6">Material não encontrado</p>
         <Link
           href="/dashboard/material"
-          className="flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-3 rounded-full font-black text-sm tracking-widest hover:opacity-90 transition-opacity"
+          className="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90"
         >
           <ArrowLeft size={15} /> VOLTAR AO MATERIAL
         </Link>
@@ -175,7 +175,7 @@ export default function MaterialDetailPage() {
   }
 
   return (
-    <div className="bg-[#0a0a0a] min-h-screen">
+    <div className="bg-djon-page min-h-screen">
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[62vh] flex items-end overflow-hidden">
@@ -189,58 +189,58 @@ export default function MaterialDetailPage() {
               onError={() => setCoverError(true)}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#141414] to-[#0a0a0a]" />
+            <div className="w-full h-full bg-gradient-to-br from-djon-surface to-djon-page" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-[#0a0a0a]/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-djon-page/70 to-djon-page/30" />
         </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto px-6 py-16 w-full">
+        <div className="relative z-10 max-w-4xl mx-auto px-4 py-14 w-full sm:px-6 sm:py-16">
           <motion.div {...fadeUp(0)}>
             <Link
               href="/dashboard/material"
-              className="inline-flex items-center gap-2 text-white/50 hover:text-[#AFFF00] text-xs font-black tracking-widest uppercase mb-8 transition-colors"
+              className="inline-flex items-center gap-2 text-djon-text/50 hover:text-djon-accent text-xs font-black tracking-widest uppercase mb-8 transition-colors"
             >
               <ArrowLeft size={14} /> VOLTAR AO MATERIAL
             </Link>
           </motion.div>
 
           <motion.span
-            className="block text-[#AFFF00] text-xs tracking-[0.25em] font-black uppercase mb-4"
+            className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4"
             {...fadeUp(0.1)}
           >
             {material.category}
           </motion.span>
 
           <motion.h1
-            className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.95] text-balance"
+            className="djon-section-title font-black text-djon-text text-balance"
             {...fadeUp(0.2)}
           >
             {material.title || "Material sem título"}
           </motion.h1>
 
-          <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mt-5" {...fadeUp(0.3)} />
+          <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-5" {...fadeUp(0.3)} />
 
           <motion.div className="flex items-center gap-3 mt-6" {...fadeUp(0.35)}>
-            <div className="w-8 h-8 rounded-full bg-[#AFFF00]/15 flex items-center justify-center overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-djon-accent/15 flex items-center justify-center overflow-hidden">
               {material.authorAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={material.authorAvatar} alt="" className="w-full h-full object-cover" />
               ) : (
-                <span className="text-[#AFFF00] text-xs font-black">{authorName.charAt(0)}</span>
+                <span className="text-djon-accent text-xs font-black">{authorName.charAt(0)}</span>
               )}
             </div>
             <div>
-              <p className="text-white text-sm font-bold leading-tight">{authorName}</p>
-              <p className="text-white/40 text-xs">{date}</p>
+              <p className="text-djon-text text-sm font-bold leading-tight">{authorName}</p>
+              <p className="text-djon-text/40 text-xs">{date}</p>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* ── BODY ────────────────────────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-6 py-16">
+      <section className="max-w-3xl mx-auto px-4 py-14 sm:px-6 sm:py-16">
         {material.description && (
-          <motion.p className="text-white/60 text-lg leading-relaxed mb-10 border-l-2 border-[#AFFF00]/40 pl-4" {...fadeUp(0)}>
+          <motion.p className="text-djon-text/60 text-lg leading-relaxed mb-10 border-l-2 border-djon-accent/40 pl-4" {...fadeUp(0)}>
             {material.description}
           </motion.p>
         )}
@@ -252,7 +252,7 @@ export default function MaterialDetailPage() {
             dangerouslySetInnerHTML={{ __html: material.body }}
           />
         ) : (
-          <motion.p className="text-white/30 text-sm" {...fadeUp(0.05)}>
+          <motion.p className="text-djon-text/30 text-sm" {...fadeUp(0.05)}>
             Este material não possui conteúdo escrito. Confira os anexos abaixo.
           </motion.p>
         )}
@@ -261,9 +261,9 @@ export default function MaterialDetailPage() {
         {attachments.length > 0 && (
           <motion.div className="mt-16" {...fadeUp(0.1)}>
             <div className="flex items-center gap-2 mb-5">
-              <Paperclip size={16} className="text-[#AFFF00]" />
-              <h2 className="text-white font-black text-sm tracking-widest uppercase">
-                Anexos <span className="text-white/30">({attachments.length})</span>
+              <Paperclip size={16} className="text-djon-accent" />
+              <h2 className="text-djon-text font-black text-sm tracking-widest uppercase">
+                Anexos <span className="text-djon-text/30">({attachments.length})</span>
               </h2>
             </div>
 
@@ -271,39 +271,39 @@ export default function MaterialDetailPage() {
               {attachments.map((att) => (
                 <div
                   key={att.id}
-                  className="group flex items-center gap-4 bg-white/4 border border-white/8 hover:border-white/16 rounded-2xl p-4 transition-all"
+                  className="group flex flex-col gap-4 rounded-2xl border border-djon-text/8 bg-djon-text/4 p-4 transition-all hover:border-djon-text/16 sm:flex-row sm:items-center"
                 >
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    att.type === "pdf" ? "bg-red-500/15" : att.type === "image" ? "bg-[#AFFF00]/12" : "bg-white/8"
+                    att.type === "pdf" ? "bg-djon-danger/15" : att.type === "image" ? "bg-djon-accent/12" : "bg-djon-text/8"
                   }`}>
                     {att.type === "pdf" ? (
-                      <FileText size={20} className="text-red-400" />
+                      <FileText size={20} className="text-djon-danger" />
                     ) : att.type === "image" ? (
-                      <ImageIcon size={20} className="text-[#AFFF00]" />
+                      <ImageIcon size={20} className="text-djon-accent" />
                     ) : (
-                      <FileIcon size={20} className="text-white/60" />
+                      <FileIcon size={20} className="text-djon-text/60" />
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-sm truncate">{att.name}</p>
-                    <p className="text-white/35 text-xs uppercase tracking-widest font-bold">
+                    <p className="text-djon-text font-bold text-sm truncate">{att.name}</p>
+                    <p className="text-djon-text/35 text-xs uppercase tracking-widest font-bold">
                       {att.type}{att.size ? ` · ${att.size}` : ""}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
                     {(att.type === "pdf" || att.type === "image") && (
                       <button
                         onClick={() => handleAttachmentClick(att)}
-                        className="cursor-pointer flex items-center gap-1.5 bg-white/8 hover:bg-white/15 text-white text-xs font-black tracking-widest px-3 py-2 rounded-full transition-colors"
+                        className="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-djon-text/8 px-3 py-2 text-xs font-black tracking-widest text-djon-text transition-colors hover:bg-djon-text/15 sm:flex-none"
                       >
                         <Eye size={13} /> VER
                       </button>
                     )}
                     <button
                       onClick={() => triggerDownload(att.url, att.name)}
-                      className="cursor-pointer flex items-center gap-1.5 bg-[#AFFF00] text-[#121212] text-xs font-black tracking-widest px-3 py-2 rounded-full hover:opacity-90 transition-opacity"
+                      className="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-djon-accent px-3 py-2 text-xs font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:flex-none"
                     >
                       <Download size={13} /> BAIXAR
                     </button>

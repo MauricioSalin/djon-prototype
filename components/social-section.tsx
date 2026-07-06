@@ -69,8 +69,8 @@ export function SocialSection() {
 
 
   return (
-    <section id="historia" className="relative py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
+    <section id="historia" className="relative py-16 bg-djon-text overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left: Text */}
           <motion.div
@@ -82,7 +82,7 @@ export function SocialSection() {
           >
             <div>
               <motion.span
-                className="text-[#121212]/50 text-xs tracking-wide uppercase"
+                className="text-djon-ink/50 text-xs tracking-wide uppercase"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
@@ -91,7 +91,7 @@ export function SocialSection() {
                 QUEM SOMOS
               </motion.span>
               <motion.h2
-                className="text-4xl md:text-6xl font-black text-[#121212] tracking-tighter leading-[0.9] mt-2 pb-1"
+                className="djon-section-title font-black text-djon-ink mt-2 pb-1"
                 initial={{ y: 80, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
@@ -101,8 +101,8 @@ export function SocialSection() {
                 <span
                   className="block"
                   style={{
-                    color: "#AFFF00",
-                    WebkitTextStroke: "2px #121212",
+                    color: "var(--djon-color-accent)",
+                    WebkitTextStroke: "2px var(--djon-color-ink)",
                     paintOrder: "stroke fill",
                   }}
                 >
@@ -118,13 +118,13 @@ export function SocialSection() {
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              <p className="text-sm text-[#121212]/60 leading-relaxed">
+              <p className="text-sm text-djon-ink/60 leading-relaxed">
                 A DJ ON foi criada em 2018 e iniciou atividades em 2019 para atender a demanda de pessoas interessadas em aprender de forma técnica e profissional sobre a profissão de DJ.
               </p>
-              <p className="text-sm text-[#121212]/60 leading-relaxed">
+              <p className="text-sm text-djon-ink/60 leading-relaxed">
                 A proposta era facilitar o ensino para iniciantes, proporcionando uma jornada acessível e divertida. Com a formação em turmas, os alunos têm a oportunidade de se conectar, colaborar em projetos e eventos, e receber acompanhamento intensivo para dominar as habilidades necessárias.
               </p>
-              <p className="text-sm text-[#121212]/60 leading-relaxed">
+              <p className="text-sm text-djon-ink/60 leading-relaxed">
                 A DJ ON funciona como uma academia, oferecendo suporte contínuo aos alunos. Mesmo depois de formados, os alunos têm acesso à infraestrutura da escola para treinar, além da possibilidade de tocar nos eventos que a escola organiza, mantendo-se assim a grande comunidade da DJ ON Academy.
               </p>
             </motion.div>
@@ -133,7 +133,7 @@ export function SocialSection() {
               href="https://www.djonacademy.com/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-[#121212] text-[#AFFF00] px-7 py-3 rounded-full font-black text-sm tracking-wide"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-djon-ink px-7 py-3 text-sm font-black tracking-wide text-djon-accent sm:w-auto"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -166,12 +166,12 @@ export function SocialSection() {
                   variants={itemVariants}
                   whileHover={{ y: -4, scale: 1.02 }}
                   transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
-                  className="bg-[#121212] rounded-2xl p-5 group cursor-pointer"
+                  className="bg-djon-ink rounded-2xl p-5 group cursor-pointer"
                 >
-                  <div className="text-2xl font-black text-[#AFFF00] tracking-tighter">
+                  <div className="text-2xl font-black text-djon-accent tracking-tighter">
                     {item.year}
                   </div>
-                  <p className="text-white/60 text-xs mt-1 leading-relaxed">{item.label}</p>
+                  <p className="text-djon-text/60 text-xs mt-1 leading-relaxed">{item.label}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -196,38 +196,38 @@ export function SocialSection() {
 
               <div className="pointer-events-none absolute left-1/2 top-[42%] z-10 -translate-x-1/2 -translate-y-full">
                 <div className="relative">
-                  <div className="absolute left-1/2 top-full h-3 w-7 -translate-x-1/2 rounded-full bg-[#AFFF00]/30 blur-sm" />
+                  <div className="absolute left-1/2 top-full h-3 w-7 -translate-x-1/2 rounded-full bg-djon-accent/30 blur-sm" />
                   <svg
                     viewBox="0 0 32 44"
-                    className="h-11 w-8 drop-shadow-[0_8px_12px_rgba(0,0,0,0.35)]"
+                    className="h-11 w-8 drop-shadow-djon-soft"
                     aria-hidden="true"
                   >
                     <path
                       d="M16 43s13-13.5 13-26.5C29 7.4 23.2 1 16 1S3 7.4 3 16.5C3 29.5 16 43 16 43Z"
-                      fill="#AFFF00"
+                      fill="var(--djon-color-accent)"
                     />
-                    <circle cx="16" cy="16.5" r="5.5" fill="#121212" />
+                    <circle cx="16" cy="16.5" r="5.5" fill="var(--djon-color-ink)" />
                   </svg>
                 </div>
               </div>
 
               {/* Overlay info card pinned to bottom */}
-              <div className="absolute bottom-0 left-0 right-0 bg-[#121212]/90 backdrop-blur-sm px-4 py-3 flex items-center gap-3">
+              <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 bg-djon-ink/90 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
                 {/* Mini DJON logo */}
-                <div className="flex items-center gap-0 text-white shrink-0">
+                <div className="flex items-center gap-0 text-djon-text shrink-0">
                   <span className="text-base font-black tracking-[-0.05em]">DJ</span>
-                  <svg viewBox="0 0 28 28" className="w-5 h-5 fill-white mx-0.5">
+                  <svg viewBox="0 0 28 28" className="w-5 h-5 fill-djon-text mx-0.5">
                     <circle cx="14" cy="14" r="13" />
-                    <polygon points="11,9 11,19 21,14" fill="#121212" />
+                    <polygon points="11,9 11,19 21,14" fill="var(--djon-color-ink)" />
                   </svg>
                   <span className="text-base font-black tracking-[-0.05em]">N</span>
                 </div>
-                <div className="w-px h-6 bg-white/20 shrink-0" />
+                <div className="hidden h-6 w-px shrink-0 bg-djon-text/20 sm:block" />
                 <div className="min-w-0">
-                  <p className="text-white text-xs font-bold leading-snug truncate">
+                  <p className="text-djon-text text-xs font-bold leading-snug truncate">
                     {location.address}
                   </p>
-                  <p className="text-[#AFFF00] text-[10px] mt-0.5">
+                  <p className="text-djon-accent text-djon-label mt-0.5">
                     Seg – Sex &nbsp;·&nbsp; 9h às 18h
                   </p>
                 </div>
@@ -235,7 +235,7 @@ export function SocialSection() {
                   href={location.mapsHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-auto shrink-0 bg-[#AFFF00] text-[#121212] text-[10px] font-black px-3 py-1.5 rounded-full tracking-wide"
+                  className="ml-auto shrink-0 rounded-full bg-djon-accent px-3 py-1.5 text-djon-label font-black tracking-wide text-djon-ink"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

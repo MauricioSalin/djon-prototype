@@ -18,7 +18,7 @@ const fadeUp = (delay = 0) => ({
 })
 
 const inputCls =
-  "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/20 focus:outline-none focus:border-[#AFFF00]/50 focus:bg-white/8 transition-all"
+  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all"
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador DJ ON",
@@ -27,9 +27,9 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const BANNER_GRADIENTS = [
-  "linear-gradient(135deg, #111 0%, #0f1a0a 60%, #121212 100%)",
-  "linear-gradient(135deg, #0a0a12 0%, #0d0d1a 60%, #121212 100%)",
-  "linear-gradient(135deg, #110a0a 0%, #1a0f0a 60%, #121212 100%)",
+  "var(--djon-gradient-profile-admin)",
+  "var(--djon-gradient-profile-professor)",
+  "var(--djon-gradient-profile-student)",
 ]
 
 interface ProfileViewProps {
@@ -98,7 +98,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
     : BANNER_GRADIENTS[gradientIndex]
 
   return (
-    <div className="bg-[#0a0a0a]">
+    <div className="bg-djon-page">
 
       {/* ── BANNER + AVATAR ─────────────────────────────────────────────────── */}
       <section className="relative">
@@ -110,10 +110,10 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         >
 
           {/* Subtle static dark vignette at bottom so avatar sits on it */}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-djon-page to-transparent" />
           {isOwner && (
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center">
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur rounded-full px-5 py-2.5 flex items-center gap-2 text-white text-xs font-bold">
+            <div className="absolute inset-0 bg-djon-page/0 group-hover:bg-djon-page/30 transition-all flex items-center justify-center">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-djon-page/70 backdrop-blur rounded-full px-5 py-2.5 flex items-center gap-2 text-djon-text text-xs font-bold">
                 <Camera size={13} /> Alterar banner
               </div>
             </div>
@@ -128,23 +128,23 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         </div>
 
         {/* Avatar + info — overlaps the banner via negative margin */}
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Row: avatar + info + edit button */}
-          <div className="flex items-end gap-5 -mt-14 md:-mt-16 pb-2 relative z-10">
+          <div className="relative z-10 -mt-14 flex flex-col items-start gap-4 pb-2 sm:flex-row sm:items-end sm:gap-5 md:-mt-16">
             {/* Avatar */}
             <div
-              className={`w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-[#0a0a0a] bg-[#AFFF00]/15 flex items-center justify-center relative overflow-hidden shrink-0 ${isOwner ? "cursor-pointer group" : ""}`}
+              className={`relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-djon-page bg-djon-accent/15 sm:h-28 sm:w-28 md:h-36 md:w-36 ${isOwner ? "cursor-pointer group" : ""}`}
               onClick={isOwner ? () => avatarRef.current?.click() : undefined}
             >
               {user.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-[#AFFF00] text-5xl font-black">{user.name.charAt(0)}</span>
+                <span className="text-djon-accent text-4xl font-black sm:text-5xl">{user.name.charAt(0)}</span>
               )}
               {isOwner && (
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Camera size={22} className="text-white" />
+                <div className="absolute inset-0 bg-djon-page/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Camera size={22} className="text-djon-text" />
                 </div>
               )}
               <input
@@ -159,7 +159,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             {/* Info — grows to fill available width */}
             <div className="flex-1 min-w-0 pb-2">
               <motion.div
-                className="inline-block bg-[#AFFF00]/15 text-[#AFFF00] text-[10px] font-black tracking-[0.2em] px-3 py-1 rounded-full mb-2"
+                className="inline-block bg-djon-accent/15 text-djon-accent text-djon-label font-black tracking-[0.2em] px-3 py-1 rounded-full mb-2"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -167,7 +167,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 {ROLE_LABELS[user.role] ?? "DJ ON Academy"}
               </motion.div>
               <motion.h1
-                className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight"
+                className="djon-section-title font-black text-djon-text"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
@@ -180,7 +180,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             {isOwner && (
               <motion.button
                 onClick={() => setEditing((v) => !v)}
-                className="cursor-pointer hidden md:flex items-center gap-2 shrink-0 mb-2 border border-white/15 text-white/50 hover:text-white hover:border-white/30 px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all"
+                className="cursor-pointer hidden md:flex items-center gap-2 shrink-0 mb-2 border border-djon-text/15 text-djon-text/50 hover:text-djon-text hover:border-djon-text/30 px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -191,9 +191,19 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
 
           {/* Bio + socials + private info — full width below the avatar row */}
           <div className="pb-8 pt-4">
+            {isOwner && (
+              <motion.button
+                onClick={() => setEditing((v) => !v)}
+                className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-all hover:border-djon-text/30 hover:text-djon-text md:hidden"
+                whileTap={{ scale: 0.97 }}
+              >
+                <Edit3 size={13} /> EDITAR PERFIL
+              </motion.button>
+            )}
+
             {user.bio && (
               <motion.p
-                className="text-white/50 text-sm max-w-xl leading-relaxed mb-3"
+                className="text-djon-text/50 text-sm max-w-xl leading-relaxed mb-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -215,7 +225,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://instagram.com/${user.socials.instagram}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-white/40 hover:text-white text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-bold transition-colors"
                   >
                     <Instagram size={18} /> @{user.socials.instagram}
                   </a>
@@ -225,7 +235,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://soundcloud.com/${user.socials.soundcloud}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-white/40 hover:text-white text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-bold transition-colors"
                   >
                     <SoundCloudIcon size={22} /> {user.socials.soundcloud}
                   </a>
@@ -235,7 +245,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://youtube.com/@${user.socials.youtube}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-white/40 hover:text-white text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-bold transition-colors"
                   >
                     <Youtube size={18} /> {user.socials.youtube}
                   </a>
@@ -250,26 +260,26 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
 
       {/* ── EDIT FORM ─────────────────────────────────────────────────────────── */}
       {isOwner && editing && (
-        <section className="bg-[#0f0f0f] border-t border-white/8 border-b">
-          <div className="max-w-7xl mx-auto px-6 py-16">
+        <section className="bg-djon-muted-panel border-t border-djon-text/8 border-b">
+          <div className="max-w-7xl mx-auto px-4 py-14 sm:px-6 sm:py-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2">EDITAR</span>
-              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-2">Seu Perfil</h2>
-              <div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mb-10" />
-              <form onSubmit={handleSave} className="grid md:grid-cols-2 gap-8 max-w-3xl">
+              <span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2">EDITAR</span>
+              <h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2">Seu Perfil</h2>
+              <div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" />
+              <form onSubmit={handleSave} className="grid max-w-3xl gap-6 md:grid-cols-2 md:gap-8">
                 <div className="space-y-5">
                   <div>
-                    <label className="text-white/40 text-xs font-black tracking-widest mb-2 block">NOME</label>
+                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">NOME</label>
                     <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs font-black tracking-widest mb-2 block">E-MAIL</label>
+                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">E-MAIL</label>
                     <div className="relative">
-                      <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
                       <input
                         type="email"
                         value={form.email}
@@ -279,9 +289,9 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     </div>
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs font-black tracking-widest mb-2 block">TELEFONE</label>
+                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">TELEFONE</label>
                     <div className="relative">
-                      <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                      <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
                       <input
                         type="tel"
                         value={form.whatsapp}
@@ -292,7 +302,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     </div>
                   </div>
                   <div>
-                    <label className="text-white/40 text-xs font-black tracking-widest mb-2 block">BIO</label>
+                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">BIO</label>
                     <textarea
                       value={form.bio}
                       onChange={(e) => setForm({ ...form, bio: e.target.value })}
@@ -303,24 +313,24 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <label className="text-white/40 text-xs font-black tracking-widest mb-2 block">REDES SOCIAIS</label>
+                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">REDES SOCIAIS</label>
                   <div className="relative">
-                    <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                    <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
                     <input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="instagram" className={`${inputCls} pl-10`} />
                   </div>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30">
                       <SoundCloudIcon size={20} />
                     </span>
                     <input value={form.soundcloud} onChange={(e) => setForm({ ...form, soundcloud: e.target.value })} placeholder="soundcloud" className={`${inputCls} pl-10`} />
                   </div>
                   <div className="relative">
-                    <Youtube size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                    <Youtube size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
                     <input value={form.youtube} onChange={(e) => setForm({ ...form, youtube: e.target.value })} placeholder="youtube" className={`${inputCls} pl-10`} />
                   </div>
                   <motion.button
                     type="submit"
-                    className="cursor-pointer w-full bg-[#AFFF00] text-[#121212] rounded-xl py-3.5 font-black text-sm tracking-widest flex items-center justify-center gap-2 mt-2"
+                    className="cursor-pointer w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-widest flex items-center justify-center gap-2 mt-2"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
                   >
@@ -335,11 +345,11 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
 
       {/* ── PRÓXIMOS EVENTOS ────────────────────────────────────────────────── */}
       {upcomingEvents.length > 0 && (
-        <section className="py-20 bg-[#0a0a0a]">
-          <div className="max-w-7xl mx-auto px-6">
-            <motion.span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>PRÓXIMOS</motion.span>
-            <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-2" {...fadeUp(0.1)}>Eventos Futuros</motion.h2>
-            <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mb-10" {...fadeUp(0.15)} />
+        <section className="py-16 bg-djon-page sm:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>PRÓXIMOS</motion.span>
+            <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2" {...fadeUp(0.1)}>Eventos Futuros</motion.h2>
+            <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" {...fadeUp(0.15)} />
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcomingEvents.map((ev, i) => (
                 <EventCard key={ev.id} ev={ev} i={i} />
@@ -351,29 +361,29 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
 
       {/* ── HISTÓRICO ───────────────────────────────────────────────────────── */}
       {pastEvents.length > 0 && (
-        <section className="py-20 bg-[#0f0f0f]">
-          <div className="max-w-7xl mx-auto px-6">
-            <motion.span className="block text-white/30 text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>HISTÓRICO</motion.span>
-            <motion.h2 className="text-3xl md:text-5xl font-black text-white/60 tracking-tighter mb-2" {...fadeUp(0.1)}>Eventos Passados</motion.h2>
-            <motion.div className="h-[3px] w-10 bg-white/20 rounded-full mb-10" {...fadeUp(0.15)} />
+        <section className="py-16 bg-djon-muted-panel sm:py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <motion.span className="block text-djon-text/30 text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>HISTÓRICO</motion.span>
+            <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text/60 tracking-tighter mb-2" {...fadeUp(0.1)}>Eventos Passados</motion.h2>
+            <motion.div className="h-[3px] w-10 bg-djon-text/20 rounded-full mb-10" {...fadeUp(0.15)} />
             <div className="space-y-3">
               {pastEvents.map((ev, i) => (
                 <motion.div
                   key={ev.id}
-                  className="flex items-center gap-5 bg-[#141414] border border-white/6 rounded-2xl px-6 py-4"
+                  className="flex flex-col gap-3 rounded-2xl border border-djon-text/6 bg-djon-surface px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:px-6"
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0 }}
                   transition={{ delay: i * 0.05, duration: 0.5 }}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0 text-white/20">
+                  <div className="w-10 h-10 rounded-xl bg-djon-text/5 flex items-center justify-center shrink-0 text-djon-text/20">
                     <Clock size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white/50 font-black text-sm truncate">{ev.title}</p>
-                    <p className="text-white/25 text-xs mt-0.5 flex items-center gap-1.5"><MapPin size={10} />{ev.location}</p>
+                    <p className="text-djon-text/50 font-black text-sm truncate">{ev.title}</p>
+                    <p className="text-djon-text/25 text-xs mt-0.5 flex items-center gap-1.5"><MapPin size={10} />{ev.location}</p>
                   </div>
-                  <div className="shrink-0 text-white/25 text-xs font-bold">{fmt(ev.date)}</div>
+                  <div className="shrink-0 text-djon-text/25 text-xs font-bold">{fmt(ev.date)}</div>
                 </motion.div>
               ))}
             </div>
@@ -382,30 +392,30 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       )}
 
       {events.length === 0 && (
-        <section className="py-24 bg-[#0a0a0a]">
-          <div className="max-w-7xl mx-auto px-6 text-center">
-            <p className="text-white/20 text-sm font-bold">Nenhum evento cadastrado ainda.</p>
+        <section className="py-20 bg-djon-page sm:py-24">
+          <div className="max-w-7xl mx-auto px-4 text-center sm:px-6">
+            <p className="text-djon-text/20 text-sm font-bold">Nenhum evento cadastrado ainda.</p>
           </div>
         </section>
       )}
 
       {/* ── CTA (somente para o dono da conta) ─────────────────────────────── */}
       {isOwner && (
-        <section className="py-20 bg-[#0a0a0a] border-t border-white/6">
-          <div className="max-w-7xl mx-auto px-6 text-center">
-            <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-6" {...fadeUp(0)}>
+        <section className="py-16 bg-djon-page border-t border-djon-text/6 sm:py-20">
+          <div className="max-w-7xl mx-auto px-4 text-center sm:px-6">
+            <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-6" {...fadeUp(0)}>
               Pronto para o próximo set?
             </motion.h2>
             <motion.div className="flex flex-wrap items-center justify-center gap-3" {...fadeUp(0.2)}>
               <Link
                 href="/dashboard/student/agendar"
-                className="inline-flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-8 py-3.5 rounded-full font-black text-sm tracking-widest"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-8 py-3.5 text-sm font-black tracking-widest text-djon-ink sm:w-auto"
               >
                 AGENDAR AULA <ArrowRight size={14} />
               </Link>
               <Link
                 href="/dashboard/student/evento"
-                className="inline-flex items-center gap-2 border-2 border-white/20 text-white px-8 py-3.5 rounded-full font-black text-sm tracking-widest hover:border-white/40 transition-all"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-8 py-3.5 text-sm font-black tracking-widest text-djon-text transition-all hover:border-djon-text/40 sm:w-auto"
               >
                 <Music size={14} /> NOVO EVENTO
               </Link>
@@ -421,16 +431,16 @@ function EventCard({ ev, i }: { ev: DJEvent; i: number }) {
   return (
     <motion.div
       key={ev.id}
-      className="bg-[#161616] border border-white/8 hover:border-[#AFFF00]/30 rounded-2xl p-6 transition-all"
+      className="bg-djon-surface-2 border border-djon-text/8 hover:border-djon-accent/30 rounded-2xl p-6 transition-all"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0 }}
       transition={{ delay: i * 0.07, duration: 0.6 }}
       whileHover={{ y: -4 }}
     >
-      <h3 className="text-white font-black text-xl tracking-tight mb-4 leading-tight">{ev.title}</h3>
+      <h3 className="text-djon-text font-black text-xl tracking-tight mb-4 leading-tight">{ev.title}</h3>
       <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-white/50 text-xs">
+        <div className="flex items-center gap-2 text-djon-text/50 text-xs">
           <Clock size={12} />
           {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR", {
             weekday: "short",
@@ -438,7 +448,7 @@ function EventCard({ ev, i }: { ev: DJEvent; i: number }) {
             month: "long",
           })} às {ev.time}
         </div>
-        <div className="flex items-center gap-2 text-white/50 text-xs">
+        <div className="flex items-center gap-2 text-djon-text/50 text-xs">
           <MapPin size={12} />{ev.location}
         </div>
       </div>
@@ -447,13 +457,13 @@ function EventCard({ ev, i }: { ev: DJEvent; i: number }) {
           href={`https://instagram.com/${ev.instagram}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-[#AFFF00] text-xs font-bold hover:underline"
+          className="inline-flex items-center gap-1.5 text-djon-accent text-xs font-bold hover:underline"
         >
           <Instagram size={11} /> @{ev.instagram}
         </a>
       )}
       {ev.description && (
-        <p className="text-white/30 text-xs mt-3 pt-3 border-t border-white/8 leading-relaxed">{ev.description}</p>
+        <p className="text-djon-text/30 text-xs mt-3 pt-3 border-t border-djon-text/8 leading-relaxed">{ev.description}</p>
       )}
     </motion.div>
   )

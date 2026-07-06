@@ -92,6 +92,7 @@ export function DjonDatePicker({
 }: DjonDatePickerProps) {
   const selectedDate = useMemo(() => fromIso(value), [value])
   const [open, setOpen] = useState(false)
+  const [alignRight, setAlignRight] = useState(false)
   const [viewDate, setViewDate] = useState(selectedDate ?? new Date())
   const ref = useRef<HTMLDivElement>(null)
 
@@ -132,22 +133,31 @@ export function DjonDatePicker({
     setOpen(false)
   }
 
+  const toggleOpen = () => {
+    const rect = ref.current?.getBoundingClientRect()
+    if (rect) {
+      const pickerWidth = Math.min(292, window.innerWidth - 32)
+      setAlignRight(rect.left + pickerWidth > window.innerWidth - 16)
+    }
+    setOpen((v) => !v)
+  }
+
   return (
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`cursor-pointer w-full h-12 bg-white/5 border rounded-xl px-4 text-left text-sm font-bold transition-all flex items-center justify-between ${
-          open ? "border-[#AFFF00]/60 bg-white/8" : "border-white/10 hover:border-white/20"
-        } ${value ? "text-white" : "text-white/30"}`}
+        onClick={toggleOpen}
+        className={`cursor-pointer w-full h-12 bg-djon-text/5 border rounded-xl px-4 text-left text-sm font-bold transition-all flex items-center justify-between ${
+          open ? "border-djon-accent/60 bg-djon-text/8" : "border-djon-text/10 hover:border-djon-text/20"
+        } ${value ? "text-djon-text" : "text-djon-text/30"}`}
       >
         <span>{formatSelectedDate(value) || placeholder}</span>
-        <Calendar size={15} className={open ? "text-[#AFFF00]" : "text-white/35"} />
+        <Calendar size={15} className={open ? "text-djon-accent" : "text-djon-text/35"} />
       </button>
 
       {open && (
         <div
-          className="absolute left-0 top-[calc(100%+8px)] z-[70] w-[292px] rounded-2xl border border-white/10 bg-[#181818] p-4 shadow-2xl"
+          className={`absolute top-[calc(100%+8px)] z-[70] w-[min(292px,calc(100vw-2rem))] rounded-2xl border border-djon-text/10 bg-djon-popover p-3 shadow-2xl sm:p-4 ${alignRight ? "right-0" : "left-0"}`}
           data-lenis-prevent="true"
           data-lenis-prevent-wheel="true"
           data-lenis-prevent-touch="true"
@@ -158,18 +168,18 @@ export function DjonDatePicker({
             <button
               type="button"
               onClick={() => goToMonth(-1)}
-              className="cursor-pointer w-9 h-9 rounded-lg bg-white/5 border border-white/8 text-white/45 hover:text-white hover:border-white/20 transition-all flex items-center justify-center"
+              className="cursor-pointer w-9 h-9 rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-text/45 hover:text-djon-text hover:border-djon-text/20 transition-all flex items-center justify-center"
               aria-label="Mês anterior"
             >
               <ChevronLeft size={16} />
             </button>
-            <p className="text-white text-sm font-black">
+            <p className="text-djon-text text-sm font-black">
               {MONTHS[viewDate.getMonth()]} de {viewDate.getFullYear()}
             </p>
             <button
               type="button"
               onClick={() => goToMonth(1)}
-              className="cursor-pointer w-9 h-9 rounded-lg bg-white/5 border border-white/8 text-white/45 hover:text-white hover:border-white/20 transition-all flex items-center justify-center"
+              className="cursor-pointer w-9 h-9 rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-text/45 hover:text-djon-text hover:border-djon-text/20 transition-all flex items-center justify-center"
               aria-label="Próximo mês"
             >
               <ChevronRight size={16} />
@@ -178,7 +188,7 @@ export function DjonDatePicker({
 
           <div className="grid grid-cols-7 gap-1 mb-2">
             {WEEKDAYS.map((day, index) => (
-              <div key={`${day}-${index}`} className="h-8 flex items-center justify-center text-[11px] text-white/45 font-bold">
+              <div key={`${day}-${index}`} className="h-8 flex items-center justify-center text-djon-meta text-djon-text/45 font-bold">
                 {day}
               </div>
             ))}
@@ -199,14 +209,14 @@ export function DjonDatePicker({
                   onClick={() => pickDate(date)}
                   className={`h-8 rounded-lg text-xs font-bold transition-all ${
                     selected
-                      ? "bg-[#AFFF00] text-[#121212]"
+                      ? "bg-djon-accent text-djon-ink"
                       : disabled
-                        ? "cursor-not-allowed text-white/12 line-through"
+                        ? "cursor-not-allowed text-djon-text/12 line-through"
                         : isToday
-                          ? "bg-white/8 text-[#AFFF00] hover:bg-[#AFFF00] hover:text-[#121212]"
+                          ? "bg-djon-text/8 text-djon-accent hover:bg-djon-accent hover:text-djon-ink"
                           : outside
-                            ? "text-white/22 hover:bg-white/6 hover:text-white/70"
-                            : "text-white/80 hover:bg-white/8 hover:text-[#AFFF00]"
+                            ? "text-djon-text/22 hover:bg-djon-text/6 hover:text-djon-text/70"
+                            : "text-djon-text/80 hover:bg-djon-text/8 hover:text-djon-accent"
                   }`}
                   title={disabled ? "Dia sem horários disponíveis" : undefined}
                 >
@@ -247,24 +257,24 @@ export function DjonTimeSelect({
         type="button"
         disabled={disabled}
         onClick={() => hasOptions && setOpen((v) => !v)}
-        className={`w-full h-12 bg-white/5 border rounded-xl px-4 text-left text-sm font-bold transition-all flex items-center justify-between ${
+        className={`w-full h-12 bg-djon-text/5 border rounded-xl px-4 text-left text-sm font-bold transition-all flex items-center justify-between ${
           disabled
-            ? "cursor-not-allowed border-white/8 text-white/18"
+            ? "cursor-not-allowed border-djon-text/8 text-djon-text/18"
             : open
-              ? "cursor-pointer border-[#AFFF00]/60 bg-white/8 text-white"
-              : "cursor-pointer border-white/10 hover:border-white/20 text-white"
-        } ${value ? "text-white" : "text-white/30"}`}
+              ? "cursor-pointer border-djon-accent/60 bg-djon-text/8 text-djon-text"
+              : "cursor-pointer border-djon-text/10 hover:border-djon-text/20 text-djon-text"
+        } ${value ? "text-djon-text" : "text-djon-text/30"}`}
       >
         <span>{value || placeholder}</span>
         <div className="flex items-center gap-2">
-          <Clock size={14} className={open ? "text-[#AFFF00]" : "text-white/35"} />
-          <ChevronDown size={13} className={`text-white/30 transition-transform ${open ? "rotate-180" : ""}`} />
+          <Clock size={14} className={open ? "text-djon-accent" : "text-djon-text/35"} />
+          <ChevronDown size={13} className={`text-djon-text/30 transition-transform ${open ? "rotate-180" : ""}`} />
         </div>
       </button>
 
       {open && (
         <div
-          className="djon-scroll absolute left-0 top-[calc(100%+8px)] z-[70] max-h-56 w-full overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#181818] p-1.5 shadow-2xl"
+          className="djon-scroll absolute left-0 top-[calc(100%+8px)] z-[70] max-h-56 w-full overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-popover p-1.5 shadow-2xl"
           data-lenis-prevent="true"
           data-lenis-prevent-wheel="true"
           data-lenis-prevent-touch="true"
@@ -281,14 +291,14 @@ export function DjonTimeSelect({
                   setOpen(false)
                 }}
                 className={`cursor-pointer w-full rounded-xl px-3 py-2.5 text-left text-xs font-black transition-all ${
-                  value === time ? "bg-[#AFFF00] text-[#121212]" : "text-white/65 hover:bg-white/8 hover:text-white"
+                  value === time ? "bg-djon-accent text-djon-ink" : "text-djon-text/65 hover:bg-djon-text/8 hover:text-djon-text"
                 }`}
               >
                 {time}
               </button>
             ))
           ) : (
-            <p className="px-3 py-3 text-xs font-bold text-white/30">Nenhum horário disponível</p>
+            <p className="px-3 py-3 text-xs font-bold text-djon-text/30">Nenhum horário disponível</p>
           )}
         </div>
       )}

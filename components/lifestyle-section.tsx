@@ -23,8 +23,8 @@ const imageVariants = {
 
 export function LifestyleSection() {
   return (
-    <section className="relative py-16 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6">
+    <section className="relative py-16 bg-djon-text overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left: Image grid 2×2 */}
           <motion.div
@@ -47,9 +47,9 @@ export function LifestyleSection() {
                 className="relative aspect-square rounded-2xl overflow-hidden"
               >
                 <Image src={item.src} alt={`${item.alt} — DJ ON Academy`} fill className="object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#121212]/80 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-djon-ink/80 to-transparent" />
                 <div className="absolute bottom-3 left-3">
-                  <span className="text-white font-black text-xs tracking-wide">{item.label}</span>
+                  <span className="text-djon-text font-black text-xs tracking-wide">{item.label}</span>
                 </div>
               </motion.div>
             ))}
@@ -64,14 +64,14 @@ export function LifestyleSection() {
             transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as const }}
           >
             <motion.div
-              className="inline-flex items-center gap-2 bg-[#121212] text-white px-3 py-1.5 rounded-full text-xs font-black tracking-widest"
+              className="inline-flex items-center gap-2 bg-djon-ink text-djon-text px-3 py-1.5 rounded-full text-xs font-black tracking-widest"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
               <motion.span
-                className="w-2 h-2 bg-[#AFFF00] rounded-full"
+                className="w-2 h-2 bg-djon-accent rounded-full"
                 animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
               />
@@ -79,7 +79,7 @@ export function LifestyleSection() {
             </motion.div>
 
             <motion.h2
-              className="text-3xl md:text-5xl font-black text-[#121212] tracking-tighter leading-[0.95] pb-1"
+            className="djon-section-title font-black text-djon-ink pb-1"
               initial={{ y: 80, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
@@ -88,8 +88,8 @@ export function LifestyleSection() {
               A FRONTEIRA ENTRE O SONHO E A{" "}
               <span
                 style={{
-                  color: "#AFFF00",
-                  WebkitTextStroke: "2px #121212",
+                  color: "var(--djon-color-accent)",
+                  WebkitTextStroke: "2px var(--djon-color-ink)",
                   paintOrder: "stroke fill",
                 }}
               >
@@ -98,7 +98,7 @@ export function LifestyleSection() {
             </motion.h2>
 
             <motion.p
-              className="text-sm text-[#121212]/60 leading-relaxed"
+              className="text-sm text-djon-ink/60 leading-relaxed"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -122,20 +122,20 @@ export function LifestyleSection() {
               ].map((item, i) => (
                 <motion.div
                   key={item}
-                  className="flex items-center gap-3 text-sm text-[#121212]/70"
+                  className="flex items-center gap-3 text-sm text-djon-ink/70"
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.45 + i * 0.08 }}
                 >
-                  <div className="w-2 h-2 bg-[#AFFF00] rounded-full shrink-0" />
+                  <div className="w-2 h-2 bg-djon-accent rounded-full shrink-0" />
                   {item}
                 </motion.div>
               ))}
             </motion.div>
 
             <motion.button
-              className="bg-[#121212] text-[#AFFF00] px-7 py-3 rounded-full font-black text-sm tracking-wide"
+              className="w-full rounded-full bg-djon-ink px-7 py-3 text-sm font-black tracking-wide text-djon-accent sm:w-auto"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}

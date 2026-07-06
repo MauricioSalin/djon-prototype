@@ -4,6 +4,95 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* DJ ON design tokens: altere a marca aqui */
+  --djon-font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --djon-font-mono: "Inter", "Inter Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --djon-color-page: #0a0a0a;
+  --djon-color-ink: #121212;
+  --djon-color-surface: #141414;
+  --djon-color-surface-2: #161616;
+  --djon-color-surface-3: #1a1a1a;
+  --djon-color-surface-4: #1b1b1b;
+  --djon-color-surface-5: #232323;
+  --djon-color-surface-6: #171717;
+  --djon-color-surface-7: #151515;
+  --djon-color-surface-8: #191919;
+  --djon-color-surface-9: #202020;
+  --djon-color-input: #242424;
+  --djon-color-mobile-overlay: #050505;
+  --djon-color-light-surface: #f5f5f5;
+  --djon-color-popover: #181818;
+  --djon-color-muted-panel: #0f0f0f;
+  --djon-color-calendar-cell: #111111;
+  --djon-color-calendar-empty: #0d0d0d;
+  --djon-color-accent: #AFFF00;
+  --djon-color-cyan: #00D4FF;
+  --djon-color-orange: #FF6B35;
+  --djon-color-info: #38BDF8;
+  --djon-color-success: #34D399;
+  --djon-color-warning: #FBBF24;
+  --djon-color-danger: #F87171;
+  --djon-color-purple: #A78BFA;
+  --djon-color-soft-gray: #8A8A8A;
+  --djon-color-text: #ffffff;
+  --djon-color-text-inverse: var(--djon-color-ink);
+  --djon-color-line: #2A2A2A;
+  --djon-color-scroll-track: var(--djon-color-page);
+  --djon-color-scroll-thumb: #8a8a8a;
+  --djon-color-scroll-thumb-hover: #a3a3a3;
+
+  --djon-radius-sm: 0.5rem;
+  --djon-radius-md: 0.75rem;
+  --djon-radius-lg: 1rem;
+  --djon-radius-xl: 1.25rem;
+  --djon-radius-2xl: 1.5rem;
+  --djon-radius-3xl: 1.875rem;
+  --djon-radius-pill: 999px;
+
+  --djon-text-micro: 0.5rem;
+  --djon-text-caption: 0.5625rem;
+  --djon-text-label: 0.625rem;
+  --djon-text-meta: 0.6875rem;
+  --djon-text-ui: 0.8rem;
+  --djon-form-mobile-text: 16px;
+  --djon-text-2xs: var(--djon-text-caption);
+  --djon-text-xs: 0.75rem;
+  --djon-text-sm: 0.875rem;
+  --djon-text-base: 1rem;
+  --djon-text-lg: 1.125rem;
+  --djon-text-xl: 1.25rem;
+  --djon-text-2xl: 1.5rem;
+  --djon-text-3xl: 1.875rem;
+  --djon-text-4xl: 2.25rem;
+  --djon-text-5xl: 3rem;
+  --djon-text-6xl: 3.75rem;
+  --djon-text-7xl: 4.5rem;
+  --djon-text-8xl: 6rem;
+
+  --djon-display-mobile: 2.25rem;
+  --djon-display-sm: 2.8rem;
+  --djon-display-md: 4rem;
+  --djon-display-lg: 6rem;
+  --djon-hero-mobile: 2rem;
+  --djon-hero-sm: 2.45rem;
+  --djon-hero-md: 3rem;
+  --djon-hero-tablet: 3.75rem;
+  --djon-hero-desktop: 4.5rem;
+  --djon-section-mobile: 2rem;
+  --djon-section-sm: 2.25rem;
+  --djon-section-md: 2.75rem;
+  --djon-section-tablet: 3.25rem;
+  --djon-section-desktop: 3.75rem;
+
+  --djon-shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.22);
+  --djon-shadow-popover: 0 22px 70px rgba(0, 0, 0, 0.5);
+  --djon-drop-shadow-soft: 0 8px 12px rgba(0, 0, 0, 0.35);
+  --djon-gradient-profile-admin: linear-gradient(135deg, #111111 0%, #0f1a0a 60%, #121212 100%);
+  --djon-gradient-profile-professor: linear-gradient(135deg, #0a0a12 0%, #0d0d1a 60%, #121212 100%);
+  --djon-gradient-profile-student: linear-gradient(135deg, #110a0a 0%, #1a0f0a 60%, #121212 100%);
+  --djon-gradient-config-banner: linear-gradient(135deg, #1a1a0a, #0a1a0a);
+
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(0.98 0 0);
@@ -43,10 +132,10 @@
   --charcoal: oklch(0.145 0 0);
   --pineapple: oklch(0.9 0.15 90);
   --coconut: oklch(0.95 0.03 90);
-  --page-scrollbar-track: #0a0a0a;
-  --page-scrollbar-thumb: #8a8a8a;
-  --page-scrollbar-thumb-hover: #a3a3a3;
-  --page-scrollbar-border: #0a0a0a;
+  --page-scrollbar-track: var(--djon-color-scroll-track);
+  --page-scrollbar-thumb: var(--djon-color-scroll-thumb);
+  --page-scrollbar-thumb-hover: var(--djon-color-scroll-thumb-hover);
+  --page-scrollbar-border: var(--djon-color-scroll-track);
 }
 
 .dark {
@@ -85,8 +174,58 @@
 }
 
 @theme inline {
-  --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
-  --font-mono: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --font-sans: var(--djon-font-sans);
+  --font-mono: var(--djon-font-mono);
+  --text-xs: var(--djon-text-xs);
+  --text-djon-micro: var(--djon-text-micro);
+  --text-djon-caption: var(--djon-text-caption);
+  --text-djon-label: var(--djon-text-label);
+  --text-djon-meta: var(--djon-text-meta);
+  --text-djon-ui: var(--djon-text-ui);
+  --shadow-djon-soft: var(--djon-shadow-soft);
+  --shadow-djon-popover: var(--djon-shadow-popover);
+  --drop-shadow-djon-soft: var(--djon-drop-shadow-soft);
+  --text-sm: var(--djon-text-sm);
+  --text-base: var(--djon-text-base);
+  --text-lg: var(--djon-text-lg);
+  --text-xl: var(--djon-text-xl);
+  --text-2xl: var(--djon-text-2xl);
+  --text-3xl: var(--djon-text-3xl);
+  --text-4xl: var(--djon-text-4xl);
+  --text-5xl: var(--djon-text-5xl);
+  --text-6xl: var(--djon-text-6xl);
+  --text-7xl: var(--djon-text-7xl);
+  --text-8xl: var(--djon-text-8xl);
+  --color-djon-page: var(--djon-color-page);
+  --color-djon-ink: var(--djon-color-ink);
+  --color-djon-surface: var(--djon-color-surface);
+  --color-djon-surface-2: var(--djon-color-surface-2);
+  --color-djon-surface-3: var(--djon-color-surface-3);
+  --color-djon-surface-4: var(--djon-color-surface-4);
+  --color-djon-surface-5: var(--djon-color-surface-5);
+  --color-djon-surface-6: var(--djon-color-surface-6);
+  --color-djon-surface-7: var(--djon-color-surface-7);
+  --color-djon-surface-8: var(--djon-color-surface-8);
+  --color-djon-surface-9: var(--djon-color-surface-9);
+  --color-djon-input: var(--djon-color-input);
+  --color-djon-mobile-overlay: var(--djon-color-mobile-overlay);
+  --color-djon-light-surface: var(--djon-color-light-surface);
+  --color-djon-popover: var(--djon-color-popover);
+  --color-djon-muted-panel: var(--djon-color-muted-panel);
+  --color-djon-calendar-cell: var(--djon-color-calendar-cell);
+  --color-djon-calendar-empty: var(--djon-color-calendar-empty);
+  --color-djon-accent: var(--djon-color-accent);
+  --color-djon-cyan: var(--djon-color-cyan);
+  --color-djon-orange: var(--djon-color-orange);
+  --color-djon-info: var(--djon-color-info);
+  --color-djon-success: var(--djon-color-success);
+  --color-djon-warning: var(--djon-color-warning);
+  --color-djon-danger: var(--djon-color-danger);
+  --color-djon-purple: var(--djon-color-purple);
+  --color-djon-soft-gray: var(--djon-color-soft-gray);
+  --color-djon-text: var(--djon-color-text);
+  --color-djon-text-inverse: var(--djon-color-text-inverse);
+  --color-djon-line: var(--djon-color-line);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -140,9 +279,33 @@
 
   html,
   body {
-    background: #0a0a0a;
+    background: var(--djon-color-page);
+    max-width: 100%;
+    overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: var(--page-scrollbar-thumb) var(--page-scrollbar-track);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+
+  @media (max-width: 767px) {
+    input,
+    textarea,
+    select {
+      font-size: var(--djon-form-mobile-text);
+    }
   }
 
   *,
@@ -210,9 +373,92 @@
 
   * {
     @apply border-border outline-ring/50;
+    min-width: 0;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+.djon-hero-title,
+.djon-section-title,
+.djon-display-title {
+  max-width: 100%;
+  letter-spacing: 0;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.djon-hero-title {
+  font-size: var(--djon-hero-mobile);
+  line-height: 0.92;
+}
+
+.djon-section-title {
+  font-size: var(--djon-section-mobile);
+  line-height: 0.95;
+}
+
+.djon-display-title {
+  font-size: var(--djon-display-mobile);
+  line-height: 0.88;
+}
+
+@media (min-width: 360px) {
+  .djon-hero-title {
+    font-size: var(--djon-hero-sm);
+  }
+
+  .djon-section-title {
+    font-size: var(--djon-section-sm);
+  }
+}
+
+@media (min-width: 480px) {
+  .djon-hero-title {
+    font-size: var(--djon-hero-md);
+  }
+
+  .djon-section-title {
+    font-size: var(--djon-section-md);
+  }
+
+  .djon-display-title {
+    font-size: var(--djon-display-sm);
+  }
+}
+
+@media (min-width: 640px) {
+  .djon-hero-title {
+    font-size: var(--djon-hero-tablet);
+  }
+
+  .djon-section-title {
+    font-size: var(--djon-section-tablet);
+  }
+
+  .djon-display-title {
+    font-size: var(--djon-display-md);
+  }
+}
+
+@media (min-width: 768px) {
+  .djon-hero-title {
+    font-size: var(--djon-hero-desktop);
+    line-height: 0.9;
+  }
+
+  .djon-section-title {
+    font-size: var(--djon-section-desktop);
+    line-height: 0.9;
+  }
+}
+
+@media (min-width: 1024px) {
+  .djon-display-title {
+    font-size: var(--djon-display-lg);
+    line-height: 0.84;
   }
 }
 
@@ -230,10 +476,10 @@
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(175, 255, 0, 0.3);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--djon-color-accent) 30%, transparent);
   }
   50% {
-    box-shadow: 0 0 40px rgba(175, 255, 0, 0.6);
+    box-shadow: 0 0 40px color-mix(in srgb, var(--djon-color-accent) 60%, transparent);
   }
 }
 
@@ -322,16 +568,16 @@
 }
 .material-prose h2,
 .material-editor h2 {
-  color: #fff;
-  font-size: 1.5rem;
+  color: var(--djon-color-text);
+  font-size: var(--djon-text-2xl);
   font-weight: 800;
   letter-spacing: -0.02em;
   margin: 1.75rem 0 0.75rem;
 }
 .material-prose h3,
 .material-editor h3 {
-  color: #fff;
-  font-size: 1.15rem;
+  color: var(--djon-color-text);
+  font-size: var(--djon-text-lg);
   font-weight: 800;
   margin: 1.5rem 0 0.5rem;
 }
@@ -357,18 +603,18 @@
 }
 .material-prose strong,
 .material-editor strong {
-  color: #fff;
+  color: var(--djon-color-text);
   font-weight: 700;
 }
 .material-prose a,
 .material-editor a {
-  color: #afff00;
+  color: var(--djon-color-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .material-prose blockquote,
 .material-editor blockquote {
-  border-left: 3px solid #afff00;
+  border-left: 3px solid var(--djon-color-accent);
   padding: 0.25rem 0 0.25rem 1rem;
   margin: 1.25rem 0;
   color: rgba(255, 255, 255, 0.6);

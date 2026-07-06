@@ -52,34 +52,34 @@ export default function ProfessorHomePage() {
   ]
 
   return (
-    <div className="bg-[#0a0a0a]">
+    <div className="bg-djon-page">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         {/* Background image + overlay */}
         <div className="absolute inset-0 z-0">
           <Image src="/images/djon-showcase.png" alt="" fill className="object-cover opacity-30" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 w-full">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 w-full sm:px-6 sm:py-24">
           <div className="max-w-3xl">
             <motion.span
-              className="inline-block text-[#AFFF00] text-xs tracking-[0.2em] font-black uppercase mb-4"
+              className="inline-block text-djon-accent text-xs tracking-[0.2em] font-black uppercase mb-4"
               {...fadeUp(0.1)}
             >
               PROFESSOR
             </motion.span>
 
             <motion.h1
-              className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9] mb-6"
+              className="djon-hero-title font-black text-djon-text mb-6"
               {...fadeUp(0.2)}
             >
               {user.name.split(" ")[0]},<br />
               <span
                 style={{
-                  color: "#AFFF00",
-                  WebkitTextStroke: "2px #0a0a0a",
+                  color: "var(--djon-color-accent)",
+                  WebkitTextStroke: "2px var(--djon-color-page)",
                   paintOrder: "stroke fill",
                 }}
               >
@@ -90,7 +90,7 @@ export default function ProfessorHomePage() {
             </motion.h1>
 
             <motion.p
-              className="text-white/50 text-base leading-relaxed max-w-lg mb-8"
+              className="text-djon-text/50 text-base leading-relaxed max-w-lg mb-8"
               {...fadeUp(0.3)}
             >
               {upcoming.length > 0
@@ -99,14 +99,14 @@ export default function ProfessorHomePage() {
             </motion.p>
 
             <motion.div className="flex flex-wrap gap-3" {...fadeUp(0.4)}>
-              <Link href="/dashboard/agenda">
+              <Link href="/dashboard/agenda" className="w-full sm:w-auto">
                 <motion.div
-                  className="flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-3 rounded-full font-black text-sm tracking-widest group overflow-hidden relative"
+                  className="relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink group"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-djon-text/30 to-transparent -translate-x-full"
                     whileHover={{ x: "200%" }}
                     transition={{ duration: 0.5 }}
                   />
@@ -114,10 +114,10 @@ export default function ProfessorHomePage() {
                   <span className="relative z-10">VER AGENDA</span>
                 </motion.div>
               </Link>
-              <Link href="/dashboard/professor/alunos">
+              <Link href="/dashboard/professor/alunos" className="w-full sm:w-auto">
                 <motion.div
-                  className="flex items-center gap-2 border-2 border-white/20 text-white px-6 py-3 rounded-full font-black text-sm tracking-widest"
-                  whileHover={{ scale: 1.03, borderColor: "#AFFF00", color: "#AFFF00" }}
+                  className="flex items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-6 py-3 text-sm font-black tracking-widest text-djon-text"
+                  whileHover={{ scale: 1.03, borderColor: "var(--djon-color-accent)", color: "var(--djon-color-accent)" }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Users size={15} />
@@ -130,17 +130,17 @@ export default function ProfessorHomePage() {
       </section>
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
-      <section className="py-20 bg-[#0f0f0f]">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+      <section className="py-16 bg-djon-muted-panel sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
             NÚMEROS
           </motion.span>
-          <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-2" {...fadeUp(0.1)}>
+          <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2" {...fadeUp(0.1)}>
             Visão Geral
           </motion.h2>
-          <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mb-10" {...fadeUp(0.15)} />
+          <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" {...fadeUp(0.15)} />
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
               { label: "Alunos Ativos", value: students.length },
               { label: "Agendamentos", value: bookings.length },
@@ -148,16 +148,16 @@ export default function ProfessorHomePage() {
             ].map((s, i) => (
               <motion.div
                 key={s.label}
-                className="bg-[#161616] border border-white/8 rounded-2xl p-6 hover:border-[#AFFF00]/20 transition-all"
+                className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-6 hover:border-djon-accent/20 transition-all"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0 }}
                 transition={{ delay: i * 0.08, duration: 0.6 }}
                 whileHover={{ y: -4 }}
               >
-                <p className="text-5xl font-black tracking-tighter mb-2 text-[#AFFF00]">{s.value}</p>
-                <p className="text-white/40 text-xs font-bold tracking-widest uppercase">{s.label}</p>
-                <div className="h-[2px] bg-[#AFFF00]/30 rounded-full mt-4" />
+                <p className="text-5xl font-black tracking-tighter mb-2 text-djon-accent">{s.value}</p>
+                <p className="text-djon-text/40 text-xs font-bold tracking-widest uppercase">{s.label}</p>
+                <div className="h-[2px] bg-djon-accent/30 rounded-full mt-4" />
               </motion.div>
             ))}
           </div>
@@ -165,15 +165,15 @@ export default function ProfessorHomePage() {
       </section>
 
       {/* Quick links */}
-      <section className="py-20 bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+      <section className="py-16 bg-djon-page sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
             ACESSO RÁPIDO
           </motion.span>
-          <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-2" {...fadeUp(0.1)}>
+          <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2" {...fadeUp(0.1)}>
             Navegar
           </motion.h2>
-          <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mb-10" {...fadeUp(0.15)} />
+          <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" {...fadeUp(0.15)} />
 
           <div className="grid sm:grid-cols-3 gap-4">
             {quickLinks.map((q, i) => (
@@ -186,16 +186,16 @@ export default function ProfessorHomePage() {
               >
                 <Link
                   href={q.href}
-                  className="group flex flex-col gap-4 bg-[#161616] border border-white/8 hover:border-[#AFFF00]/30 rounded-2xl p-6 transition-all"
+                  className="group flex flex-col gap-4 bg-djon-surface-2 border border-djon-text/8 hover:border-djon-accent/30 rounded-2xl p-6 transition-all"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-[#AFFF00]/10 flex items-center justify-center group-hover:bg-[#AFFF00]/20 transition-colors">
-                    <q.icon size={20} className="text-[#AFFF00]" />
+                  <div className="w-12 h-12 rounded-xl bg-djon-accent/10 flex items-center justify-center group-hover:bg-djon-accent/20 transition-colors">
+                    <q.icon size={20} className="text-djon-accent" />
                   </div>
                   <div>
-                    <p className="text-white font-black text-base tracking-tight group-hover:text-[#AFFF00] transition-colors">{q.label}</p>
-                    <p className="text-white/30 text-xs mt-0.5">{q.desc}</p>
+                    <p className="text-djon-text font-black text-base tracking-tight group-hover:text-djon-accent transition-colors">{q.label}</p>
+                    <p className="text-djon-text/30 text-xs mt-0.5">{q.desc}</p>
                   </div>
-                  <ArrowRight size={14} className="text-white/20 group-hover:text-[#AFFF00] transition-colors mt-auto" />
+                  <ArrowRight size={14} className="text-djon-text/20 group-hover:text-djon-accent transition-colors mt-auto" />
                 </Link>
               </motion.div>
             ))}
@@ -204,22 +204,22 @@ export default function ProfessorHomePage() {
       </section>
 
       {/* ── PRÓXIMOS AGENDAMENTOS ────────────────────────────────────────── */}
-      <section className="py-20 bg-[#0f0f0f]">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-16 bg-djon-muted-panel sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
             <div>
-              <motion.span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+              <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
                 AGENDA
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter" {...fadeUp(0.1)}>
+              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter" {...fadeUp(0.1)}>
                 Próximos Agendamentos
               </motion.h2>
-              <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mt-3" {...fadeUp(0.15)} />
+              <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.15)} />
             </div>
             <motion.div {...fadeUp(0.1)}>
               <Link
                 href="/dashboard/agenda"
-                className="flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-3 rounded-full font-black text-sm tracking-widest hover:opacity-90 transition-opacity"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:w-auto"
               >
                 <Calendar size={15} /> VER AGENDA COMPLETA
               </Link>
@@ -228,11 +228,11 @@ export default function ProfessorHomePage() {
 
           {upcoming.length === 0 ? (
             <motion.div
-              className="border-2 border-dashed border-white/10 rounded-2xl p-16 text-center"
+              className="rounded-2xl border-2 border-dashed border-djon-text/10 p-8 text-center sm:p-16"
               {...fadeUp(0.2)}
             >
-              <Calendar size={40} className="text-white/15 mx-auto mb-4" />
-              <p className="text-white/30 text-sm font-bold">Nenhum agendamento futuro.</p>
+              <Calendar size={40} className="text-djon-text/15 mx-auto mb-4" />
+              <p className="text-djon-text/30 text-sm font-bold">Nenhum agendamento futuro.</p>
             </motion.div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -241,7 +241,7 @@ export default function ProfessorHomePage() {
                 return (
                   <motion.div
                     key={b.id}
-                    className="bg-[#161616] border border-white/8 rounded-2xl p-5 hover:border-white/20 transition-all group"
+                    className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:border-djon-text/20 transition-all group"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0 }}
@@ -250,21 +250,21 @@ export default function ProfessorHomePage() {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-[#AFFF00]/15 flex items-center justify-center shrink-0">
-                          <span className="text-[#AFFF00] font-black text-xs">{student?.name.charAt(0) ?? "?"}</span>
+                        <div className="w-8 h-8 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0">
+                          <span className="text-djon-accent font-black text-xs">{student?.name.charAt(0) ?? "?"}</span>
                         </div>
                         <div>
-                          <p className="text-white text-xs font-black">{student?.name}</p>
-                          <p className="text-white/30 text-[10px] capitalize">{b.type}</p>
+                          <p className="text-djon-text text-xs font-black">{student?.name}</p>
+                          <p className="text-djon-text/30 text-djon-label capitalize">{b.type}</p>
                         </div>
                       </div>
                       {b.status === "confirmado"
-                        ? <CheckCircle size={14} className="text-[#AFFF00]" />
+                        ? <CheckCircle size={14} className="text-djon-accent" />
                         : <AlertCircle size={14} className="text-yellow-400" />
                       }
                     </div>
-                    <h3 className="text-white font-black text-base tracking-tight mb-3 leading-tight">{b.title}</h3>
-                    <div className="flex items-center gap-2 text-white/40 text-xs">
+                    <h3 className="text-djon-text font-black text-base tracking-tight mb-3 leading-tight">{b.title}</h3>
+                    <div className="flex items-center gap-2 text-djon-text/40 text-xs">
                       <Clock size={11} />{fmt(b.date)} às {b.time}
                     </div>
                   </motion.div>

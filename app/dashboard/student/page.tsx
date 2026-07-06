@@ -62,34 +62,34 @@ export default function StudentPage() {
   })
 
   return (
-    <div className="bg-[#0a0a0a]">
+    <div className="bg-djon-page">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[70vh] flex items-center overflow-hidden">
         {/* Background image + overlay */}
         <div className="absolute inset-0 z-0">
           <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-30" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/80 to-[#0a0a0a]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 w-full">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 w-full sm:px-6 sm:py-24">
           <div className="max-w-3xl">
             <motion.span
-              className="inline-block text-[#AFFF00] text-xs tracking-[0.2em] font-black uppercase mb-4"
+              className="inline-block text-djon-accent text-xs tracking-[0.2em] font-black uppercase mb-4"
               {...fadeUp(0.1)}
             >
               BEM-VINDO DE VOLTA
             </motion.span>
 
             <motion.h1
-              className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9] mb-6"
+              className="djon-hero-title font-black text-djon-text mb-6"
               {...fadeUp(0.2)}
             >
               {user.name.split(" ")[0]},<br />
               <span
                 style={{
-                  color: "#AFFF00",
-                  WebkitTextStroke: "2px #0a0a0a",
+                  color: "var(--djon-color-accent)",
+                  WebkitTextStroke: "2px var(--djon-color-page)",
                   paintOrder: "stroke fill",
                 }}
               >
@@ -100,7 +100,7 @@ export default function StudentPage() {
             </motion.h1>
 
             <motion.p
-              className="text-white/50 text-base leading-relaxed max-w-lg mb-8"
+              className="text-djon-text/50 text-base leading-relaxed max-w-lg mb-8"
               {...fadeUp(0.3)}
             >
               {upcoming.length > 0
@@ -110,14 +110,14 @@ export default function StudentPage() {
 
             {/* CTAs */}
             <motion.div className="flex flex-wrap gap-3" {...fadeUp(0.4)}>
-              <Link href="/dashboard/student/agendar">
+              <Link href="/dashboard/student/agendar" className="w-full sm:w-auto">
                 <motion.div
-                  className="flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-3 rounded-full font-black text-sm tracking-widest group overflow-hidden relative"
+                  className="relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink group"
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full"
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-djon-text/30 to-transparent -translate-x-full"
                     whileHover={{ x: "200%" }}
                     transition={{ duration: 0.5 }}
                   />
@@ -125,10 +125,10 @@ export default function StudentPage() {
                   <span className="relative z-10">SOLICITAR TREINO</span>
                 </motion.div>
               </Link>
-              <Link href="/dashboard/student/evento">
+              <Link href="/dashboard/student/evento" className="w-full sm:w-auto">
                 <motion.div
-                  className="flex items-center gap-2 border-2 border-white/20 text-white px-6 py-3 rounded-full font-black text-sm tracking-widest"
-                  whileHover={{ scale: 1.03, borderColor: "#AFFF00", color: "#AFFF00" }}
+                  className="flex items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-6 py-3 text-sm font-black tracking-widest text-djon-text"
+                  whileHover={{ scale: 1.03, borderColor: "var(--djon-color-accent)", color: "var(--djon-color-accent)" }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Music2 size={15} />
@@ -141,22 +141,22 @@ export default function StudentPage() {
       </section>
 
       {/* ── PRÓXIMAS AULAS ───────────────────────────────────────────────── */}
-      <section className="py-20 bg-[#0f0f0f]">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-16 bg-djon-muted-panel sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
             <div>
-              <motion.span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+              <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
                 AGENDAMENTOS
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter" {...fadeUp(0.1)}>
+              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter" {...fadeUp(0.1)}>
                 Próximos Agendamentos
               </motion.h2>
-              <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mt-3" {...fadeUp(0.2)} />
+              <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.2)} />
             </div>
             <motion.div {...fadeUp(0.1)}>
               <Link
                 href="/dashboard/student/agendar"
-                className="flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-3 rounded-full font-black text-sm tracking-widest hover:opacity-90 transition-opacity"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:w-auto"
               >
                 <CalendarPlus size={15} /> SOLICITAR TREINO
               </Link>
@@ -165,14 +165,14 @@ export default function StudentPage() {
 
           {upcoming.length === 0 ? (
             <motion.div
-              className="border-2 border-dashed border-white/10 rounded-2xl p-16 text-center"
+              className="rounded-2xl border-2 border-dashed border-djon-text/10 p-8 text-center sm:p-16"
               {...fadeUp(0.2)}
             >
-              <CalendarPlus size={40} className="text-white/15 mx-auto mb-4" />
-              <p className="text-white/30 text-sm font-bold mb-4">Nenhum agendamento futuro</p>
+              <CalendarPlus size={40} className="text-djon-text/15 mx-auto mb-4" />
+              <p className="text-djon-text/30 text-sm font-bold mb-4">Nenhum agendamento futuro</p>
               <Link
                 href="/dashboard/student/agendar"
-                className="inline-flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-2.5 rounded-full font-black text-xs tracking-widest"
+                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-6 py-2.5 rounded-full font-black text-xs tracking-widest"
               >
                 <CalendarPlus size={13} /> SOLICITAR TREINO
               </Link>
@@ -182,7 +182,7 @@ export default function StudentPage() {
               {upcoming.slice(0, 6).map((b, i) => (
                 <motion.div
                   key={b.id}
-                  className="bg-[#161616] border border-white/8 rounded-2xl p-5 hover:border-white/20 transition-all group"
+                  className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:border-djon-text/20 transition-all group"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0 }}
@@ -190,24 +190,24 @@ export default function StudentPage() {
                   whileHover={{ y: -4 }}
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className={`text-[10px] font-black tracking-widest px-2.5 py-1 rounded-full ${
-                      b.type === "aula" ? "bg-[#AFFF00]/15 text-[#AFFF00]" : "bg-blue-400/15 text-blue-400"
+                    <span className={`text-djon-label font-black tracking-widest px-2.5 py-1 rounded-full ${
+                      b.type === "aula" ? "bg-djon-accent/15 text-djon-accent" : "bg-blue-400/15 text-blue-400"
                     }`}>
                       {b.type.toUpperCase()}
                     </span>
                     {b.status === "confirmado"
-                      ? <CheckCircle size={14} className="text-[#AFFF00]" />
+                      ? <CheckCircle size={14} className="text-djon-accent" />
                       : <AlertCircle size={14} className="text-yellow-400" />
                     }
                   </div>
-                  <h3 className="text-white font-black text-lg tracking-tight mb-3 leading-tight">{b.title}</h3>
+                  <h3 className="text-djon-text font-black text-lg tracking-tight mb-3 leading-tight">{b.title}</h3>
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2 text-white/40 text-xs">
+                    <div className="flex items-center gap-2 text-djon-text/40 text-xs">
                       <Clock size={11} />{fmt(b.date)} às {b.time}
                     </div>
                   </div>
                   {b.notes && (
-                    <p className="text-white/30 text-xs mt-3 pt-3 border-t border-white/8 leading-relaxed">{b.notes}</p>
+                    <p className="text-djon-text/30 text-xs mt-3 pt-3 border-t border-djon-text/8 leading-relaxed">{b.notes}</p>
                   )}
                 </motion.div>
               ))}
@@ -218,29 +218,29 @@ export default function StudentPage() {
 
       {/* ── EVENTO OFICIAL DJ ON ─────────────────────────────────────────── */}
       {/* ── MURAL DE EVENTOS ─────────────────────────────────────────────── */}
-      <section className="py-20 bg-[#0f0f0f]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-10">
+      <section className="py-16 bg-djon-muted-panel sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
             <div>
-              <motion.span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+              <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
                 COMUNIDADE
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter" {...fadeUp(0.1)}>
+              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter" {...fadeUp(0.1)}>
                 Mural de Eventos
               </motion.h2>
-              <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mt-3" {...fadeUp(0.2)} />
+              <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.2)} />
             </div>
             <motion.div {...fadeUp(0.1)}>
-              <Link href="/dashboard/mural" className="flex items-center gap-2 text-[#AFFF00] text-xs font-black tracking-widest hover:gap-3 transition-all">
+              <Link href="/dashboard/mural" className="flex items-center gap-2 text-djon-accent text-xs font-black tracking-widest hover:gap-3 transition-all">
                 VER TUDO <ArrowRight size={13} />
               </Link>
             </motion.div>
           </div>
 
           {allMuralEvents.length === 0 ? (
-            <motion.div className="border-2 border-dashed border-white/10 rounded-2xl p-16 text-center" {...fadeUp(0.2)}>
-              <Newspaper size={40} className="text-white/15 mx-auto mb-4" />
-              <p className="text-white/30 text-sm font-bold">Nenhum evento no mural ainda.</p>
+            <motion.div className="rounded-2xl border-2 border-dashed border-djon-text/10 p-8 text-center sm:p-16" {...fadeUp(0.2)}>
+              <Newspaper size={40} className="text-djon-text/15 mx-auto mb-4" />
+              <p className="text-djon-text/30 text-sm font-bold">Nenhum evento no mural ainda.</p>
             </motion.div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -250,7 +250,7 @@ export default function StudentPage() {
                   <motion.div
                     key={ev.id}
                     className={`relative rounded-2xl overflow-hidden border ${
-                      isDJOn ? "border-[#AFFF00]/30 bg-[#AFFF00]/5" : "border-white/8 bg-[#161616]"
+                      isDJOn ? "border-djon-accent/30 bg-djon-accent/5" : "border-djon-text/8 bg-djon-surface-2"
                     }`}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -259,31 +259,31 @@ export default function StudentPage() {
                     whileHover={{ y: -4 }}
                   >
                     {isDJOn && (
-                      <div className="bg-[#AFFF00] px-4 py-1.5 flex items-center gap-2">
-                        <Star size={10} className="text-[#121212]" fill="#121212" />
-                        <span className="text-[#121212] text-[9px] font-black tracking-[0.2em]">EVENTO OFICIAL</span>
+                      <div className="bg-djon-accent px-4 py-1.5 flex items-center gap-2">
+                        <Star size={10} className="text-djon-ink" fill="var(--djon-color-ink)" />
+                        <span className="text-djon-ink text-djon-caption font-black tracking-[0.2em]">EVENTO OFICIAL</span>
                       </div>
                     )}
                     <div className="p-5">
                       <div className="flex items-center gap-3 mb-3">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${
-                          isDJOn ? "bg-[#AFFF00] text-[#121212]" : "bg-white/10 text-white"
+                          isDJOn ? "bg-djon-accent text-djon-ink" : "bg-djon-text/10 text-djon-text"
                         }`}>
                           {ev.createdByName.charAt(0)}
                         </div>
                         <div>
-                          <p className="text-white text-xs font-bold">{ev.createdByName}</p>
-                          <p className={`text-[9px] font-bold tracking-wide ${isDJOn ? "text-[#AFFF00]" : "text-white/30"}`}>
+                          <p className="text-djon-text text-xs font-bold">{ev.createdByName}</p>
+                          <p className={`text-djon-caption font-bold tracking-wide ${isDJOn ? "text-djon-accent" : "text-djon-text/30"}`}>
                             {isDJOn ? "DJ ON ACADEMY" : "Aluno"}
                           </p>
                         </div>
                       </div>
-                      <h3 className="text-white font-black text-base tracking-tight mb-3 leading-tight">{ev.title}</h3>
+                      <h3 className="text-djon-text font-black text-base tracking-tight mb-3 leading-tight">{ev.title}</h3>
                       <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 text-white/50 text-xs">
+                        <div className="flex items-center gap-2 text-djon-text/50 text-xs">
                           <Clock size={11} />{fmt(ev.date)} às {ev.time}
                         </div>
-                        <div className="flex items-center gap-2 text-white/50 text-xs">
+                        <div className="flex items-center gap-2 text-djon-text/50 text-xs">
                           <MapPin size={11} />{ev.location}
                         </div>
                       </div>
@@ -297,32 +297,32 @@ export default function StudentPage() {
       </section>
 
       {/* ── MEUS EVENTOS ─────────────────────────────────────────────────── */}
-      <section className="py-20 bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-10">
+      <section className="py-16 bg-djon-page sm:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
             <div>
-              <motion.span className="block text-[#AFFF00] text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+              <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
                 MEUS EVENTOS
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter" {...fadeUp(0.1)}>
+              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter" {...fadeUp(0.1)}>
                 Onde Você Vai Tocar
               </motion.h2>
-              <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mt-3" {...fadeUp(0.2)} />
+              <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.2)} />
             </div>
             <motion.div {...fadeUp(0.1)}>
-              <Link href="/dashboard/student/evento" className="flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-5 py-2.5 rounded-full font-black text-xs tracking-widest">
+              <Link href="/dashboard/student/evento" className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink sm:w-auto">
                 <Music2 size={13} /> + NOVO EVENTO
               </Link>
             </motion.div>
           </div>
 
           {myEvents.length === 0 ? (
-            <motion.div className="border-2 border-dashed border-white/10 rounded-2xl p-16 text-center" {...fadeUp(0.2)}>
-              <Music2 size={40} className="text-white/15 mx-auto mb-4" />
-              <p className="text-white/30 text-sm font-bold mb-4">Nenhum evento cadastrado</p>
+            <motion.div className="rounded-2xl border-2 border-dashed border-djon-text/10 p-8 text-center sm:p-16" {...fadeUp(0.2)}>
+              <Music2 size={40} className="text-djon-text/15 mx-auto mb-4" />
+              <p className="text-djon-text/30 text-sm font-bold mb-4">Nenhum evento cadastrado</p>
               <Link
                 href="/dashboard/student/evento"
-                className="inline-flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-2.5 rounded-full font-black text-xs tracking-widest"
+                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-6 py-2.5 rounded-full font-black text-xs tracking-widest"
               >
                 <Music2 size={13} /> CADASTRAR EVENTO
               </Link>
@@ -334,7 +334,7 @@ export default function StudentPage() {
                 return (
                   <motion.div
                     key={ev.id}
-                    className={`bg-[#161616] border border-white/8 rounded-2xl p-5 hover:border-white/20 transition-all ${isPast ? "opacity-50" : ""}`}
+                    className={`bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:border-djon-text/20 transition-all ${isPast ? "opacity-50" : ""}`}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: isPast ? 0.5 : 1, y: 0 }}
                     viewport={{ once: true, amount: 0 }}
@@ -342,21 +342,21 @@ export default function StudentPage() {
                     whileHover={{ y: -4 }}
                   >
                     {isPast && (
-                      <span className="inline-block text-[9px] bg-white/8 text-white/30 font-black tracking-widest px-2.5 py-1 rounded-full mb-3">
+                      <span className="inline-block text-djon-caption bg-djon-text/8 text-djon-text/30 font-black tracking-widest px-2.5 py-1 rounded-full mb-3">
                         PASSADO
                       </span>
                     )}
-                    <h3 className="text-white font-black text-lg tracking-tight mb-3 leading-tight">{ev.title}</h3>
+                    <h3 className="text-djon-text font-black text-lg tracking-tight mb-3 leading-tight">{ev.title}</h3>
                     <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-white/50 text-xs">
+                      <div className="flex items-center gap-2 text-djon-text/50 text-xs">
                         <Clock size={11} />{fmt(ev.date)} às {ev.time}
                       </div>
-                      <div className="flex items-center gap-2 text-white/50 text-xs">
+                      <div className="flex items-center gap-2 text-djon-text/50 text-xs">
                         <MapPin size={11} />{ev.location}
                       </div>
                     </div>
                     {ev.description && (
-                      <p className="text-white/30 text-xs mt-3 pt-3 border-t border-white/8 leading-relaxed line-clamp-2">{ev.description}</p>
+                      <p className="text-djon-text/30 text-xs mt-3 pt-3 border-t border-djon-text/8 leading-relaxed line-clamp-2">{ev.description}</p>
                     )}
                   </motion.div>
                 )

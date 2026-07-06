@@ -35,11 +35,11 @@ function CardThumb({ mat }: { mat: Material }) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-[#141414] to-[#0f0f0f]">
-      <div className="w-14 h-14 rounded-2xl bg-[#AFFF00]/10 flex items-center justify-center">
-        <FileText size={26} className="text-[#AFFF00]" />
+    <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-djon-surface to-djon-muted-panel">
+      <div className="w-14 h-14 rounded-2xl bg-djon-accent/10 flex items-center justify-center">
+        <FileText size={26} className="text-djon-accent" />
       </div>
-      <span className="text-white/30 text-[10px] font-bold tracking-widest uppercase">Material</span>
+      <span className="text-djon-text/30 text-djon-label font-bold tracking-widest uppercase">Material</span>
     </div>
   )
 }
@@ -124,31 +124,31 @@ export default function MaterialPage() {
   if (!user) return null
 
   return (
-    <div className="bg-[#0a0a0a] min-h-screen">
+    <div className="bg-djon-page min-h-screen">
 
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image src="/images/material-hero.png" alt="" fill className="object-cover opacity-25" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/85 to-[#0a0a0a]/50" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/85 to-djon-page/50" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-transparent to-transparent" />
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 py-28">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 sm:px-6 sm:py-28">
           <motion.span
-            className="block text-[#AFFF00] text-xs tracking-[0.25em] font-black uppercase mb-4"
+            className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4"
             {...fadeUp(0.1)}
           >
             {isProfessor ? "PORTAL DO PROFESSOR" : "PORTAL DO ALUNO"}
           </motion.span>
           <motion.h1
-            className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-[0.9]"
+            className="djon-hero-title font-black text-djon-text"
             {...fadeUp(0.2)}
           >
             Material
           </motion.h1>
-          <motion.div className="h-[3px] w-10 bg-[#AFFF00] rounded-full mt-4" {...fadeUp(0.3)} />
-          <motion.p className="text-white/40 text-base max-w-md leading-relaxed mt-4" {...fadeUp(0.35)}>
+          <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-4" {...fadeUp(0.3)} />
+          <motion.p className="text-djon-text/40 text-base max-w-md leading-relaxed mt-4" {...fadeUp(0.35)}>
             {isProfessor
               ? "Publique artigos, PDFs e imagens para seus alunos. Todo material fica disponível imediatamente."
               : "Acesse o material publicado pelos professores da DJ ON Academy."}
@@ -157,7 +157,7 @@ export default function MaterialPage() {
       </section>
 
       {/* ── FILTER + ACTION ROW ─────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 mb-12 mt-4">
+      <section className="max-w-7xl mx-auto px-4 mb-10 mt-4 sm:px-6 sm:mb-12">
         <div className="flex items-start gap-4 flex-wrap">
           <motion.div className="flex flex-1 min-w-0 items-center gap-2 flex-wrap" {...fadeUp(0.1)}>
             {categories.map((cat) => {
@@ -168,7 +168,7 @@ export default function MaterialPage() {
                 return (
                   <div
                     key={cat}
-                    className="flex items-center gap-1 rounded-full bg-[#AFFF00] text-[#121212] px-4 py-2"
+                    className="flex items-center gap-1 rounded-full bg-djon-accent text-djon-ink px-4 py-2"
                   >
                     <button
                       onClick={() => setActiveCategory(cat)}
@@ -176,11 +176,11 @@ export default function MaterialPage() {
                     >
                       {cat.toUpperCase()}
                     </button>
-                    <span className="mx-1 h-3 w-px bg-[#121212]/20" />
+                    <span className="mx-1 h-3 w-px bg-djon-ink/20" />
                     <button
                       type="button"
                       onClick={() => setCategoryModal({ mode: "edit", original: cat, value: cat })}
-                      className="cursor-pointer rounded-full p-0.5 text-[#121212]/70 hover:text-[#121212] hover:bg-[#121212]/10 transition-all"
+                      className="cursor-pointer rounded-full p-0.5 text-djon-ink/70 hover:text-djon-ink hover:bg-djon-ink/10 transition-all"
                       aria-label={`Editar categoria ${cat}`}
                     >
                       <Edit2 size={12} />
@@ -188,7 +188,7 @@ export default function MaterialPage() {
                     <button
                       type="button"
                       onClick={() => openDeleteCategory(cat)}
-                      className="cursor-pointer rounded-full p-0.5 text-[#121212]/70 hover:text-[#121212] hover:bg-[#121212]/10 transition-all"
+                      className="cursor-pointer rounded-full p-0.5 text-djon-ink/70 hover:text-djon-ink hover:bg-djon-ink/10 transition-all"
                       aria-label={`Excluir categoria ${cat}`}
                     >
                       <Trash2 size={12} />
@@ -203,8 +203,8 @@ export default function MaterialPage() {
                   onClick={() => setActiveCategory(cat)}
                   className={`px-4 py-2 rounded-full text-xs font-black tracking-widest transition-all cursor-pointer ${
                     active
-                      ? "bg-[#AFFF00] text-[#121212]"
-                      : "bg-white/6 text-white/50 hover:text-white border border-white/10 hover:border-white/20"
+                      ? "bg-djon-accent text-djon-ink"
+                      : "bg-djon-text/6 text-djon-text/50 hover:text-djon-text border border-djon-text/10 hover:border-djon-text/20"
                   }`}
                 >
                   {cat.toUpperCase()}
@@ -215,7 +215,7 @@ export default function MaterialPage() {
               <button
                 type="button"
                 onClick={() => setCategoryModal({ mode: "create", value: "" })}
-                className="cursor-pointer px-2 py-2 text-xs font-black tracking-widest text-white/35 hover:text-[#AFFF00] transition-colors"
+                className="cursor-pointer px-2 py-2 text-xs font-black tracking-widest text-djon-text/35 hover:text-djon-accent transition-colors"
               >
                 + NOVA CATEGORIA
               </button>
@@ -225,7 +225,7 @@ export default function MaterialPage() {
           {isProfessor && (
             <motion.button
               onClick={() => router.push("/dashboard/material/novo")}
-              className="cursor-pointer flex items-center gap-2 bg-[#AFFF00] text-[#121212] px-6 py-3 rounded-full font-black text-sm tracking-widest hover:opacity-90 transition-opacity shrink-0"
+              className="cursor-pointer flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:w-auto"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               {...fadeUp(0.15)}
@@ -237,29 +237,29 @@ export default function MaterialPage() {
       </section>
 
       {/* ── GRID ────────────────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-6 pb-24">
+      <section className="max-w-7xl mx-auto px-4 pb-20 sm:px-6 sm:pb-24">
         {filtered.length === 0 ? (
           <motion.div className="text-center py-24" {...fadeUp(0)}>
-            <BookOpen size={40} className="text-white/10 mx-auto mb-4" />
-            <p className="text-white/20 font-bold text-lg">Nenhum material nesta categoria</p>
+            <BookOpen size={40} className="text-djon-text/10 mx-auto mb-4" />
+            <p className="text-djon-text/20 font-bold text-lg">Nenhum material nesta categoria</p>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map((mat, i) => (
               <motion.div
                 key={mat.id}
-                className="group bg-white/4 border border-white/8 rounded-2xl overflow-hidden hover:border-white/16 transition-all cursor-pointer flex flex-col min-h-[322px]"
+                className="group bg-djon-text/4 border border-djon-text/8 rounded-2xl overflow-hidden hover:border-djon-text/16 transition-all cursor-pointer flex flex-col min-h-[322px]"
                 {...fadeUp(i * 0.04)}
                 whileHover={{ y: -4 }}
                 onClick={() => router.push(`/dashboard/material/${mat.id}`)}
               >
                 {/* Thumbnail */}
-                <div className="relative h-44 bg-[#0f0f0f] overflow-hidden">
+                <div className="relative h-44 bg-djon-muted-panel overflow-hidden">
                   <CardThumb mat={mat} />
 
                   {/* Category badge */}
                   <div className="absolute top-3 left-3">
-                    <span className="bg-[#0a0a0a]/80 backdrop-blur-sm text-white/50 text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full border border-white/10">
+                    <span className="bg-djon-page/80 backdrop-blur-sm text-djon-text/50 text-djon-caption font-black tracking-widest uppercase px-2.5 py-1 rounded-full border border-djon-text/10">
                       {mat.category}
                     </span>
                   </div>
@@ -267,7 +267,7 @@ export default function MaterialPage() {
                   {/* Attachment count badge */}
                   {mat.attachments && mat.attachments.length > 0 && (
                     <div className="absolute top-3 right-3">
-                      <span className="flex items-center gap-1 bg-[#0a0a0a]/80 backdrop-blur-sm text-white/60 text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full border border-white/10">
+                      <span className="flex items-center gap-1 bg-djon-page/80 backdrop-blur-sm text-djon-text/60 text-djon-caption font-black tracking-widest uppercase px-2.5 py-1 rounded-full border border-djon-text/10">
                         <Paperclip size={9} /> {mat.attachments.length}
                       </span>
                     </div>
@@ -276,27 +276,27 @@ export default function MaterialPage() {
 
                 {/* Info */}
                 <div className="p-4 flex flex-1 flex-col">
-                  <p className="text-white font-black text-sm leading-snug line-clamp-2 mb-1">{mat.title}</p>
+                  <p className="text-djon-text font-black text-sm leading-snug line-clamp-2 mb-1">{mat.title}</p>
                   {mat.description && (
-                    <p className="text-white/35 text-xs leading-relaxed line-clamp-3">{mat.description}</p>
+                    <p className="text-djon-text/35 text-xs leading-relaxed line-clamp-3">{mat.description}</p>
                   )}
                   <div className="flex items-center justify-between mt-auto pt-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-[#AFFF00]/15 flex items-center justify-center overflow-hidden">
+                      <div className="w-5 h-5 rounded-full bg-djon-accent/15 flex items-center justify-center overflow-hidden">
                         {mat.authorAvatar
                           // eslint-disable-next-line @next/next/no-img-element
                           ? <img src={mat.authorAvatar} alt="" className="w-full h-full object-cover" />
-                          : <span className="text-[#AFFF00] text-[8px] font-black">{mat.authorName.charAt(0)}</span>
+                          : <span className="text-djon-accent text-djon-micro font-black">{mat.authorName.charAt(0)}</span>
                         }
                       </div>
-                      <span className="text-white/30 text-[10px] font-bold">{mat.authorName.split(" ")[0]}</span>
+                      <span className="text-djon-text/30 text-djon-label font-bold">{mat.authorName.split(" ")[0]}</span>
                     </div>
                     {isProfessor && mat.authorId === user.id && (
                       <button
                         onClick={(e) => { e.stopPropagation(); setDeleteId(mat.id) }}
-                        className="cursor-pointer opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center transition-all"
+                        className="cursor-pointer opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-djon-danger/10 hover:bg-djon-danger/20 flex items-center justify-center transition-all"
                       >
-                        <Trash2 size={12} className="text-red-400" />
+                        <Trash2 size={12} className="text-djon-danger" />
                       </button>
                     )}
                   </div>
@@ -313,28 +313,28 @@ export default function MaterialPage() {
       <AnimatePresence>
         {categoryModal && (
           <motion.div
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
+            className="fixed inset-0 z-50 bg-djon-page/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={(e) => e.target === e.currentTarget && setCategoryModal(null)}
           >
             <motion.div
-              className="djon-scroll bg-[#111] border border-white/10 rounded-2xl p-6 max-w-sm w-full my-6 max-h-[calc(100svh-3rem)] overflow-y-auto"
+              className="djon-scroll bg-djon-calendar-cell border border-djon-text/10 rounded-2xl p-6 max-w-sm w-full my-6 max-h-[calc(100svh-3rem)] overflow-y-auto"
               initial={{ scale: 0.95, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 12 }}
             >
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <p className="text-[#AFFF00] text-xs font-black tracking-widest uppercase mb-1">
+                  <p className="text-djon-accent text-xs font-black tracking-widest uppercase mb-1">
                     {categoryModal.mode === "create" ? "NOVA" : "EDITAR"}
                   </p>
-                  <h2 className="text-white text-xl font-black tracking-tight">Categoria</h2>
+                  <h2 className="text-djon-text text-xl font-black tracking-tight">Categoria</h2>
                 </div>
                 <button
                   onClick={() => setCategoryModal(null)}
-                  className="cursor-pointer text-white/30 hover:text-white transition-colors"
+                  className="cursor-pointer text-djon-text/30 hover:text-djon-text transition-colors"
                   type="button"
                 >
                   <X size={18} />
@@ -349,19 +349,19 @@ export default function MaterialPage() {
                 }}
               >
                 <div>
-                  <label className="block text-white/50 text-xs font-bold tracking-widest uppercase mb-2">Nome</label>
+                  <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Nome</label>
                   <input
                     autoFocus
                     value={categoryModal.value}
                     onChange={(e) => setCategoryModal({ ...categoryModal, value: e.target.value })}
                     placeholder="Ex: Produção musical"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder:text-white/25 focus:outline-none focus:border-[#AFFF00]/40 transition-colors"
+                    className="w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/25 focus:outline-none focus:border-djon-accent/40 transition-colors"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={!categoryModal.value.trim()}
-                  className="cursor-pointer w-full bg-[#AFFF00] disabled:opacity-40 disabled:cursor-not-allowed text-[#121212] font-black text-sm tracking-widest py-3 rounded-full transition-opacity hover:opacity-90"
+                  className="cursor-pointer w-full bg-djon-accent disabled:opacity-40 disabled:cursor-not-allowed text-djon-ink font-black text-sm tracking-widest py-3 rounded-full transition-opacity hover:opacity-90"
                 >
                   {categoryModal.mode === "create" ? "CRIAR CATEGORIA" : "SALVAR CATEGORIA"}
                 </button>
@@ -375,47 +375,47 @@ export default function MaterialPage() {
       <AnimatePresence>
         {categoryDelete && (
           <motion.div
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
+            className="fixed inset-0 z-50 bg-djon-page/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={(e) => e.target === e.currentTarget && setCategoryDelete(null)}
           >
             <motion.div
-              className="djon-scroll bg-[#111] border border-white/10 rounded-2xl p-6 max-w-md w-full my-6 max-h-[calc(100svh-3rem)] overflow-y-auto"
+              className="djon-scroll bg-djon-calendar-cell border border-djon-text/10 rounded-2xl p-6 max-w-md w-full my-6 max-h-[calc(100svh-3rem)] overflow-y-auto"
               initial={{ scale: 0.95, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 12 }}
             >
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <p className="text-red-400 text-xs font-black tracking-widest uppercase mb-1">EXCLUIR</p>
-                  <h2 className="text-white text-xl font-black tracking-tight">Categoria {categoryDelete}</h2>
+                  <p className="text-djon-danger text-xs font-black tracking-widest uppercase mb-1">EXCLUIR</p>
+                  <h2 className="text-djon-text text-xl font-black tracking-tight">Categoria {categoryDelete}</h2>
                 </div>
                 <button
                   onClick={() => setCategoryDelete(null)}
-                  className="cursor-pointer text-white/30 hover:text-white transition-colors"
+                  className="cursor-pointer text-djon-text/30 hover:text-djon-text transition-colors"
                   type="button"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <p className="text-white/45 text-sm leading-relaxed mb-5">
-                Existem <span className="text-white font-black">{categoryDeleteCount}</span> materiais nessa categoria.
+              <p className="text-djon-text/45 text-sm leading-relaxed mb-5">
+                Existem <span className="text-djon-text font-black">{categoryDeleteCount}</span> materiais nessa categoria.
                 Escolha para qual categoria eles serão transferidos antes de excluir.
               </p>
 
               <div className="space-y-5">
                 <div>
-                  <label className="block text-white/50 text-xs font-bold tracking-widest uppercase mb-2">Transferir para</label>
+                  <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Transferir para</label>
                   <select
                     value={transferCategory}
                     onChange={(e) => setTransferCategory(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#AFFF00]/40 transition-colors cursor-pointer"
+                    className="w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm focus:outline-none focus:border-djon-accent/40 transition-colors cursor-pointer"
                   >
                     {transferOptions.map((cat) => (
-                      <option key={cat} value={cat} className="bg-[#111]">{cat}</option>
+                      <option key={cat} value={cat} className="bg-djon-calendar-cell">{cat}</option>
                     ))}
                   </select>
                 </div>
@@ -423,7 +423,7 @@ export default function MaterialPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setCategoryDelete(null)}
-                    className="cursor-pointer flex-1 py-3 rounded-full border border-white/15 text-white/60 hover:text-white text-xs font-black tracking-widest transition-colors"
+                    className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:text-djon-text text-xs font-black tracking-widest transition-colors"
                     type="button"
                   >
                     CANCELAR
@@ -431,7 +431,7 @@ export default function MaterialPage() {
                   <button
                     onClick={confirmDeleteCategory}
                     disabled={!transferCategory}
-                    className="cursor-pointer flex-1 py-3 rounded-full bg-red-500/80 hover:bg-red-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-black tracking-widest transition-colors"
+                    className="cursor-pointer flex-1 py-3 rounded-full bg-djon-danger/80 hover:bg-djon-danger disabled:opacity-40 disabled:cursor-not-allowed text-djon-text text-xs font-black tracking-widest transition-colors"
                     type="button"
                   >
                     EXCLUIR
@@ -447,29 +447,29 @@ export default function MaterialPage() {
       <AnimatePresence>
         {deleteId && (
           <motion.div
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
+            className="fixed inset-0 z-50 bg-djon-page/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="djon-scroll bg-[#111] border border-white/10 rounded-2xl p-6 max-w-sm w-full my-6 max-h-[calc(100svh-3rem)] overflow-y-auto"
+              className="djon-scroll bg-djon-calendar-cell border border-djon-text/10 rounded-2xl p-6 max-w-sm w-full my-6 max-h-[calc(100svh-3rem)] overflow-y-auto"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
             >
-              <p className="text-white font-black text-lg mb-2">Remover material?</p>
-              <p className="text-white/40 text-sm mb-6">Esta ação não pode ser desfeita.</p>
+              <p className="text-djon-text font-black text-lg mb-2">Remover material?</p>
+              <p className="text-djon-text/40 text-sm mb-6">Esta ação não pode ser desfeita.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="cursor-pointer flex-1 py-3 rounded-full border border-white/15 text-white/60 hover:text-white text-xs font-black tracking-widest transition-colors"
+                  className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:text-djon-text text-xs font-black tracking-widest transition-colors"
                 >
                   CANCELAR
                 </button>
                 <button
                   onClick={() => handleDelete(deleteId)}
-                  className="cursor-pointer flex-1 py-3 rounded-full bg-red-500/80 hover:bg-red-500 text-white text-xs font-black tracking-widest transition-colors"
+                  className="cursor-pointer flex-1 py-3 rounded-full bg-djon-danger/80 hover:bg-djon-danger text-djon-text text-xs font-black tracking-widest transition-colors"
                 >
                   REMOVER
                 </button>

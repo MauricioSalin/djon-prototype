@@ -70,7 +70,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#AFFF00",
+  themeColor: "var(--djon-color-accent)",
 }
 
 export default function RootLayout({
@@ -82,7 +82,7 @@ export default function RootLayout({
     <html lang="pt-BR" className="bg-background">
       <body className={`font-sans antialiased`}>
         <ClickSpark
-          sparkColor="#AFFF00"
+          sparkColor="var(--djon-color-accent)"
           sparkSize={12}
           sparkRadius={20}
           sparkCount={8}
