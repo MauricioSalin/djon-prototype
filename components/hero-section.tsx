@@ -195,18 +195,16 @@ export function HeroSection() {
               initial="hidden"
               animate="visible"
               custom={6}
-              className="relative mt-5 h-[360px] w-full overflow-visible min-[390px]:h-[390px] sm:h-[430px] lg:hidden"
+              className="relative mt-5 h-[430px] w-full overflow-visible min-[390px]:h-[460px] sm:h-[520px] lg:hidden"
             >
               <motion.div
-                aria-hidden="true"
-                className="absolute left-1/2 top-1/2 h-[520px] w-[700px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] transform-gpu min-[360px]:scale-[0.46] min-[390px]:scale-[0.5] sm:scale-[0.58]"
+                className="absolute left-1/2 top-1/2 h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.34] transform-gpu min-[360px]:scale-[0.38] min-[390px]:scale-[0.42] sm:scale-[0.5]"
                 initial={false}
                 animate={{ opacity: splineLoaded ? 1 : 0 }}
                 transition={{ duration: 0.45, ease: "easeOut" }}
               >
                 <SplineScene
                   scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
-                  globalEvents
                   lazyThreshold={0.01}
                   onLoad={revealSpline}
                   style={{ width: "100%", height: "100%" }}
@@ -218,7 +216,6 @@ export function HeroSection() {
           {/* Right side — Spline 3D scene */}
           <div className="relative hidden lg:block" style={{ height: "calc(100vh - 80px)" }}>
             <motion.div
-              aria-hidden="true"
               className="h-full w-full"
               initial={false}
               animate={{ opacity: splineLoaded ? 1 : 0 }}
@@ -226,7 +223,6 @@ export function HeroSection() {
             >
               <SplineScene
                 scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
-                globalEvents
                 lazyThreshold={0.01}
                 onLoad={revealSpline}
                 style={{ width: "100%", height: "100%" }}

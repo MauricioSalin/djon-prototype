@@ -213,16 +213,6 @@ export function SocialSection() {
 
               {/* Overlay info card pinned to bottom */}
               <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 bg-djon-ink/90 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
-                {/* Mini DJON logo */}
-                <div className="flex items-center gap-0 text-djon-text shrink-0">
-                  <span className="text-base font-black tracking-[-0.05em]">DJ</span>
-                  <svg viewBox="0 0 28 28" className="w-5 h-5 fill-djon-text mx-0.5">
-                    <circle cx="14" cy="14" r="13" />
-                    <polygon points="11,9 11,19 21,14" fill="var(--djon-color-ink)" />
-                  </svg>
-                  <span className="text-base font-black tracking-[-0.05em]">N</span>
-                </div>
-                <div className="hidden h-6 w-px shrink-0 bg-djon-text/20 sm:block" />
                 <div className="min-w-0">
                   <p className="text-djon-text text-xs font-bold leading-snug truncate">
                     {location.address}

@@ -22,7 +22,7 @@ interface Spark {
 }
 
 const ClickSpark: React.FC<ClickSparkProps> = ({
-  sparkColor = "var(--djon-color-text)",
+  sparkColor = "var(--djon-color-accent)",
   sparkSize = 10,
   sparkRadius = 15,
   sparkCount = 8,
@@ -91,6 +91,9 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
     if (!ctx) return
 
     let animationId: number
+    const resolvedSparkColor = sparkColor.startsWith("var(")
+      ? getComputedStyle(document.documentElement).getPropertyValue(sparkColor.slice(4, -1)).trim() || sparkColor
+      : sparkColor
 
     const draw = (timestamp: number) => {
       if (!startTimeRef.current) {
@@ -115,7 +118,7 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
         const x2 = spark.x + (distance + lineLength) * Math.cos(spark.angle)
         const y2 = spark.y + (distance + lineLength) * Math.sin(spark.angle)
 
-        ctx.strokeStyle = sparkColor
+        ctx.strokeStyle = resolvedSparkColor
         ctx.lineWidth = 2
         ctx.beginPath()
         ctx.moveTo(x1, y1)

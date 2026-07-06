@@ -153,22 +153,20 @@ export function ActivationsSection() {
           </div>
 
           <motion.div
-            className="relative mt-8 h-[280px] overflow-hidden bg-transparent sm:h-[340px] md:mt-12 md:h-[500px]"
+            className="relative mt-8 h-[420px] overflow-hidden bg-transparent min-[390px]:h-[460px] sm:h-[520px] md:mt-12 md:h-[560px]"
             initial={{ opacity: 0, y: 32 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const }}
           >
             <motion.div
-              aria-hidden="true"
-              className="absolute left-1/2 top-1/2 h-[420px] w-[760px] -translate-x-1/2 -translate-y-1/2 scale-[0.4] transform-gpu min-[360px]:scale-[0.44] min-[390px]:scale-[0.5] sm:scale-[0.62] md:static md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:scale-100"
+              className="absolute left-1/2 top-1/2 h-[620px] w-[900px] -translate-x-1/2 -translate-y-1/2 scale-[0.34] transform-gpu min-[360px]:scale-[0.38] min-[390px]:scale-[0.42] sm:scale-[0.52] md:static md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:scale-100"
               initial={false}
               animate={{ opacity: showcaseSplineLoaded ? 1 : 0 }}
               transition={{ duration: 0.45, ease: "easeOut" }}
             >
               <SplineScene
                 scene="https://prod.spline.design/AUAj4HtJL15gKfTA/scene.splinecode"
-                globalEvents
                 lazyThreshold={0.01}
                 onLoad={() => setShowcaseSplineLoaded(true)}
                 style={{ width: "100%", height: "100%" }}
@@ -277,7 +275,6 @@ export function ActivationsSection() {
             <div className="absolute left-1/2 top-1/2 h-[380px] w-[720px] -translate-x-1/2 -translate-y-1/2 scale-[0.4] transform-gpu min-[360px]:scale-[0.44] min-[390px]:scale-[0.48] sm:scale-[0.62] md:static md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:scale-100">
               <SplineScene
                 scene="https://prod.spline.design/OduYuH7Y3CXDo9Ga/scene.splinecode"
-                globalEvents
                 lazyThreshold={0.01}
                 style={{ width: "100%", height: "100%" }}
               />

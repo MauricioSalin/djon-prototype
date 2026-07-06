@@ -122,15 +122,15 @@ export default function BrandPage() {
         <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl items-center px-4 py-14 sm:px-6 sm:py-16">
           <div className="max-w-3xl">
             <Image
-              src="/images/salin/salin-logo-djon-text.png"
+              src="/images/salin/salin-logo-white.png"
               alt="Salin"
               width={360}
               height={110}
-              className="mb-9 h-auto w-full max-w-[260px] md:max-w-[360px]"
+              className="mb-9 h-auto w-full max-w-[170px] md:max-w-[240px]"
             />
             <p className="mb-5 text-xs font-black tracking-[0.35em] text-djon-accent">ARTISTA · TECNOLOGIA · IA</p>
-            <h2 className="djon-display-title font-black text-djon-text">
-              ENTRE O CÓDIGO E A PISTA.
+            <h2 className="djon-display-title font-black text-djon-text [hyphens:none] [overflow-wrap:normal]">
+              ENTRE O <span className="whitespace-nowrap">CÓDIGO</span> E A PISTA.
             </h2>
             <p className="mt-7 max-w-2xl text-base leading-relaxed text-djon-text/62 md:text-lg">
               Além de DJ e aluno da DJ ON Academy, sou programador em projetos de inteligência artificial e tecnologia financeira, com atuação também em soluções para a Visa. Trabalho com design, produto digital e estou me especializando cada vez mais em IA para conectar criatividade, performance e tecnologia.

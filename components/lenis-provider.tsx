@@ -18,6 +18,7 @@ export function LenisProvider({ children }: LenisProviderProps) {
         wheelMultiplier: 1,
         touchMultiplier: 2,
         infinite: false,
+        prevent: (node) => Boolean(node.closest("[data-lenis-prevent]")),
       }}
     >
       {children}
