@@ -5,8 +5,33 @@ import { CalendarDays, ChevronDown, Mail, Sparkles } from "lucide-react"
 import { SplineScene } from "@/components/spline-scene"
 
 export const metadata: Metadata = {
-  title: "Brand DJ ON Academy",
-  description: "Guia visual da identidade DJ ON Academy: logo, tipografia, paleta, componentes e aplicações.",
+  title: "Brand DJ ON Academy x Salin",
+  description:
+    "Apresentação visual da identidade DJ ON Academy: logo, tipografia, paleta, componentes, modelos 3D e proposta criativa assinada por Salin.",
+  alternates: {
+    canonical: "/brand",
+  },
+  openGraph: {
+    title: "Brand DJ ON Academy x Salin",
+    description:
+      "Um guia de marca com identidade visual, componentes, 3D e direção criativa para apresentar a proposta DJ ON Academy.",
+    url: "/brand",
+    images: [
+      {
+        url: "/images/salin/salin-cenna-4.jpg",
+        width: 1200,
+        height: 630,
+        alt: "DJ ON Academy x Salin - Brand presentation",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Brand DJ ON Academy x Salin",
+    description:
+      "Identidade visual, componentes, 3D e direção criativa para apresentar a proposta DJ ON Academy.",
+    images: ["/images/salin/salin-cenna-4.jpg"],
+  },
 }
 
 const colors = [
