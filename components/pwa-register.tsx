@@ -6,6 +6,15 @@ export function PWARegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return
 
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+
+    if (isIOS) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister())
+      })
+      return
+    }
+
     const register = async () => {
       try {
         const response = await fetch("/sw.js", { cache: "no-store" })

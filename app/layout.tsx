@@ -14,7 +14,7 @@ const _inter = Inter({
 
 const siteName = "DJ ON"
 const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://djonacademy.com")
-const defaultTitle = "DJ ON Academy | Curso de DJ e Produção Musical"
+const defaultTitle = "DJ ON"
 const defaultDescription =
   "A DJ ON Academy é a fronteira entre o sonho e a realização. Aprenda DJ, produção musical e performance com uma comunidade feita para transformar sonho em palco."
 const defaultImage = "/images/djon-hero.png"
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
       { url: "/icons/djon-icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     shortcut: ["/favicon.png"],
-    apple: [{ url: "/icons/djon-icon-180.png", sizes: "180x180", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,
@@ -94,6 +94,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="bg-background">
+      <head>
+        <title>DJ ON</title>
+        <meta name="application-name" content="DJ ON" />
+        <meta name="apple-mobile-web-app-title" content="DJ ON" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+      </head>
       <body className={`font-sans antialiased`}>
         <ClickSpark
           sparkColor="var(--djon-color-accent)"
