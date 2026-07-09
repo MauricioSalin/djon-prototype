@@ -7,9 +7,12 @@ import ClickSpark from "@/components/click-spark"
 import { PWARegister } from "@/components/pwa-register"
 import "./globals.css"
 
-const _inter = Inter({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-sans",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+  style: ["normal"],
+  variable: "--font-inter",
+  display: "swap",
 })
 
 const siteName = "DJ ON"
@@ -93,7 +96,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className="bg-background">
+    <html lang="pt-BR" className={`bg-background ${inter.variable}`}>
       <head>
         <title>DJ ON</title>
         <meta name="application-name" content="DJ ON" />

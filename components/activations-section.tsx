@@ -3,7 +3,7 @@
 import { motion, useInView } from "framer-motion"
 import { useRef, useState } from "react"
 import Image from "next/image"
-import { Mic2, Star, Users, Music } from "lucide-react"
+import { Mic2, Star, Users, Music, MousePointerClick } from "lucide-react"
 import { SplineScene } from "@/components/spline-scene"
 
 const teamMembers = [
@@ -171,6 +171,43 @@ export function ActivationsSection() {
                 onLoad={() => setShowcaseSplineLoaded(true)}
                 style={{ width: "100%", height: "100%" }}
               />
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="relative z-10 -mt-8 flex justify-center pb-2 sm:-mt-10 md:-mt-12"
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ duration: 0.55, ease: [0.25, 0.4, 0.25, 1] as const, delay: 0.1 }}
+          >
+            <motion.div
+              className="group relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-djon-ink/10 bg-djon-ink px-5 py-3 text-djon-text shadow-djon-soft"
+              animate={{ y: [0, -3, 0] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <motion.span
+                className="absolute inset-y-0 -left-16 w-16 bg-djon-accent/18 blur-xl"
+                animate={{ x: ["0%", "420%"] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <span className="relative flex size-8 items-center justify-center rounded-full bg-djon-accent text-djon-ink">
+                <motion.span
+                  className="absolute inset-0 rounded-full border border-djon-accent"
+                  animate={{ scale: [1, 1.55], opacity: [0.65, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+                />
+                <motion.span
+                  animate={{ x: [0, 5, -3, 0], rotate: [0, -8, 6, 0] }}
+                  transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative"
+                >
+                  <MousePointerClick size={16} strokeWidth={2.8} />
+                </motion.span>
+              </span>
+              <span className="relative text-xs font-black tracking-[0.22em] text-djon-text">
+                ARRASTE PARA INTERAGIR
+              </span>
             </motion.div>
           </motion.div>
         </div>

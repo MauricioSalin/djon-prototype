@@ -1,7 +1,8 @@
 import type { Metadata } from "next"
+import type { ReactNode } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Bell, CalendarDays, ChevronDown, Download, Mail, Plus, Search, Smartphone, Sparkles, User } from "lucide-react"
+import { Bell, CalendarDays, Check, ChevronDown, Clock, Download, Edit3, LogIn, Mail, Search, Smartphone, Sparkles, Trash2, User, X } from "lucide-react"
 import { SplineScene } from "@/components/spline-scene"
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
 
 const colors = [
   { name: "Acid Green", hex: "var(--djon-color-accent)", usage: "CTA, foco, highlights e estados ativos" },
+  { name: "White Noise", hex: "var(--djon-color-text)", usage: "Títulos, logo em negativo e superfícies claras de contraste" },
   { name: "Black Stage", hex: "var(--djon-color-ink)", usage: "Base escura, headers e fundos principais" },
   { name: "Panel Dark", hex: "var(--djon-color-surface-3)", usage: "Cards, modais, inputs e superfícies" },
   { name: "Line Gray", hex: "var(--djon-color-line)", usage: "Bordas, divisórias e contornos sutis" },
@@ -90,6 +92,15 @@ const fontExamples = [
   },
 ]
 
+const fontWeights = [
+  { label: "Regular", value: "400", className: "font-normal" },
+  { label: "Medium", value: "500", className: "font-medium" },
+  { label: "Semibold", value: "600", className: "font-semibold" },
+  { label: "Bold", value: "700", className: "font-bold" },
+  { label: "ExtraBold", value: "800", className: "font-extrabold" },
+  { label: "Black", value: "900", className: "font-black" },
+]
+
 const components = [
   { label: "Badge", value: "EVENTO OFICIAL" },
   { label: "Tab ativa", value: "TÉCNICA" },
@@ -129,9 +140,13 @@ export default function BrandPage() {
           <div>
             <p className="mb-5 text-xs font-black tracking-[0.35em] text-djon-accent">BRAND SYSTEM</p>
             <h1 className="djon-display-title max-w-5xl font-black text-djon-text">
-              A FRONTEIRA ENTRE O SONHO E A{" "}
-              <span className="text-djon-accent" style={{ WebkitTextStroke: "1.5px var(--djon-color-ink)", paintOrder: "stroke fill" }}>
-                REALIZAÇÃO
+              <span className="block">A FRONTEIRA</span>
+              <span className="block">ENTRE O SONHO</span>
+              <span className="block">
+                E A{" "}
+                <span className="text-djon-accent" style={{ WebkitTextStroke: "1.5px var(--djon-color-ink)", paintOrder: "stroke fill" }}>
+                  REALIZAÇÃO
+                </span>
               </span>
             </h1>
             <p className="mt-7 max-w-xl text-base leading-relaxed text-djon-text/58 md:text-lg">
@@ -182,7 +197,7 @@ export default function BrandPage() {
               ENTRE O <span className="whitespace-nowrap">CÓDIGO</span> E A PISTA.
             </h2>
             <p className="mt-7 max-w-2xl text-base leading-relaxed text-djon-text/62 md:text-lg">
-              Além de DJ e aluno da DJ ON Academy, sou programador em projetos de inteligência artificial e tecnologia financeira, com atuação também em soluções para a Visa. Trabalho com design, produto digital e estou me especializando cada vez mais em IA para conectar criatividade, performance e tecnologia.
+              Tenho 29 anos e trabalho há 11 anos como programador. Além de DJ e aluno da DJ ON Academy, faço parte de duas empresas de Inteligência Artificial, e também atuo na Visa, operadora de cartão de crédito. Além disso, trabalho com design, produto digital e estou me especializando cada vez mais em IA para conectar criatividade, performance e tecnologia.
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
               {["DJ", "Aluno DJ ON", "Programador", "Design", "Inteligência Artificial"].map((item) => (
@@ -197,22 +212,23 @@ export default function BrandPage() {
 
       <section id="logo" className="bg-djon-page py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <SectionTitle eyebrow="Identidade" title="Logo" description="A assinatura DJ ON deve aparecer com impacto imediato. O símbolo play comunica ação, música e presença digital." />
+          <SectionTitle eyebrow="Identidade" title="Logo" description="A proposta mantém a essência da logo original porque ela já tem uma identidade forte: impacto imediato, peso visual e reconhecimento rápido. O símbolo play continua comunicando ação, música e presença digital, preservando o que a marca já tem de mais potente e levando essa assinatura para um sistema mais consistente." />
 
-          <div className="mt-10 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-djon-text/10 bg-djon-surface-7 p-10">
+          <div className="mt-10 grid gap-4 lg:grid-cols-3">
+            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-djon-text/10 bg-djon-surface-7 p-10 lg:col-span-2">
               <Image src="/images/djon-verde.png" alt="DJ ON Academy em verde" width={340} height={110} className="h-auto w-full max-w-[340px]" />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="flex min-h-[132px] items-center justify-center rounded-2xl border border-djon-text/10 bg-djon-text p-8">
-                <Image src="/images/djon-logo.png" alt="DJ ON Academy versão escura" width={220} height={72} className="h-auto w-full max-w-[220px]" />
-              </div>
-              <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-7 p-6">
-                <p className="text-xs font-black tracking-[0.25em] text-djon-accent">USO</p>
-                <p className="mt-4 text-sm leading-relaxed text-djon-text/55">
-                  Priorizar fundos escuros, áreas limpas e boa margem lateral. Em composições de hero, a marca deve aparecer como sinal forte no primeiro viewport.
-                </p>
-              </div>
+            <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-8">
+              <Image src="/images/djon-logo.png" alt="DJ ON Academy versão compacta" width={220} height={72} className="h-auto w-full max-w-[220px] drop-shadow-djon-soft" />
+            </div>
+            <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-djon-ink/10 bg-djon-text p-8">
+              <Image src="/images/djon-logo-preta-j-grosso.svg" alt="DJ ON Academy versão preta" width={300} height={78} className="h-auto w-full max-w-[300px]" />
+            </div>
+            <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-7 p-6 sm:p-8 lg:col-span-2">
+              <p className="text-xs font-black tracking-[0.25em] text-djon-accent">USO</p>
+              <p className="mt-4 max-w-3xl text-sm leading-relaxed text-djon-text/55">
+                Priorizar fundos escuros, áreas limpas e boa margem lateral. Em composições de hero, a marca deve aparecer como sinal forte no primeiro viewport.
+              </p>
             </div>
           </div>
         </div>
@@ -222,19 +238,25 @@ export default function BrandPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <SectionTitle eyebrow="Tipografia" title="Inter / Font System" description="A fonte principal é Inter. O sistema usa peso alto para impacto, corpo legível para instrução e labels em caixa alta para navegação e metadados." light />
 
-          <div className="mt-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-2xl border border-djon-ink/10 bg-djon-light-surface p-6 md:p-8">
-              <p className="text-xs font-black tracking-[0.25em] text-djon-ink/45">FAMÍLIA</p>
-              <h3 className="mt-4 text-5xl font-black leading-none tracking-tight md:text-7xl">Inter</h3>
-              <p className="mt-5 max-w-md text-sm leading-relaxed text-djon-ink/58">
-                Uma tipografia neutra, tecnológica e extremamente legível. Ela sustenta títulos agressivos sem perder clareza nos formulários, cards e dashboards.
-              </p>
-              <div className="mt-7 grid grid-cols-2 gap-3 text-sm">
-                {["Regular 400", "Bold 700", "Black 900", "Mono token"].map((weight) => (
-                  <div key={weight} className="rounded-xl border border-djon-ink/10 bg-djon-text px-4 py-3 font-black text-djon-ink/62">
-                    {weight}
-                  </div>
-                ))}
+          <div className="mt-10 grid items-stretch gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <div className="flex h-full flex-col rounded-2xl border border-djon-ink/10 bg-djon-light-surface p-6 md:p-8">
+              <div>
+                <p className="text-xs font-black tracking-[0.25em] text-djon-ink/45">FONTE</p>
+                <h3 className="mt-4 text-5xl font-black leading-none tracking-tight md:text-7xl">Inter</h3>
+                <p className="mt-5 max-w-md text-sm leading-relaxed text-djon-ink/58">
+                  Uma tipografia neutra, tecnológica e extremamente legível. Ela sustenta títulos agressivos sem perder clareza nos formulários, cards e dashboards.
+                </p>
+              </div>
+              <div className="mt-7 flex-1 rounded-2xl border border-djon-ink/10 bg-djon-text p-5">
+                <p className="text-xs font-black tracking-[0.25em] text-djon-ink/38">TIPOS</p>
+                <div className="mt-4 grid gap-2">
+                  {fontWeights.map((weight) => (
+                    <div key={weight.value} className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl bg-djon-ink/[0.035] px-4 py-3 text-djon-ink">
+                      <span className={`text-lg leading-none ${weight.className}`}>Inter {weight.label}</span>
+                      <span className="font-mono text-xs text-djon-ink/38">{weight.value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -269,12 +291,12 @@ export default function BrandPage() {
 
       <section id="cores" className="bg-djon-page py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <SectionTitle eyebrow="Paleta" title="Cores" description="A base é preta e grafite, com verde ácido como energia principal. Ciano e laranja entram apenas como variações de informação." />
+          <SectionTitle eyebrow="Paleta" title="Cores" description="A base é preta, branca e grafite, com verde ácido como energia principal. Ciano e laranja entram apenas como variações de informação." />
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {colors.map((color) => (
               <div key={color.hex} className="overflow-hidden rounded-2xl border border-djon-text/10 bg-djon-surface-7">
-                <div className="h-32" style={{ backgroundColor: color.hex }} />
+                <div className="h-32 border-b border-djon-text/10" style={{ backgroundColor: color.hex }} />
                 <div className="p-5">
                   <p className="font-black tracking-tight text-djon-text">{color.name}</p>
                   <p className="mt-1 font-mono text-xs text-djon-text/40">{color.hex}</p>
@@ -291,110 +313,116 @@ export default function BrandPage() {
           <SectionTitle eyebrow="Interface" title="Componentes" description="Elementos arredondados, escuros, densos e com estados claros. O verde deve guiar ação, não decorar tudo." />
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-6">
-              <p className="mb-5 flex items-center gap-2 text-xs font-black tracking-[0.25em] text-djon-text/45"><Sparkles size={14} /> BOTÕES</p>
-              <div className="flex flex-wrap gap-3">
-                <button className="rounded-full bg-djon-accent px-6 py-3 text-xs font-black tracking-widest text-djon-ink">AGENDAR</button>
-                <button className="rounded-full border border-djon-text/20 px-6 py-3 text-xs font-black tracking-widest text-djon-text/70">LOGIN</button>
-                <button className="rounded-full bg-djon-text/10 px-6 py-3 text-xs font-black tracking-widest text-djon-text">SALVAR</button>
-                <button className="flex size-11 items-center justify-center rounded-full border border-djon-text/15 bg-djon-text/5 text-djon-text/65"><Plus size={17} /></button>
-                <button className="flex size-11 items-center justify-center rounded-full bg-djon-accent text-djon-ink"><Search size={17} /></button>
+            <ComponentCard icon={<Sparkles size={14} />} title="BOTÕES">
+              <div className="grid gap-3">
+                <PortalButton full icon={<CalendarDays size={15} />}>AGENDAR</PortalButton>
+                <PortalButton full variant="dark" icon={<LogIn size={15} />}>ENTRAR</PortalButton>
+                <PortalButton full variant="outline">VER CURSOS</PortalButton>
+                <div className="grid grid-cols-[1fr_auto_auto] gap-3">
+                  <PortalButton variant="ghost">SALVAR</PortalButton>
+                  <PortalIconButton label="Editar"><Edit3 size={16} /></PortalIconButton>
+                  <PortalIconButton label="Excluir" variant="danger"><Trash2 size={16} /></PortalIconButton>
+                </div>
+                <p className="text-xs leading-relaxed text-djon-text/38">
+                  Hover padrão do portal: escala leve, toque com compressão e sem trocar a cor base do botão.
+                </p>
               </div>
-            </div>
+            </ComponentCard>
 
-            <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-6">
-              <p className="mb-5 flex items-center gap-2 text-xs font-black tracking-[0.25em] text-djon-text/45"><Mail size={14} /> INPUTS</p>
+            <ComponentCard icon={<Mail size={14} />} title="CAMPOS">
               <div className="space-y-3">
-                <label className="block">
-                  <span className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">E-MAIL</span>
-                  <input className="w-full rounded-xl border border-djon-text/12 bg-djon-input px-4 py-3 text-sm text-djon-text outline-none placeholder:text-djon-text/25 focus:border-djon-accent" placeholder="aluno@djonacademy.com" />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">UNIDADE</span>
-                  <div className="flex items-center justify-between rounded-xl border border-djon-text/12 bg-djon-input px-4 py-3 text-sm font-bold text-djon-text">
-                    Porto Alegre / RS <ChevronDown size={15} className="text-djon-text/45" />
-                  </div>
-                </label>
+                <PortalField label="E-MAIL" placeholder="aluno@djonacademy.com" />
+                <PortalSelect label="UNIDADE" value="Porto Alegre / RS" />
                 <label className="block">
                   <span className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">BUSCA</span>
-                  <div className="flex items-center gap-3 rounded-xl border border-djon-text/12 bg-djon-input px-4 py-3 text-sm text-djon-text/45">
+                  <div className="flex items-center gap-3 rounded-xl border border-djon-text/12 bg-djon-input px-4 py-3 text-sm text-djon-text/45 transition-colors focus-within:border-djon-accent/50">
                     <Search size={15} />
                     Buscar alunos, materiais, eventos...
                   </div>
                 </label>
               </div>
-            </div>
+            </ComponentCard>
 
-            <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-6">
-              <p className="mb-5 flex items-center gap-2 text-xs font-black tracking-[0.25em] text-djon-text/45"><CalendarDays size={14} /> BADGES</p>
+            <ComponentCard icon={<CalendarDays size={14} />} title="STATUS E CARDS">
               <div className="flex flex-wrap gap-2">
                 {components.map((component) => (
-                  <span
-                    key={component.label}
-                    className={`rounded-full px-4 py-2 text-djon-meta font-black tracking-widest ${component.label === "Tab ativa" ? "bg-djon-accent text-djon-ink" : component.label === "Info" ? "bg-djon-cyan/12 text-djon-cyan" : component.label === "Warning" ? "bg-djon-orange/12 text-djon-orange" : "border border-djon-text/12 bg-djon-text/5 text-djon-text/62"
-                      }`}
-                  >
+                  <PortalBadge key={component.label} label={component.label}>
                     {component.value}
-                  </span>
+                  </PortalBadge>
                 ))}
               </div>
-              <div className="mt-6 rounded-xl border border-djon-text/10 bg-djon-surface-9 p-4">
-                <p className="text-sm font-black text-djon-text">Treino Jungle Clássico</p>
-                <p className="mt-1 text-xs text-djon-text/38">20/07/2026 às 09:00</p>
-                <p className="mt-4 text-xs leading-relaxed text-djon-text/45">Cards devem ser escaneáveis, com contraste alto e ações bem definidas.</p>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-6">
-              <p className="mb-5 flex items-center gap-2 text-xs font-black tracking-[0.25em] text-djon-text/45"><Bell size={14} /> NOTIFICAÇÃO</p>
-              <div className="rounded-2xl border border-djon-accent/25 bg-djon-accent/10 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-xl bg-djon-accent text-djon-ink">
-                    <Bell size={17} />
-                  </div>
+              <div className="mt-5 rounded-2xl border border-djon-text/10 bg-djon-surface-9 p-4 transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99]">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-black text-djon-text">Treino aprovado</p>
-                    <p className="mt-1 text-xs leading-relaxed text-djon-text/52">Seu horário foi confirmado para amanhã às 19h.</p>
+                    <p className="text-sm font-black text-djon-text">Treino Jungle Clássico</p>
+                    <p className="mt-1 text-xs font-bold text-djon-text/38">Fernanda Lima</p>
                   </div>
+                  <PortalBadge label="Info">CONFIRMADO</PortalBadge>
+                </div>
+                <div className="mt-4 flex items-center gap-4 text-xs font-bold text-djon-text/42">
+                  <span className="flex items-center gap-1.5"><CalendarDays size={13} /> 20/07/2026</span>
+                  <span className="flex items-center gap-1.5"><Clock size={13} /> 09:00</span>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between rounded-full border border-djon-text/12 bg-djon-text/5 px-4 py-3">
-                <span className="text-xs font-black tracking-widest text-djon-text/50">BADGE</span>
-                <span className="flex size-7 items-center justify-center rounded-full bg-djon-accent text-xs font-black text-djon-ink">6</span>
-              </div>
-            </div>
+            </ComponentCard>
 
-            <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-6">
-              <p className="mb-5 flex items-center gap-2 text-xs font-black tracking-[0.25em] text-djon-text/45"><User size={14} /> PERFIL</p>
+            <ComponentCard icon={<Bell size={14} />} title="NOTIFICAÇÃO">
+              <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-9 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="relative flex size-10 items-center justify-center rounded-full bg-djon-accent text-djon-ink">
+                    <Bell size={17} />
+                    <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-djon-accent text-[9px] font-black text-djon-ink ring-2 ring-djon-surface-9">6</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-djon-text">Solicitações de treino</p>
+                    <p className="mt-1 text-xs leading-relaxed text-djon-text/52">6 aguardando aprovação dos professores.</p>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  <PortalButton icon={<Check size={14} />}>APROVAR</PortalButton>
+                  <PortalButton variant="danger" icon={<X size={14} />}>RECUSAR</PortalButton>
+                </div>
+              </div>
+            </ComponentCard>
+
+            <ComponentCard icon={<User size={14} />} title="PERFIL">
               <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-9 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex size-12 items-center justify-center rounded-full bg-djon-accent/18 text-sm font-black text-djon-accent">C</div>
-                  <div>
-                    <p className="text-sm font-black text-djon-text">Camila Souza</p>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-djon-text">Camila Souza</p>
                     <p className="text-[10px] font-black tracking-widest text-djon-accent">PROFESSOR</p>
                   </div>
                 </div>
-                <div className="mt-4 border-t border-djon-text/10 pt-4 text-xs leading-relaxed text-djon-text/45">
-                  Card de usuário com avatar, função, contato e ações por ícone.
+                <div className="mt-4 grid gap-2 border-t border-djon-text/10 pt-4 text-xs font-bold text-djon-text/45">
+                  <span className="flex items-center gap-2"><Mail size={13} /> camila@djonacademy.com</span>
+                  <span className="flex items-center gap-2"><User size={13} /> Perfil editável no portal</span>
                 </div>
               </div>
-            </div>
+            </ComponentCard>
 
-            <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-6">
-              <p className="mb-5 flex items-center gap-2 text-xs font-black tracking-[0.25em] text-djon-text/45"><CalendarDays size={14} /> MODAL</p>
+            <ComponentCard icon={<CalendarDays size={14} />} title="MODAL">
               <div className="rounded-2xl border border-djon-text/12 bg-djon-surface-9 p-5">
                 <p className="text-xs font-black tracking-[0.25em] text-djon-accent">NOVO</p>
                 <h3 className="mt-2 text-2xl font-black text-djon-text">Treino</h3>
                 <div className="mt-4 grid gap-3">
-                  <div className="h-11 rounded-xl border border-djon-text/12 bg-djon-input" />
+                  <PortalField label="TÍTULO" placeholder="Treino de Beat Match" defaultValue="Treino de Beat Match" />
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="h-11 rounded-xl border border-djon-accent bg-djon-input" />
-                    <div className="h-11 rounded-xl border border-djon-text/12 bg-djon-input" />
+                    <PortalSelect label="DATA" value="20/07/2026" icon={<CalendarDays size={14} />} />
+                    <PortalSelect label="HORÁRIO" value="19:00" icon={<Clock size={14} />} />
                   </div>
-                  <div className="h-12 rounded-xl bg-djon-accent" />
+                  <label className="block">
+                    <span className="mb-2 block text-[10px] font-black tracking-widest text-djon-text/38">OBSERVAÇÕES</span>
+                    <textarea
+                      className="min-h-20 w-full resize-none rounded-xl border border-djon-text/12 bg-djon-input px-4 py-3 text-xs font-bold leading-relaxed text-djon-text outline-none transition-colors placeholder:text-djon-text/25 hover:border-djon-text/24 focus:border-djon-accent/50"
+                      placeholder="O que você quer trabalhar nesse treino?"
+                      defaultValue="Quero revisar transições e preparar repertório para meu primeiro set."
+                    />
+                  </label>
+                  <PortalButton full> SOLICITAR TREINO </PortalButton>
                 </div>
               </div>
-            </div>
+            </ComponentCard>
           </div>
         </div>
       </section>
@@ -508,5 +536,146 @@ function SectionTitle({
       <div className="mt-4 h-1 w-10 rounded-full bg-djon-accent" />
       <p className={`mt-5 max-w-2xl text-sm leading-relaxed ${light ? "text-djon-ink/60" : "text-djon-text/50"}`}>{description}</p>
     </div>
+  )
+}
+
+function ComponentCard({
+  icon,
+  title,
+  children,
+}: {
+  icon: ReactNode
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-6">
+      <p className="mb-5 flex items-center gap-2 text-xs font-black tracking-[0.25em] text-djon-text/45">
+        {icon} {title}
+      </p>
+      {children}
+    </div>
+  )
+}
+
+function PortalButton({
+  children,
+  icon,
+  variant = "primary",
+  full = false,
+}: {
+  children: ReactNode
+  icon?: ReactNode
+  variant?: "primary" | "dark" | "outline" | "ghost" | "danger"
+  full?: boolean
+}) {
+  const variants = {
+    primary: "bg-djon-accent text-djon-ink",
+    dark: "bg-djon-text text-djon-ink",
+    outline: "border border-djon-text/20 bg-transparent text-djon-text/82",
+    ghost: "bg-djon-text/8 text-djon-text",
+    danger: "border border-djon-danger/30 bg-transparent text-djon-danger",
+  }
+
+  return (
+    <button
+      type="button"
+      className={`inline-flex h-12 items-center justify-center gap-2 rounded-xl px-5 text-xs font-black tracking-widest transition-transform duration-200 hover:scale-[1.02] active:scale-[0.97] disabled:opacity-60 ${full ? "w-full" : ""} ${variants[variant]}`}
+    >
+      {icon}
+      {children}
+    </button>
+  )
+}
+
+function PortalIconButton({
+  children,
+  label,
+  variant = "default",
+}: {
+  children: ReactNode
+  label: string
+  variant?: "default" | "danger"
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      className={`flex size-12 items-center justify-center rounded-xl border transition-transform duration-200 hover:scale-[1.02] active:scale-[0.97] ${
+        variant === "danger"
+          ? "border-djon-danger/24 bg-transparent text-djon-danger"
+          : "border-djon-text/12 bg-djon-text/5 text-djon-text/62"
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function PortalField({
+  label,
+  placeholder,
+  defaultValue,
+}: {
+  label: string
+  placeholder: string
+  defaultValue?: string
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">{label}</span>
+      <input
+        className="h-12 w-full rounded-xl border border-djon-text/12 bg-djon-input px-4 text-sm font-bold text-djon-text outline-none transition-colors placeholder:text-djon-text/25 hover:border-djon-text/24 focus:border-djon-accent/50"
+        placeholder={placeholder}
+        defaultValue={defaultValue}
+      />
+    </label>
+  )
+}
+
+function PortalSelect({
+  label,
+  value,
+  icon,
+}: {
+  label: string
+  value: string
+  icon?: ReactNode
+}) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">{label}</span>
+      <button
+        type="button"
+        className="flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-djon-text/12 bg-djon-input px-4 text-left text-sm font-bold text-djon-text transition-colors hover:border-djon-text/24 focus:border-djon-accent/50 focus:outline-none"
+      >
+        <span className="truncate">{value}</span>
+        <span className="shrink-0 text-djon-text/40">{icon ?? <ChevronDown size={15} />}</span>
+      </button>
+    </label>
+  )
+}
+
+function PortalBadge({
+  label,
+  children,
+}: {
+  label: string
+  children: ReactNode
+}) {
+  const variants =
+    label === "Tab ativa"
+      ? "bg-djon-accent text-djon-ink"
+      : label === "Info"
+        ? "bg-djon-accent/15 text-djon-accent"
+        : label === "Warning"
+          ? "bg-djon-warning/15 text-djon-warning"
+          : "border border-djon-text/12 bg-djon-text/5 text-djon-text/62"
+
+  return (
+    <span className={`rounded-full px-3.5 py-1.5 text-djon-meta font-black tracking-widest ${variants}`}>
+      {children}
+    </span>
   )
 }

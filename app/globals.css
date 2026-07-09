@@ -5,7 +5,7 @@
 
 :root {
   /* DJ ON design tokens: altere a marca aqui */
-  --djon-font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --djon-font-sans: var(--font-inter, "Inter"), "Inter Fallback", system-ui, sans-serif;
   --djon-font-mono: "Inter", "Inter Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --djon-color-page: #0a0a0a;
@@ -386,8 +386,9 @@
   max-width: 100%;
   letter-spacing: 0;
   text-wrap: balance;
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
 }
 
 .djon-hero-title {

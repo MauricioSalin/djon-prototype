@@ -43,9 +43,6 @@ export function HeroSection() {
   const rawScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.9])
   const scale = useSpring(rawScale, springConfig)
 
-  const rawOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
-  const opacity = useSpring(rawOpacity, springConfig)
-
   useEffect(() => {
     return () => {
       if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
@@ -77,10 +74,10 @@ export function HeroSection() {
 
 
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-24 pb-12 w-full sm:px-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-12 w-full sm:px-6 lg:pt-24">
         <div className="grid lg:grid-cols-[5fr_7fr] gap-4 items-center">
           {/* Text Content */}
-          <motion.div style={{ opacity }} className="space-y-6 relative z-20">
+          <motion.div className="space-y-6 relative z-20">
             <div className="space-y-1 overflow-hidden">
               <motion.h1
                 style={{ x: textX1 }}
@@ -195,10 +192,10 @@ export function HeroSection() {
               initial="hidden"
               animate="visible"
               custom={6}
-              className="relative mt-5 h-[430px] w-full overflow-visible min-[390px]:h-[460px] sm:h-[520px] lg:hidden"
+              className="relative !-mt-2 h-[430px] w-full overflow-visible min-[390px]:h-[460px] sm:!-mt-1 sm:h-[520px] lg:hidden"
             >
               <motion.div
-                className="absolute left-1/2 top-1/2 h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.34] transform-gpu min-[360px]:scale-[0.38] min-[390px]:scale-[0.42] sm:scale-[0.5]"
+                className="absolute left-1/2 top-[34%] h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.34] transform-gpu min-[360px]:scale-[0.38] min-[390px]:top-[36%] min-[390px]:scale-[0.42] sm:top-[40%] sm:scale-[0.5]"
                 initial={false}
                 animate={{ opacity: splineLoaded ? 1 : 0 }}
                 transition={{ duration: 0.45, ease: "easeOut" }}
