@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { LenisProvider } from "@/components/lenis-provider"
 import ClickSpark from "@/components/click-spark"
+import { PWARegister } from "@/components/pwa-register"
 import "./globals.css"
 
 const _inter = Inter({
@@ -11,7 +12,7 @@ const _inter = Inter({
   variable: "--font-sans",
 })
 
-const siteName = "DJ ON Academy"
+const siteName = "DJ ON"
 const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://djonacademy.com")
 const defaultTitle = "DJ ON Academy | Curso de DJ e Produção Musical"
 const defaultDescription =
@@ -21,6 +22,7 @@ const defaultImage = "/images/djon-hero.png"
 export const metadata: Metadata = {
   metadataBase: siteUrl,
   applicationName: siteName,
+  manifest: "/manifest.webmanifest",
   title: {
     default: defaultTitle,
     template: `%s | ${siteName}`,
@@ -40,9 +42,21 @@ export const metadata: Metadata = {
   creator: siteName,
   publisher: siteName,
   icons: {
-    icon: [{ url: "/favicon.png", type: "image/png" }],
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/icons/djon-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/djon-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
     shortcut: ["/favicon.png"],
-    apple: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/icons/djon-icon-180.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "DJ ON",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
   },
   openGraph: {
     type: "website",
@@ -70,7 +84,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "var(--djon-color-accent)",
+  themeColor: "#97ff00",
 }
 
 export default function RootLayout({
@@ -91,6 +105,7 @@ export default function RootLayout({
         >
           <LenisProvider>{children}</LenisProvider>
         </ClickSpark>
+        <PWARegister />
         <Analytics />
       </body>
     </html>
