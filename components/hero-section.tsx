@@ -192,10 +192,10 @@ export function HeroSection() {
               initial="hidden"
               animate="visible"
               custom={6}
-              className="relative !-mt-2 h-[430px] w-full overflow-visible min-[390px]:h-[460px] sm:!-mt-1 sm:h-[520px] lg:hidden"
+              className="relative !-mt-6 h-[300px] w-full overflow-visible min-[390px]:h-[330px] sm:!-mt-4 sm:h-[390px] lg:hidden"
             >
               <motion.div
-                className="absolute left-1/2 top-[34%] h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.34] transform-gpu min-[360px]:scale-[0.38] min-[390px]:top-[36%] min-[390px]:scale-[0.42] sm:top-[40%] sm:scale-[0.5]"
+                className="absolute left-1/2 top-[40%] h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] transform-gpu min-[360px]:scale-[0.46] min-[390px]:top-[42%] min-[390px]:scale-[0.5] sm:top-[44%] sm:scale-[0.58]"
                 initial={false}
                 animate={{ opacity: splineLoaded ? 1 : 0 }}
                 transition={{ duration: 0.45, ease: "easeOut" }}

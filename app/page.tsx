@@ -8,7 +8,7 @@ import { ActivationsSection } from "@/components/activations-section"
 import { SocialSection } from "@/components/social-section"
 import { Footer } from "@/components/footer"
 
-const title = "DJ ON"
+const title = "Seu sonho começa aqui | DJ ON"
 const shareTitle = "DJ ON Academy | Curso de DJ e Produção Musical"
 const description =
   "Aprenda a ser DJ ou produtor musical com a DJ ON Academy. Formação, produção musical, mentoria e eventos reais para transformar seu sonho em palco."

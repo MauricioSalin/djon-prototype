@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { LenisProvider } from "@/components/lenis-provider"
 import ClickSpark from "@/components/click-spark"
 import { PWARegister } from "@/components/pwa-register"
+import { PageTitleManager } from "@/components/page-title-manager"
 import "./globals.css"
 
 const inter = Inter({
@@ -17,7 +18,7 @@ const inter = Inter({
 
 const siteName = "DJ ON"
 const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://djonacademy.com")
-const defaultTitle = "DJ ON"
+const defaultTitle = "DJ ON Academy | Música, palco e performance"
 const defaultDescription =
   "A DJ ON Academy é a fronteira entre o sonho e a realização. Aprenda DJ, produção musical e performance com uma comunidade feita para transformar sonho em palco."
 const defaultImage = "/images/djon-hero.png"
@@ -87,7 +88,10 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0a0a0a",
 }
 
 export default function RootLayout({
@@ -96,19 +100,20 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={`bg-background ${inter.variable}`}>
+    <html lang="pt-BR" className={`bg-djon-page ${inter.variable}`}>
       <head>
+        <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
         <title>DJ ON</title>
         <meta name="application-name" content="DJ ON" />
         <meta name="apple-mobile-web-app-title" content="DJ ON" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-        <meta name="theme-color" content="#050505" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="theme-color" content="#0a0a0a" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
         <link rel="icon" href="/favicon.png" type="image/png" />
       </head>
-      <body className={`font-sans antialiased`}>
+      <body className="bg-djon-page font-sans text-djon-text antialiased">
         <ClickSpark
           sparkColor="var(--djon-color-accent)"
           sparkSize={12}
@@ -119,6 +124,7 @@ export default function RootLayout({
         >
           <LenisProvider>{children}</LenisProvider>
         </ClickSpark>
+        <PageTitleManager />
         <PWARegister />
         <Analytics />
       </body>

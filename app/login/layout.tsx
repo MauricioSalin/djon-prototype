@@ -1,13 +1,15 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
-const title = "Acessar Portal | DJ ON Academy"
+const title = "Acessar Portal | DJ ON"
 const description =
   "Entre no portal da DJ ON Academy para acessar agenda, materiais, professores, eventos e sua jornada dentro da escola."
 const image = "/images/djon-hero.png"
 
 export const metadata: Metadata = {
-  title,
+  title: {
+    absolute: title,
+  },
   description,
   alternates: {
     canonical: "/login",

@@ -1,4 +1,4 @@
-const SW_VERSION = "djon-pwa-v2"
+const SW_VERSION = "djon-pwa-v3"
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting())

@@ -1,7 +1,7 @@
 "use client"
 
 import type { CSSProperties } from "react"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import dynamic from "next/dynamic"
 import type { Application } from "@splinetool/runtime"
 
@@ -13,7 +13,6 @@ type SplineSceneProps = {
   style?: CSSProperties
   onLoad?: (spline: Application) => void
   transparent?: boolean
-  bustCache?: boolean
   revealDelay?: number
   lazy?: boolean
   lazyThreshold?: number
@@ -26,7 +25,6 @@ export function SplineScene({
   style,
   onLoad,
   transparent = true,
-  bustCache = true,
   revealDelay = 650,
   lazy = true,
   lazyThreshold = 0.12,
@@ -38,13 +36,7 @@ export function SplineScene({
   const [isVisible, setIsVisible] = useState(!lazy)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const sceneUrl = useMemo(() => {
-    if (!bustCache) return scene
-
-    const separator = scene.includes("?") ? "&" : "?"
-    return `${scene}${separator}v=${Date.now()}`
-  }, [bustCache, scene])
-  const sceneKey = sceneUrl
+  const sceneKey = scene
 
   useEffect(() => {
     const ua = window.navigator.userAgent
@@ -52,6 +44,7 @@ export function SplineScene({
     const maxTouchPoints = window.navigator.maxTouchPoints || 0
     const isIOS = /iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1)
     const isSmallTouchDevice = window.matchMedia("(max-width: 768px) and (pointer: coarse)").matches
+
     setIsMemorySensitive(isIOS || isSmallTouchDevice)
   }, [])
 
@@ -79,12 +72,12 @@ export function SplineScene({
           setShouldLoad(true)
         }
       },
-      { rootMargin: "220px 0px", threshold: lazyThreshold },
+      { rootMargin: isMemorySensitive ? "80px 0px" : "220px 0px", threshold: lazyThreshold },
     )
 
     observer.observe(element)
     return () => observer.disconnect()
-  }, [lazy, lazyThreshold])
+  }, [isMemorySensitive, lazy, lazyThreshold])
 
   useEffect(() => {
     if (!unloadWhenHidden || !isMemorySensitive || isVisible) return
@@ -145,7 +138,7 @@ export function SplineScene({
         {shouldLoad && (
           <Spline
             key={sceneKey}
-            scene={sceneUrl}
+            scene={scene}
             onLoad={handleLoad}
             renderOnDemand
             style={{

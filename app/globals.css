@@ -376,7 +376,7 @@
     min-width: 0;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-djon-page text-djon-text;
   }
 }
 

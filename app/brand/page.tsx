@@ -6,14 +6,14 @@ import { Bell, CalendarDays, Check, ChevronDown, Clock, Download, Edit3, LogIn, 
 import { SplineScene } from "@/components/spline-scene"
 
 export const metadata: Metadata = {
-  title: "Brand DJ ON Academy x Salin",
+  title: "Brand System x Salin",
   description:
     "Apresentação visual da identidade DJ ON Academy: logo, tipografia, paleta, componentes, modelos 3D e proposta criativa assinada por Salin.",
   alternates: {
     canonical: "/brand",
   },
   openGraph: {
-    title: "Brand DJ ON Academy x Salin",
+    title: "Brand System x Salin | DJ ON",
     description:
       "Um guia de marca com identidade visual, componentes, 3D e direção criativa para apresentar a proposta DJ ON Academy.",
     url: "/brand",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brand DJ ON Academy x Salin",
+    title: "Brand System x Salin | DJ ON",
     description:
       "Identidade visual, componentes, 3D e direção criativa para apresentar a proposta DJ ON Academy.",
     images: ["/images/salin/salin-cenna-4.jpg"],

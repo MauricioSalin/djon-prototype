@@ -6,12 +6,12 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "DJ ON",
     short_name: "DJ ON",
     description: "Portal e proposta digital da DJ ON Academy.",
-    start_url: "/",
+    start_url: "/login",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#050505",
-    theme_color: "#050505",
+    background_color: "#0a0a0a",
+    theme_color: "#0a0a0a",
     categories: ["education", "music", "entertainment"],
     icons: [
       {
