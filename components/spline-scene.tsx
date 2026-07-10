@@ -17,6 +17,7 @@ type SplineSceneProps = {
   revealDelay?: number
   lazy?: boolean
   lazyThreshold?: number
+  unloadWhenHidden?: boolean
 }
 
 export function SplineScene({
@@ -29,10 +30,12 @@ export function SplineScene({
   revealDelay = 650,
   lazy = true,
   lazyThreshold = 0.12,
+  unloadWhenHidden = true,
 }: SplineSceneProps) {
   const [ready, setReady] = useState(false)
   const [shouldLoad, setShouldLoad] = useState(!lazy)
-  const [isIOS, setIsIOS] = useState<boolean | null>(null)
+  const [isMemorySensitive, setIsMemorySensitive] = useState(false)
+  const [isVisible, setIsVisible] = useState(!lazy)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sceneUrl = useMemo(() => {
@@ -47,7 +50,9 @@ export function SplineScene({
     const ua = window.navigator.userAgent
     const platform = window.navigator.platform
     const maxTouchPoints = window.navigator.maxTouchPoints || 0
-    setIsIOS(/iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1))
+    const isIOS = /iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1)
+    const isSmallTouchDevice = window.matchMedia("(max-width: 768px) and (pointer: coarse)").matches
+    setIsMemorySensitive(isIOS || isSmallTouchDevice)
   }, [])
 
   useEffect(() => {
@@ -64,21 +69,33 @@ export function SplineScene({
     }
 
     const element = wrapperRef.current
-    if (!element || shouldLoad) return
+    if (!element) return
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        setIsVisible(entry.isIntersecting)
+
         if (entry.isIntersecting) {
           setShouldLoad(true)
-          observer.disconnect()
         }
       },
-      { threshold: lazyThreshold },
+      { rootMargin: "220px 0px", threshold: lazyThreshold },
     )
 
     observer.observe(element)
     return () => observer.disconnect()
-  }, [lazy, lazyThreshold, shouldLoad])
+  }, [lazy, lazyThreshold])
+
+  useEffect(() => {
+    if (!unloadWhenHidden || !isMemorySensitive || isVisible) return
+
+    const timeout = window.setTimeout(() => {
+      setReady(false)
+      setShouldLoad(false)
+    }, 900)
+
+    return () => window.clearTimeout(timeout)
+  }, [isMemorySensitive, isVisible, unloadWhenHidden])
 
   const handleLoad = useCallback(
     (spline: Application) => {
@@ -125,12 +142,12 @@ export function SplineScene({
           height: "100%",
         }}
       >
-        {shouldLoad && isIOS === false && (
+        {shouldLoad && (
           <Spline
             key={sceneKey}
             scene={sceneUrl}
             onLoad={handleLoad}
-            renderOnDemand={false}
+            renderOnDemand
             style={{
               width: "100%",
               height: "100%",
