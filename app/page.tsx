@@ -8,19 +8,22 @@ import { ActivationsSection } from "@/components/activations-section"
 import { SocialSection } from "@/components/social-section"
 import { Footer } from "@/components/footer"
 
-const title = "DJ ON Academy | Curso de DJ e Produção Musical"
+const title = "DJ ON"
+const shareTitle = "DJ ON Academy | Curso de DJ e Produção Musical"
 const description =
   "Aprenda a ser DJ ou produtor musical com a DJ ON Academy. Formação, produção musical, mentoria e eventos reais para transformar seu sonho em palco."
 const image = "/images/djon-hero.png"
 
 export const metadata: Metadata = {
-  title,
+  title: {
+    absolute: title,
+  },
   description,
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title,
+    title: shareTitle,
     description,
     url: "/",
     images: [
@@ -34,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title,
+    title: shareTitle,
     description,
     images: [image],
   },

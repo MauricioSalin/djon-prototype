@@ -32,6 +32,7 @@ export function SplineScene({
 }: SplineSceneProps) {
   const [ready, setReady] = useState(false)
   const [shouldLoad, setShouldLoad] = useState(!lazy)
+  const [isIOS, setIsIOS] = useState<boolean | null>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sceneUrl = useMemo(() => {
@@ -41,6 +42,13 @@ export function SplineScene({
     return `${scene}${separator}v=${Date.now()}`
   }, [bustCache, scene])
   const sceneKey = sceneUrl
+
+  useEffect(() => {
+    const ua = window.navigator.userAgent
+    const platform = window.navigator.platform
+    const maxTouchPoints = window.navigator.maxTouchPoints || 0
+    setIsIOS(/iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1))
+  }, [])
 
   useEffect(() => {
     setReady(false)
@@ -117,7 +125,7 @@ export function SplineScene({
           height: "100%",
         }}
       >
-        {shouldLoad && (
+        {shouldLoad && isIOS === false && (
           <Spline
             key={sceneKey}
             scene={sceneUrl}
