@@ -6,6 +6,8 @@ import { LenisProvider } from "@/components/lenis-provider"
 import ClickSpark from "@/components/click-spark"
 import { PWARegister } from "@/components/pwa-register"
 import { PageTitleManager } from "@/components/page-title-manager"
+import { AppToaster } from "@/components/app-toaster"
+import { ConfirmationProvider } from "@/components/confirmation-provider"
 import "./globals.css"
 
 const inter = Inter({
@@ -122,10 +124,13 @@ export default function RootLayout({
           duration={400}
           easing="ease-out"
         >
-          <LenisProvider>{children}</LenisProvider>
+          <ConfirmationProvider>
+            <LenisProvider>{children}</LenisProvider>
+          </ConfirmationProvider>
         </ClickSpark>
         <PageTitleManager />
         <PWARegister />
+        <AppToaster />
         <Analytics />
       </body>
     </html>

@@ -1,1459 +1,1562 @@
-"use client"
+"use client";
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+import {
+  notifyRequestError,
+  notifySuccess,
+  notifyUndoable,
+} from "@/lib/feedback";
+import { formatPhone, phoneDigits } from "@/lib/phone";
 
-export type Role = "admin" | "professor" | "student"
+export type Role = "admin" | "professor" | "student";
+
+type MutationFeedbackOptions = {
+  onChange?: () => void;
+  silent?: boolean;
+  keepalive?: boolean;
+};
 
 export interface SocialLinks {
-  instagram?: string
-  soundcloud?: string
-  youtube?: string
+  instagram?: string;
+  soundcloud?: string;
+  youtube?: string;
 }
 
 export interface User {
-  id: string
-  name: string
-  email: string
-  whatsapp?: string
-  cpf?: string
-  birthDate?: string
-  avatar?: string
-  banner?: string
-  bio?: string
-  socials?: SocialLinks
-  role: Role
-  createdAt: string
+  id: string;
+  name: string;
+  email: string;
+  whatsapp?: string;
+  cpf?: string;
+  birthDate?: string;
+  avatar?: string;
+  banner?: string;
+  bio?: string;
+  socials?: SocialLinks;
+  role: Role;
+  unitId?: string;
+  unitLabel?: string;
+  trainingHoursLimit?: number;
+  active?: boolean;
+  createdAt: string;
 }
 
 export interface DJEvent {
-  id: string
-  title: string
-  date: string
-  time: string
-  location: string
-  instagram?: string
-  description?: string
-  createdBy: string
-  createdByName: string
-  createdByAvatar?: string
-  type: "student" | "djOn" | "professor"
-  createdAt: string
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  instagram?: string;
+  description?: string;
+  createdBy: string;
+  createdByName: string;
+  createdByAvatar?: string;
+  type: "student" | "djOn" | "professor";
+  createdAt: string;
 }
 
 export interface Booking {
-  id: string
-  userId: string
-  title: string
-  date: string
-  time: string
-  type: "aula" | "treino"
-  notes?: string
-  status: "confirmado" | "pendente" | "cancelado"
-  createdAt: string
+  id: string;
+  userId: string;
+  studentName?: string;
+  studentAvatar?: string;
+  title: string;
+  date: string;
+  time: string;
+  type: "aula" | "treino";
+  notes?: string;
+  status: "confirmado" | "pendente" | "cancelado";
+  unitId?: string;
+  unitLabel?: string;
+  professorId?: string;
+  professorName?: string;
+  equipmentId?: string;
+  equipmentName?: string;
+  durationMinutes: number;
+  originalBookingId?: string;
+  createdAt: string;
+}
+
+export interface TrainingBalance {
+  limitHours: number;
+  reservedHours: number;
+  remainingHours: number;
+}
+
+export interface OccupiedEquipmentSlot {
+  bookingId: string;
+  equipmentId: string;
+  equipmentName: string;
+  date: string;
+  time: string;
+  endTime: string;
+}
+
+export interface BookingAvailability {
+  availableTimes: string[];
+  occupiedTimes: string[];
+  occupiedEquipment: OccupiedEquipmentSlot[];
+}
+
+export interface Unit {
+  id: string;
+  key: string;
+  label: string;
+  shortLabel: string;
+  address: string;
+  mapSrc?: string;
+  mapsHref?: string;
+  timezone: string;
+  active: boolean;
+}
+
+export interface Equipment {
+  id: string;
+  name: string;
+  description?: string;
+  unitId: string;
+  unitLabel?: string;
+  active: boolean;
+}
+
+export interface Lead {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  message?: string;
+  unitKey?: string;
+  status: "novo" | "contatado" | "convertido" | "arquivado";
+  internalNotes?: string;
+  assignedTo?: { id: string; name: string; email: string };
+  createdAt: string;
 }
 
 export interface MaterialAttachment {
-  id: string
-  name: string
-  type: "pdf" | "image" | "file"
-  url: string
-  size?: string
+  id: string;
+  name: string;
+  type: "pdf" | "image" | "file";
+  url: string;
+  size?: string;
 }
 
 export interface Material {
-  id: string
-  title: string
-  description?: string
-  category: string
-  coverImage?: string
-  body?: string
-  attachments?: MaterialAttachment[]
-  authorId: string
-  authorName: string
-  authorAvatar?: string
-  createdAt: string
-  // legacy fields (kept for backwards compatibility)
-  fileType?: "image" | "pdf"
-  fileUrl?: string
-  fileName?: string
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  coverImage?: string;
+  body?: string;
+  attachments?: MaterialAttachment[];
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  status: "draft" | "published";
+  createdAt: string;
+  fileType?: "image" | "pdf";
+  fileUrl?: string;
+  fileName?: string;
 }
 
-// ─── Seed Data ───────────────────────────────────────────────────────────────
+export interface UploadedFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  purpose: string;
+  url: string;
+}
 
-const seedUsers: User[] = [
-  {
-    id: "admin-1",
-    name: "DJ ON Academy",
-    email: "admin@djonacademy.com",
-    avatar: "",
-    banner: "",
-    bio: "A DJ ON Academy é a fronteira entre o sonho e a realização.",
-    socials: { instagram: "djonacademy" },
-    role: "admin",
-    createdAt: "2018-01-01T00:00:00Z",
-  },
-  {
-    id: "prof-1",
-    name: "Rafael Steiner",
-    email: "rafael@djonacademy.com",
-    whatsapp: "51999990001",
-    avatar: "",
-    banner: "",
-    bio: "Professor de Formação DJ e Produção Musical. 12 anos de experiência em eletrônica.",
-    socials: { instagram: "rafaelsteiner_dj", soundcloud: "rafaelsteiner" },
-    role: "professor",
-    createdAt: "2019-03-01T00:00:00Z",
-  },
-  {
-    id: "prof-2",
-    name: "Camila Souza",
-    email: "camila@djonacademy.com",
-    whatsapp: "51999990002",
-    avatar: "",
-    banner: "",
-    bio: "Professora de Produção Musical e Marketing. Techno, Afro House e Melodic.",
-    socials: { instagram: "camilasouza_dj", soundcloud: "camilasouza" },
-    role: "professor",
-    createdAt: "2020-07-15T00:00:00Z",
-  },
-  {
-    id: "student-1",
-    name: "Lucas Ferreira",
-    email: "lucas@email.com",
-    whatsapp: "51991110001",
-    cpf: "111.222.333-01",
-    birthDate: "1999-04-20",
-    avatar: "",
-    banner: "",
-    bio: "DJ em formação. Apaixonado por deep house e melodic techno.",
-    socials: { instagram: "lucasdjpoa", soundcloud: "lucasferreiramusic" },
-    role: "student",
-    createdAt: "2024-03-15T00:00:00Z",
-  },
-  {
-    id: "student-2",
-    name: "Ana Beatriz",
-    email: "ana@email.com",
-    whatsapp: "51991110002",
-    cpf: "111.222.333-02",
-    birthDate: "2001-08-15",
-    avatar: "",
-    banner: "",
-    bio: "Produtora musical e DJ. Techno, afro house e beats experimentais.",
-    socials: { instagram: "anabeatz", soundcloud: "anabeatz" },
-    role: "student",
-    createdAt: "2024-06-01T00:00:00Z",
-  },
-  {
-    id: "student-3",
-    name: "Pedro Nunes",
-    email: "pedro@email.com",
-    avatar: "",
-    banner: "",
-    bio: "Fã de house music. Aprendendo a mixar e produzir.",
-    socials: { instagram: "pedronunes_dj" },
-    role: "student",
-    createdAt: "2024-09-10T00:00:00Z",
-  },
-  {
-    id: "student-4",
-    name: "Fernanda Lima",
-    email: "fernanda@email.com",
-    avatar: "",
-    banner: "",
-    bio: "Dançarina que virou DJ. Drum & bass e jungle.",
-    socials: { instagram: "fernandalima_beats" },
-    role: "student",
-    createdAt: "2025-01-20T00:00:00Z",
-  },
-  {
-    id: "student-5",
-    name: "Gabriel Rocha",
-    email: "gabriel@email.com",
-    avatar: "",
-    banner: "",
-    bio: "DJ e produtor. Progressive house e trance.",
-    socials: { instagram: "gabrielrocha_prog", soundcloud: "gabrielrocha" },
-    role: "student",
-    createdAt: "2025-02-14T00:00:00Z",
-  },
-]
+export interface Notification {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  url: string;
+  metadata: Record<string, unknown>;
+  readAt?: string;
+  createdAt: string;
+}
 
-const seedEvents: DJEvent[] = [
-  // ── DJ ON Official Events ─────────────────────────────────────────────────
-  {
-    id: "evt-djOn-1",
-    title: "Showcase Formatura — Turma 2025",
-    date: "2025-08-15",
-    time: "22:00",
-    location: "Teatro do SESC — Porto Alegre",
-    instagram: "djonacademy",
-    description: "Grande evento de formatura com os novos DJs da turma 2025. Palco real, som profissional e convidados especiais.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2025-01-10T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2",
-    title: "Open Lab — Sessão de Produção Ao Vivo",
-    date: "2025-07-30",
-    time: "19:00",
-    location: "DJ ON Studio — Rua da República, 450",
-    instagram: "djonacademy",
-    description: "Sessão aberta de produção musical com os professores. Venha ver como funciona o processo criativo.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2025-06-20T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-3",
-    title: "Night Edition — Palco DJ ON",
-    date: "2025-09-06",
-    time: "23:00",
-    location: "Club W — Av. Independência, 877",
-    instagram: "clubw_poa",
-    description: "Noite exclusiva com os melhores alunos da turma no Club W. Entrada gratuita para alunos.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2025-07-01T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-past-1",
-    title: "Showcase Inverno 2024",
-    date: "2024-07-20",
-    time: "21:00",
-    location: "Opinião — Rua José do Patrocínio, 834",
-    instagram: "djonacademy",
-    description: "Formatura da turma de inverno 2024 com 12 DJs no palco.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2024-06-01T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-past-2",
-    title: "DJ ON no Lollapalooza Side Stage",
-    date: "2024-03-22",
-    time: "18:30",
-    location: "Autódromo de Interlagos — São Paulo",
-    instagram: "djonacademy",
-    description: "Participação especial dos alunos da DJ ON no festival.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2024-01-15T00:00:00Z",
-  },
-  // ── Student Events ────────────────────────────────────────────────────────
-  {
-    id: "evt-s1-1",
-    title: "Open Bar Sábado",
-    date: "2025-07-19",
-    time: "23:00",
-    location: "Bar Ocidente — Rua Riachuelo, 1069",
-    instagram: "barocidente_",
-    description: "Primeira apresentação ao vivo depois do Módulo 1. Deep house e progressive.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2025-07-01T00:00:00Z",
-  },
-  {
-    id: "evt-s1-2",
-    title: "Residência — Sextas do Ocidente",
-    date: "2025-08-01",
-    time: "22:00",
-    location: "Bar Ocidente — Rua Riachuelo, 1069",
-    instagram: "lucasdjpoa",
-    description: "Segundo set na residência mensal do Bar Ocidente. 90 minutos de deep house.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2025-07-10T00:00:00Z",
-  },
-  {
-    id: "evt-s1-past-1",
-    title: "Aniversário da Nanda — Set Privado",
-    date: "2025-04-12",
-    time: "20:00",
-    location: "Espaço Villa — Bairro Floresta",
-    instagram: "lucasdjpoa",
-    description: "Primeiro set privado. Deep house e disco clássico.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2025-03-20T00:00:00Z",
-  },
-  {
-    id: "evt-s2-1",
-    title: "Festa Techno Underground",
-    date: "2025-07-26",
-    time: "00:00",
-    location: "Club XYZ — Av. Farrapos, 300",
-    instagram: "techno_poa",
-    description: "Set techno de 2h no palco principal. Minimal e industrial.",
-    createdBy: "student-2",
-    createdByName: "Ana Beatriz",
-    type: "student",
-    createdAt: "2025-07-05T00:00:00Z",
-  },
-  {
-    id: "evt-s2-2",
-    title: "Afro House Sunset — Praia do Lami",
-    date: "2025-08-10",
-    time: "17:00",
-    location: "Praia do Lami — Porto Alegre",
-    instagram: "anabeatz",
-    description: "Set ao pôr do sol na praia. Afro house e melodic techno.",
-    createdBy: "student-2",
-    createdByName: "Ana Beatriz",
-    type: "student",
-    createdAt: "2025-07-20T00:00:00Z",
-  },
-  {
-    id: "evt-s2-past-1",
-    title: "Festa de Formatura da UFRGS",
-    date: "2024-12-14",
-    time: "22:00",
-    location: "Clube Sírio — Av. Ipiranga",
-    instagram: "anabeatz",
-    description: "Set de 3h de techno e afro house.",
-    createdBy: "student-2",
-    createdByName: "Ana Beatriz",
-    type: "student",
-    createdAt: "2024-11-01T00:00:00Z",
-  },
-  {
-    id: "evt-s3-1",
-    title: "Casa Party — House Edition",
-    date: "2025-08-23",
-    time: "21:00",
-    location: "Casa do Pedro — Bairro Petrópolis",
-    instagram: "pedronunes_dj",
-    description: "Festa temática house music com amigos. Primeiro set em público.",
-    createdBy: "student-3",
-    createdByName: "Pedro Nunes",
-    type: "student",
-    createdAt: "2025-08-01T00:00:00Z",
-  },
-  {
-    id: "evt-s4-1",
-    title: "Drum & Bass Night — Club Noir",
-    date: "2025-09-13",
-    time: "23:00",
-    location: "Club Noir — Cidade Baixa",
-    instagram: "fernandalima_beats",
-    description: "Noite de D&B com dois outros DJs. Estreia no Club Noir.",
-    createdBy: "student-4",
-    createdByName: "Fernanda Lima",
-    type: "student",
-    createdAt: "2025-08-10T00:00:00Z",
-  },
-  {
-    id: "evt-s5-1",
-    title: "Progressive Sunday — Hangar 110",
-    date: "2025-07-27",
-    time: "18:00",
-    location: "Hangar 110 — Zona Sul",
-    instagram: "gabrielrocha_prog",
-    description: "Tarde progressiva no Hangar 110. Trance e progressive house.",
-    createdBy: "student-5",
-    createdByName: "Gabriel Rocha",
-    type: "student",
-    createdAt: "2025-07-12T00:00:00Z",
-  },
-  {
-    id: "evt-s5-past-1",
-    title: "Réveillon 2025 — Praia de Tramandaí",
-    date: "2024-12-31",
-    time: "23:30",
-    location: "Praia de Tramandaí — RS",
-    instagram: "gabrielrocha_prog",
-    description: "Virada de ano na praia com set de 4h de progressive.",
-    createdBy: "student-5",
-    createdByName: "Gabriel Rocha",
-    type: "student",
-    createdAt: "2024-11-20T00:00:00Z",
-  },
-  // ── More future student events ────────────────────────────────────────────
-  {
-    id: "evt-s1-3",
-    title: "Late Night House — Café de la Musique",
-    date: "2025-09-20",
-    time: "01:00",
-    location: "Café de la Musique — Parcão",
-    instagram: "lucasdjpoa",
-    description: "Set de 2h de deep house e garage no Café de la Musique. Abertura para DJ residente.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2025-07-30T00:00:00Z",
-  },
-  {
-    id: "evt-s2-3",
-    title: "Techno Ritual — Edição Outubro",
-    date: "2025-10-04",
-    time: "23:00",
-    location: "Club XYZ — Av. Farrapos, 300",
-    instagram: "anabeatz",
-    description: "Segundo slot na noite techno do Club XYZ. Raw techno e industrial.",
-    createdBy: "student-2",
-    createdByName: "Ana Beatriz",
-    type: "student",
-    createdAt: "2025-08-01T00:00:00Z",
-  },
-  {
-    id: "evt-s3-2",
-    title: "Block Party Petrópolis",
-    date: "2025-09-27",
-    time: "16:00",
-    location: "Bairro Petrópolis — Porto Alegre",
-    instagram: "pedronunes_dj",
-    description: "Festa de rua no bairro Petrópolis. House e disco ao ar livre.",
-    createdBy: "student-3",
-    createdByName: "Pedro Nunes",
-    type: "student",
-    createdAt: "2025-08-15T00:00:00Z",
-  },
-  {
-    id: "evt-s4-2",
-    title: "Jungle Vibes — Noite Especial",
-    date: "2025-10-18",
-    time: "22:00",
-    location: "Void Club — Cidade Baixa",
-    instagram: "fernandalima_beats",
-    description: "Noite dedicada a jungle e d&b clássico. Segundo horário ao lado do residente.",
-    createdBy: "student-4",
-    createdByName: "Fernanda Lima",
-    type: "student",
-    createdAt: "2025-08-20T00:00:00Z",
-  },
-  {
-    id: "evt-s5-2",
-    title: "Trance Nation — Club W",
-    date: "2025-11-01",
-    time: "22:00",
-    location: "Club W — Av. Independência, 877",
-    instagram: "gabrielrocha_prog",
-    description: "Noite de trance com 3 DJs. Gabriel fecha a noite com set de 3h de progressive trance.",
-    createdBy: "student-5",
-    createdByName: "Gabriel Rocha",
-    type: "student",
-    createdAt: "2025-08-25T00:00:00Z",
-  },
-  // ── DJ ON future events ───────────────────────────────────────────────────
-  {
-    id: "evt-djOn-4",
-    title: "Masterclass Aberta — Produção Musical",
-    date: "2025-10-11",
-    time: "14:00",
-    location: "DJ ON Studio — Rua da República, 450",
-    instagram: "djonacademy",
-    description: "Masterclass gratuita com Rafael Steiner sobre produção musical com Ableton Live. Vagas limitadas.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2025-08-01T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-5",
-    title: "Formatura de Verão 2025",
-    date: "2025-12-13",
-    time: "21:00",
-    location: "Araújo Vianna — Parque Farroupilha",
-    instagram: "djonacademy",
-    description: "A maior formatura do ano. Todos os alunos das três turmas no palco do Araújo Vianna.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2025-09-01T00:00:00Z",
-  },
-  // ── Professor events ──────────────────────────────────────────────────────
-  {
-    id: "evt-p1-1",
-    title: "Rafael Steiner b2b Camila Souza",
-    date: "2025-08-02",
-    time: "23:00",
-    location: "Void Club — Cidade Baixa",
-    instagram: "rafaelsteiner_dj",
-    description: "Back-to-back especial dos dois professores da DJ ON Academy. Techno e afro house a noite toda.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2025-07-10T00:00:00Z",
-  },
-  {
-    id: "evt-p1-2",
-    title: "Resident Night — Bar Opinião",
-    date: "2025-09-05",
-    time: "22:00",
-    location: "Bar Opinião — José do Patrocínio, 834",
-    instagram: "rafaelsteiner_dj",
-    description: "Set mensal de Rafael Steiner no Bar Opinião. Progressive e deep house.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2025-07-20T00:00:00Z",
-  },
-  {
-    id: "evt-p1-3",
-    title: "Festival Electrônica Sul — Stage 2",
-    date: "2025-10-25",
-    time: "20:00",
-    location: "Parque de Exposições — Porto Alegre",
-    instagram: "rafaelsteiner_dj",
-    description: "Rafael Steiner no palco 2 do maior festival de música eletrônica do Sul do Brasil.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2025-08-05T00:00:00Z",
-  },
-  {
-    id: "evt-p2-1",
-    title: "Camila Souza — Sunset Techno",
-    date: "2025-08-16",
-    time: "17:00",
-    location: "Praia do Guarujá — RS",
-    instagram: "camilasouza_dj",
-    description: "Set ao pôr do sol na praia. Melodic techno e afro house.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2025-07-25T00:00:00Z",
-  },
-  {
-    id: "evt-p2-2",
-    title: "DJ ON Presents: Camila Souza",
-    date: "2025-09-19",
-    time: "23:00",
-    location: "Club W — Av. Independência, 877",
-    instagram: "camilasouza_dj",
-    description: "Noite exclusiva com Camila Souza no Club W. Afro house, melodic techno e muito groove.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2025-08-10T00:00:00Z",
-  },
-  {
-    id: "evt-p1-past-1",
-    title: "Closing Set — Lage Club",
-    date: "2025-05-03",
-    time: "04:00",
-    location: "Lage Club — São Paulo",
-    instagram: "rafaelsteiner_dj",
-    description: "Closing set de 3h no Lage Club em São Paulo.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2025-04-01T00:00:00Z",
-  },
-  {
-    id: "evt-p2-past-1",
-    title: "Afro Vibes — Projeto Quintal",
-    date: "2025-04-19",
-    time: "18:00",
-    location: "Quintal Bar — Bairro Floresta",
-    instagram: "camilasouza_dj",
-    description: "Set afro house e amapiano no Quintal Bar.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2025-03-20T00:00:00Z",
-  },
+type ApiRecord = Record<string, unknown>;
+type ApiPage = { items: ApiRecord[]; total: number };
+type CategoryRecord = { id: string; name: string };
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // 2026 EVENTS
-  // ════════════════════════════════════════════════════════════════════════════
+const TOKEN_KEY = "djon_access_token";
+export const SESSION_EXPIRED_EVENT = "djon:session-expired";
+let sessionExpirationAnnounced = false;
+const userNameCollator = new Intl.Collator("pt-BR", {
+  sensitivity: "base",
+  numeric: true,
+});
 
-  // ── DJ ON — 2026 ─────────────────────────────────────────────────────────
-  {
-    id: "evt-djOn-2026-1",
-    title: "Turma 2026 — Showcase de Abertura",
-    date: "2026-04-11",
-    time: "20:00",
-    location: "DJ ON Studio — Rua da República, 450",
-    instagram: "djonacademy",
-    description: "Apresentação de abertura da nova turma 2026. Cada aluno toca 15 minutos no estúdio principal.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-03-01T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-2",
-    title: "Open Lab Produção — Edição Maio",
-    date: "2026-05-16",
-    time: "14:00",
-    location: "DJ ON Studio — Rua da República, 450",
-    instagram: "djonacademy",
-    description: "Sessão aberta de produção e masterização. Rafael Steiner e Camila Souza ao vivo no DAW.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-04-10T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-3",
-    title: "DJ ON Anniversary — 8 Anos",
-    date: "2026-06-06",
-    time: "22:00",
-    location: "Araújo Vianna — Parque Farroupilha",
-    instagram: "djonacademy",
-    description: "8 anos de DJ ON Academy. Grande festa com ex-alunos, professores e convidados especiais do cenário eletrônico gaúcho.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-04-20T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-4",
-    title: "DJ ON no Planeta Atlântida 2026",
-    date: "2026-07-10",
-    time: "20:00",
-    location: "Atlântida — RS",
-    instagram: "djonacademy",
-    description: "Palco exclusivo da DJ ON Academy no Planeta Atlântida. Cinco alunos e os dois professores em sequência.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-05-01T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-5",
-    title: "Masterclass STEMS e Remix — Julho",
-    date: "2026-07-18",
-    time: "10:00",
-    location: "DJ ON Studio — Rua da República, 450",
-    instagram: "djonacademy",
-    description: "Workshop intensivo de STEMS, edição criativa e remix no Ableton. Vagas limitadas a 12 alunos.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-06-01T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-6",
-    title: "Night Edition Julho — Club W",
-    date: "2026-07-25",
-    time: "23:00",
-    location: "Club W — Av. Independência, 877",
-    instagram: "djonacademy",
-    description: "Noite mensal da DJ ON Academy no Club W. Alunos avançados da turma 2026 no palco principal.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-06-15T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-7",
-    title: "Formatura de Inverno 2026",
-    date: "2026-08-22",
-    time: "21:00",
-    location: "Teatro do SESC — Porto Alegre",
-    instagram: "djonacademy",
-    description: "Formatura da turma de inverno 2026. 10 alunos no palco do Teatro SESC com cobertura de imprensa.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-07-01T00:00:00Z",
-  },
-
-  // ── Professores — 2026 ────────────────────────────────────────────────────
-  {
-    id: "evt-p1-2026-1",
-    title: "Rafael Steiner — Resident Março",
-    date: "2026-03-07",
-    time: "23:00",
-    location: "Bar Opinião — José do Patrocínio, 834",
-    instagram: "rafaelsteiner_dj",
-    description: "Set mensal de Rafael Steiner no Bar Opinião. Progressive house e melodic.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2026-02-20T00:00:00Z",
-  },
-  {
-    id: "evt-p2-2026-1",
-    title: "Camila Souza — Afro House Lab",
-    date: "2026-04-25",
-    time: "22:00",
-    location: "Void Club — Cidade Baixa",
-    instagram: "camilasouza_dj",
-    description: "Noite afro house com Camila Souza no Void. Set de 3h com produção ao vivo.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2026-03-15T00:00:00Z",
-  },
-  {
-    id: "evt-p1-2026-2",
-    title: "Festival Eletrônica Sul 2026 — Stage 1",
-    date: "2026-05-30",
-    time: "21:00",
-    location: "Parque de Exposições — Porto Alegre",
-    instagram: "rafaelsteiner_dj",
-    description: "Rafael Steiner sobe de palco: desta vez no Stage 1 do Festival Eletrônica Sul.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2026-04-01T00:00:00Z",
-  },
-  {
-    id: "evt-p1-2026-3",
-    title: "Rafael Steiner — Open Air Julho",
-    date: "2026-07-04",
-    time: "17:00",
-    location: "Parque Marinha do Brasil — Porto Alegre",
-    instagram: "rafaelsteiner_dj",
-    description: "Set open air de 2h30 na Marinha do Brasil. Progressive house e downtempo ao pôr do sol.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2026-06-10T00:00:00Z",
-  },
-  {
-    id: "evt-p2-2026-2",
-    title: "Camila Souza b2b Convidado — Void Club",
-    date: "2026-07-12",
-    time: "23:30",
-    location: "Void Club — Cidade Baixa",
-    instagram: "camilasouza_dj",
-    description: "Back-to-back especial com convidado surpresa. Techno e afro house a noite inteira.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2026-06-20T00:00:00Z",
-  },
-  {
-    id: "evt-p1-2026-4",
-    title: "Rafael Steiner — Planeta Atlântida Side",
-    date: "2026-07-11",
-    time: "19:00",
-    location: "Atlântida — RS",
-    instagram: "rafaelsteiner_dj",
-    description: "Segundo dia no Planeta Atlântida. Set solo de Rafael Steiner no palco lateral.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2026-06-25T00:00:00Z",
-  },
-  {
-    id: "evt-p2-2026-3",
-    title: "Camila Souza — Resident Agosto",
-    date: "2026-08-08",
-    time: "22:00",
-    location: "Club W — Av. Independência, 877",
-    instagram: "camilasouza_dj",
-    description: "Residência mensal de Camila Souza no Club W. Melodic techno e afro grooves.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2026-07-15T00:00:00Z",
-  },
-
-  // ── Alunos — 2026 ────────────────────────────────────────────────────────
-  {
-    id: "evt-s1-2026-1",
-    title: "Lucas Ferreira — Residência Junho",
-    date: "2026-06-06",
-    time: "22:00",
-    location: "Bar Ocidente — Rua Riachuelo, 1069",
-    instagram: "lucasdjpoa",
-    description: "Quarta residência mensal de Lucas no Ocidente. Set de 90min de deep house e tech house.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2026-05-20T00:00:00Z",
-  },
-  {
-    id: "evt-s2-2026-1",
-    title: "Ana Beatriz — Techno Warehouse",
-    date: "2026-06-20",
-    time: "00:00",
-    location: "Armazém A4 — Cais Mauá",
-    instagram: "anabeatz",
-    description: "Estreia de Ana no Cais Mauá. Set de 2h de raw techno e industrial em ambiente warehouse.",
-    createdBy: "student-2",
-    createdByName: "Ana Beatriz",
-    type: "student",
-    createdAt: "2026-05-25T00:00:00Z",
-  },
-  {
-    id: "evt-s3-2026-1",
-    title: "Pedro Nunes — Casa Party Vol.3",
-    date: "2026-06-27",
-    time: "21:00",
-    location: "Espaço Coletivo — Moinhos de Vento",
-    instagram: "pedronunes_dj",
-    description: "Terceira edição da Casa Party de Pedro. House e nu-disco com convidados.",
-    createdBy: "student-3",
-    createdByName: "Pedro Nunes",
-    type: "student",
-    createdAt: "2026-06-01T00:00:00Z",
-  },
-  {
-    id: "evt-s5-2026-1",
-    title: "Gabriel Rocha — Progressive Julio",
-    date: "2026-07-05",
-    time: "18:00",
-    location: "Hangar 110 — Zona Sul",
-    instagram: "gabrielrocha_prog",
-    description: "Tarde progressiva no Hangar 110. Set de 3h de progressive house e trance.",
-    createdBy: "student-5",
-    createdByName: "Gabriel Rocha",
-    type: "student",
-    createdAt: "2026-06-18T00:00:00Z",
-  },
-  {
-    id: "evt-s4-2026-1",
-    title: "Fernanda Lima — D&B Night Club Noir",
-    date: "2026-07-11",
-    time: "23:00",
-    location: "Club Noir — Cidade Baixa",
-    instagram: "fernandalima_beats",
-    description: "Terceira apresentação no Club Noir. D&B e liquid funk com set de 2h.",
-    createdBy: "student-4",
-    createdByName: "Fernanda Lima",
-    type: "student",
-    createdAt: "2026-06-22T00:00:00Z",
-  },
-  {
-    id: "evt-s1-2026-2",
-    title: "Lucas Ferreira — Planeta Atlântida 2026",
-    date: "2026-07-12",
-    time: "16:00",
-    location: "Atlântida — RS",
-    instagram: "lucasdjpoa",
-    description: "Lucas Ferreira no Planeta Atlântida! Abertura no palco lateral com 45min de deep house.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2026-06-30T00:00:00Z",
-  },
-  {
-    id: "evt-s2-2026-2",
-    title: "Ana Beatriz — Techno Ritual Julho",
-    date: "2026-07-18",
-    time: "23:30",
-    location: "Club XYZ — Av. Farrapos, 300",
-    instagram: "anabeatz",
-    description: "Quarta edição do Techno Ritual com Ana Beatriz fechando a noite. 3h de techno puro.",
-    createdBy: "student-2",
-    createdByName: "Ana Beatriz",
-    type: "student",
-    createdAt: "2026-07-02T00:00:00Z",
-  },
-  {
-    id: "evt-s5-2026-2",
-    title: "Gabriel Rocha — Trance Night Especial",
-    date: "2026-07-19",
-    time: "22:00",
-    location: "Club W — Av. Independência, 877",
-    instagram: "gabrielrocha_prog",
-    description: "Noite especial de trance no Club W. Gabriel Rocha abre e fecha o line-up.",
-    createdBy: "student-5",
-    createdByName: "Gabriel Rocha",
-    type: "student",
-    createdAt: "2026-07-05T00:00:00Z",
-  },
-  {
-    id: "evt-s3-2026-2",
-    title: "Pedro Nunes — Open Air Moinhos",
-    date: "2026-07-26",
-    time: "16:00",
-    location: "Praça Júlio de Castilhos — Moinhos de Vento",
-    instagram: "pedronunes_dj",
-    description: "Set gratuito ao ar livre na Praça Júlio de Castilhos. House e disco para o bairro.",
-    createdBy: "student-3",
-    createdByName: "Pedro Nunes",
-    type: "student",
-    createdAt: "2026-07-10T00:00:00Z",
-  },
-  {
-    id: "evt-s4-2026-2",
-    title: "Fernanda Lima — Jungle Agosto",
-    date: "2026-08-01",
-    time: "22:00",
-    location: "Void Club — Cidade Baixa",
-    instagram: "fernandalima_beats",
-    description: "Noite de jungle e D&B no Void Club com Fernanda Lima e convidados.",
-    createdBy: "student-4",
-    createdByName: "Fernanda Lima",
-    type: "student",
-    createdAt: "2026-07-15T00:00:00Z",
-  },
-  {
-    id: "evt-s1-2026-3",
-    title: "Lucas Ferreira — Residência Agosto",
-    date: "2026-08-01",
-    time: "22:00",
-    location: "Bar Ocidente — Rua Riachuelo, 1069",
-    instagram: "lucasdjpoa",
-    description: "Residência mensal de agosto. Deep house e uk garage.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2026-07-18T00:00:00Z",
-  },
-  {
-    id: "evt-s2-2026-3",
-    title: "Ana Beatriz — Formatura DJ ON Inverno 2026",
-    date: "2026-08-22",
-    time: "21:00",
-    location: "Teatro do SESC — Porto Alegre",
-    instagram: "anabeatz",
-    description: "Ana Beatriz abre a noite de formatura da DJ ON Academy com set de 30min de techno.",
-    createdBy: "student-2",
-    createdByName: "Ana Beatriz",
-    type: "student",
-    createdAt: "2026-07-20T00:00:00Z",
-  },
-
-  // ── DJ ON — Julho/Agosto 2026 (extra) ─────────────────────────────────────
-  {
-    id: "evt-djOn-2026-8",
-    title: "Workshop de DJ Iniciante — Turno Tarde",
-    date: "2026-07-31",
-    time: "15:00",
-    location: "DJ ON Studio — Rua da República, 450",
-    instagram: "djonacademy",
-    description: "Aula aberta gratuita para quem quer começar. Fundamentos de beatmatch, EQ e leitura de pista.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-07-01T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-9",
-    title: "DJ ON Open Air — Cais Embarcadero",
-    date: "2026-08-08",
-    time: "16:00",
-    location: "Cais Embarcadero — Orla do Guaíba",
-    instagram: "djonacademy",
-    description: "Tarde ao ar livre na orla com alunos e professores revezando nos decks. Entrada gratuita.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-07-10T00:00:00Z",
-  },
-  {
-    id: "evt-djOn-2026-10",
-    title: "Night Edition Agosto — Club W",
-    date: "2026-08-15",
-    time: "23:00",
-    location: "Club W — Av. Independência, 877",
-    instagram: "djonacademy",
-    description: "Edição de agosto da noite oficial DJ ON. Line-up com os destaques da turma 2026.",
-    createdBy: "admin-1",
-    createdByName: "DJ ON Academy",
-    type: "djOn",
-    createdAt: "2026-07-18T00:00:00Z",
-  },
-
-  // ── Professores — Julho/Agosto 2026 (extra) ───────────────────────────────
-  {
-    id: "evt-p1-2026-5",
-    title: "Rafael Steiner — Sunset Sessions Julho",
-    date: "2026-07-26",
-    time: "17:30",
-    location: "Rooftop Hotel Laghetto — Centro Histórico",
-    instagram: "rafaelsteiner_dj",
-    description: "Set de encerramento de domingo no rooftop. Melodic e progressive house ao pôr do sol.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2026-07-05T00:00:00Z",
-  },
-  {
-    id: "evt-p2-2026-4",
-    title: "Camila Souza — Afro House Lab Julho",
-    date: "2026-07-24",
-    time: "23:00",
-    location: "Void Club — Cidade Baixa",
-    instagram: "camilasouza_dj",
-    description: "Nova edição do Afro House Lab. Set de 3h com percussão ao vivo e convidada surpresa.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2026-07-06T00:00:00Z",
-  },
-  {
-    id: "evt-p1-2026-6",
-    title: "Rafael Steiner — Formatura DJ ON Inverno 2026",
-    date: "2026-08-22",
-    time: "23:30",
-    location: "Teatro do SESC — Porto Alegre",
-    instagram: "rafaelsteiner_dj",
-    description: "Closing set da noite de formatura da turma de inverno. Rafael fecha o palco após os alunos.",
-    createdBy: "prof-1",
-    createdByName: "Rafael Steiner",
-    type: "professor",
-    createdAt: "2026-07-20T00:00:00Z",
-  },
-  {
-    id: "evt-p2-2026-5",
-    title: "Camila Souza — Warehouse Agosto",
-    date: "2026-08-29",
-    time: "00:00",
-    location: "Armazém A4 — Cais Mauá",
-    instagram: "camilasouza_dj",
-    description: "Noite warehouse no Cais Mauá. Melodic techno e afro grooves em set de 4h.",
-    createdBy: "prof-2",
-    createdByName: "Camila Souza",
-    type: "professor",
-    createdAt: "2026-07-28T00:00:00Z",
-  },
-
-  // ── Alunos — Julho/Agosto 2026 (extra) ────────────────────────────────────
-  {
-    id: "evt-s3-2026-3",
-    title: "Pedro Nunes — Aniversário Set Privado",
-    date: "2026-07-25",
-    time: "20:00",
-    location: "Espaço Villa — Bairro Floresta",
-    instagram: "pedronunes_dj",
-    description: "Set de aniversário de um amigo. House clássico e nu-disco a noite toda.",
-    createdBy: "student-3",
-    createdByName: "Pedro Nunes",
-    type: "student",
-    createdAt: "2026-07-08T00:00:00Z",
-  },
-  {
-    id: "evt-s5-2026-3",
-    title: "Gabriel Rocha — Progressive Sunday Agosto",
-    date: "2026-08-09",
-    time: "18:00",
-    location: "Hangar 110 — Zona Sul",
-    instagram: "gabrielrocha_prog",
-    description: "Tarde progressiva mensal no Hangar 110. Set de 3h de progressive house e trance.",
-    createdBy: "student-5",
-    createdByName: "Gabriel Rocha",
-    type: "student",
-    createdAt: "2026-07-22T00:00:00Z",
-  },
-  {
-    id: "evt-s4-2026-3",
-    title: "Fernanda Lima — Liquid Sessions",
-    date: "2026-08-15",
-    time: "22:30",
-    location: "Club Noir — Cidade Baixa",
-    instagram: "fernandalima_beats",
-    description: "Noite dedicada a liquid D&B e atmospheric. Set de 2h com visuais ao vivo.",
-    createdBy: "student-4",
-    createdByName: "Fernanda Lima",
-    type: "student",
-    createdAt: "2026-07-25T00:00:00Z",
-  },
-  {
-    id: "evt-s1-2026-4",
-    title: "Lucas Ferreira — Formatura DJ ON Inverno 2026",
-    date: "2026-08-22",
-    time: "21:30",
-    location: "Teatro do SESC — Porto Alegre",
-    instagram: "lucasdjpoa",
-    description: "Lucas se apresenta na formatura da turma de inverno com set de 30min de deep house.",
-    createdBy: "student-1",
-    createdByName: "Lucas Ferreira",
-    type: "student",
-    createdAt: "2026-07-26T00:00:00Z",
-  },
-  {
-    id: "evt-s3-2026-4",
-    title: "Pedro Nunes — Casa Party Vol.4",
-    date: "2026-08-28",
-    time: "21:00",
-    location: "Espaço Coletivo — Moinhos de Vento",
-    instagram: "pedronunes_dj",
-    description: "Quarta edição da Casa Party. House, disco e convidados da turma 2026.",
-    createdBy: "student-3",
-    createdByName: "Pedro Nunes",
-    type: "student",
-    createdAt: "2026-08-01T00:00:00Z",
-  },
-]
-
-const seedBookings: Booking[] = [
-  // Lucas Ferreira
-  { id: "bk-1", userId: "student-1", title: "Aula de Beat Match", date: "2025-07-08", time: "14:00", type: "aula", notes: "Focar em transições suaves", status: "confirmado", createdAt: "2025-07-01T00:00:00Z" },
-  { id: "bk-2", userId: "student-1", title: "Treino Rekordbox", date: "2025-07-15", time: "10:00", type: "treino", status: "confirmado", createdAt: "2025-07-05T00:00:00Z" },
-  { id: "bk-3", userId: "student-1", title: "Aula de EQ e Filtros", date: "2025-07-22", time: "14:00", type: "aula", notes: "Cobrir filtros passa-alta e passa-baixa", status: "confirmado", createdAt: "2025-07-08T00:00:00Z" },
-  { id: "bk-4", userId: "student-1", title: "Treino Harmonia", date: "2025-07-29", time: "10:00", type: "treino", status: "pendente", createdAt: "2025-07-10T00:00:00Z" },
-  { id: "bk-5", userId: "student-1", title: "Aula de Repertório", date: "2025-08-05", time: "14:00", type: "aula", notes: "Selecionar músicas para o showcase", status: "pendente", createdAt: "2025-07-12T00:00:00Z" },
-  { id: "bk-6", userId: "student-1", title: "Treino Pré-Showcase", date: "2025-08-12", time: "10:00", type: "treino", notes: "Simular set completo de 45min", status: "pendente", createdAt: "2025-07-15T00:00:00Z" },
-  // past
-  { id: "bk-1p", userId: "student-1", title: "Aula Introdução ao CDJ", date: "2025-05-06", time: "14:00", type: "aula", status: "confirmado", createdAt: "2025-04-28T00:00:00Z" },
-  { id: "bk-2p", userId: "student-1", title: "Treino Sync vs Manual", date: "2025-05-13", time: "10:00", type: "treino", status: "confirmado", createdAt: "2025-05-07T00:00:00Z" },
-  { id: "bk-3p", userId: "student-1", title: "Aula de Mixagem Clássica", date: "2025-06-03", time: "14:00", type: "aula", status: "confirmado", createdAt: "2025-05-20T00:00:00Z" },
-
-  // Ana Beatriz
-  { id: "bk-7", userId: "student-2", title: "Aula de Produção Ableton", date: "2025-07-10", time: "16:00", type: "aula", status: "confirmado", createdAt: "2025-07-03T00:00:00Z" },
-  { id: "bk-8", userId: "student-2", title: "Treino de Síntese", date: "2025-07-17", time: "16:00", type: "treino", notes: "Synths analógicos e FM", status: "confirmado", createdAt: "2025-07-07T00:00:00Z" },
-  { id: "bk-9", userId: "student-2", title: "Aula Mixagem Multicanal", date: "2025-07-24", time: "16:00", type: "aula", status: "pendente", createdAt: "2025-07-10T00:00:00Z" },
-  { id: "bk-10", userId: "student-2", title: "Treino Masterização", date: "2025-08-07", time: "16:00", type: "treino", status: "pendente", createdAt: "2025-07-14T00:00:00Z" },
-  { id: "bk-11", userId: "student-2", title: "Aula Live Performance", date: "2025-08-14", time: "16:00", type: "aula", notes: "Ableton Live Set na prática", status: "pendente", createdAt: "2025-07-20T00:00:00Z" },
-  // past
-  { id: "bk-7p", userId: "student-2", title: "Aula Introdução Ableton", date: "2025-04-15", time: "16:00", type: "aula", status: "confirmado", createdAt: "2025-04-08T00:00:00Z" },
-  { id: "bk-8p", userId: "student-2", title: "Treino Sample Packs", date: "2025-05-20", time: "16:00", type: "treino", status: "confirmado", createdAt: "2025-05-10T00:00:00Z" },
-
-  // Pedro Nunes
-  { id: "bk-12", userId: "student-3", title: "Aula Beat Match Manual", date: "2025-07-21", time: "11:00", type: "aula", status: "confirmado", createdAt: "2025-07-15T00:00:00Z" },
-  { id: "bk-13", userId: "student-3", title: "Treino House Music", date: "2025-07-28", time: "11:00", type: "treino", status: "pendente", createdAt: "2025-07-18T00:00:00Z" },
-  { id: "bk-14", userId: "student-3", title: "Aula EQ na Prática", date: "2025-08-04", time: "11:00", type: "aula", notes: "Resolver problema de frequencies graves", status: "pendente", createdAt: "2025-07-20T00:00:00Z" },
-
-  // Fernanda Lima
-  { id: "bk-15", userId: "student-4", title: "Aula D&B Fundamentals", date: "2025-07-23", time: "09:00", type: "aula", status: "confirmado", createdAt: "2025-07-16T00:00:00Z" },
-  { id: "bk-16", userId: "student-4", title: "Treino Sets Rápidos", date: "2025-07-30", time: "09:00", type: "treino", notes: "30min de D&B puro", status: "pendente", createdAt: "2025-07-20T00:00:00Z" },
-  { id: "bk-17", userId: "student-4", title: "Aula Jungle e Amen Breaks", date: "2025-08-06", time: "09:00", type: "aula", status: "pendente", createdAt: "2025-07-22T00:00:00Z" },
-
-  // Gabriel Rocha
-  { id: "bk-18", userId: "student-5", title: "Aula Progressive Mixing", date: "2025-07-09", time: "15:00", type: "aula", status: "confirmado", createdAt: "2025-07-02T00:00:00Z" },
-  { id: "bk-19", userId: "student-5", title: "Treino Long Sets", date: "2025-07-16", time: "15:00", type: "treino", notes: "Set de 4h contínuas", status: "confirmado", createdAt: "2025-07-08T00:00:00Z" },
-  { id: "bk-20", userId: "student-5", title: "Aula Trance Structure", date: "2025-07-23", time: "15:00", type: "aula", status: "confirmado", createdAt: "2025-07-10T00:00:00Z" },
-  { id: "bk-21", userId: "student-5", title: "Treino Trance Clássico", date: "2025-07-30", time: "15:00", type: "treino", status: "pendente", createdAt: "2025-07-14T00:00:00Z" },
-  { id: "bk-22", userId: "student-5", title: "Aula Preparação de Set ao Vivo", date: "2025-08-09", time: "15:00", type: "aula", notes: "Hangar 110 está chegando", status: "pendente", createdAt: "2025-07-20T00:00:00Z" },
-  // past
-  { id: "bk-18p", userId: "student-5", title: "Aula Introdução Progressive", date: "2025-03-10", time: "15:00", type: "aula", status: "confirmado", createdAt: "2025-03-03T00:00:00Z" },
-  { id: "bk-19p", userId: "student-5", title: "Treino Harmonic Mixing", date: "2025-04-07", time: "15:00", type: "treino", status: "confirmado", createdAt: "2025-03-30T00:00:00Z" },
-
-  // ════════════════════════════════════════════════════════════════════════════
-  // 2026 BOOKINGS
-  // ════════════════════════════════════════════════════════════════════════════
-
-  // Lucas Ferreira — 2026
-  { id: "bk26-1",  userId: "student-1", title: "Aula Técnicas de Leitura de Pista",      date: "2026-06-02", time: "14:00", type: "aula",   notes: "Foco em crowd reading e seleção ao vivo",       status: "confirmado", createdAt: "2026-05-25T00:00:00Z" },
-  { id: "bk26-2",  userId: "student-1", title: "Treino Tech House",                       date: "2026-06-09", time: "14:00", type: "treino", notes: "Groove, swing e loops ao vivo",                  status: "confirmado", createdAt: "2026-06-02T00:00:00Z" },
-  { id: "bk26-3",  userId: "student-1", title: "Aula Performance ao Vivo",                date: "2026-06-16", time: "14:00", type: "aula",   notes: "Preparo para Planeta Atlântida",                status: "confirmado", createdAt: "2026-06-09T00:00:00Z" },
-  { id: "bk26-4",  userId: "student-1", title: "Treino Set Planeta Atlântida",            date: "2026-06-30", time: "14:00", type: "treino", notes: "Simular 45min em ambiente ao vivo",              status: "confirmado", createdAt: "2026-06-20T00:00:00Z" },
-  { id: "bk26-5",  userId: "student-1", title: "Aula Pós-Atlântida — Review",             date: "2026-07-14", time: "14:00", type: "aula",   notes: "Análise do set e pontos de melhoria",           status: "confirmado", createdAt: "2026-07-08T00:00:00Z" },
-  { id: "bk26-6",  userId: "student-1", title: "Treino Residência Agosto",                date: "2026-07-28", time: "14:00", type: "treino", notes: "Preparar novo repertório para agosto",           status: "pendente",   createdAt: "2026-07-20T00:00:00Z" },
-  { id: "bk26-7",  userId: "student-1", title: "Aula Mixing Avançado",                    date: "2026-08-04", time: "14:00", type: "aula",                                                           status: "pendente",   createdAt: "2026-07-25T00:00:00Z" },
-
-  // Ana Beatriz — 2026
-  { id: "bk26-8",  userId: "student-2", title: "Aula Mixagem Cenas Modular",              date: "2026-06-04", time: "16:00", type: "aula",   notes: "Integração modular com Ableton",                status: "confirmado", createdAt: "2026-05-28T00:00:00Z" },
-  { id: "bk26-9",  userId: "student-2", title: "Treino Raw Techno",                       date: "2026-06-11", time: "16:00", type: "treino", notes: "Construir energia de floor — low BPM a alto",   status: "confirmado", createdAt: "2026-06-04T00:00:00Z" },
-  { id: "bk26-10", userId: "student-2", title: "Aula Performance Cais Mauá",              date: "2026-06-18", time: "16:00", type: "aula",   notes: "Preparação técnica para ambiente warehouse",    status: "confirmado", createdAt: "2026-06-11T00:00:00Z" },
-  { id: "bk26-11", userId: "student-2", title: "Treino Fechamento de Set",                date: "2026-07-02", time: "16:00", type: "treino", notes: "Desenvolver clímax e resolução de energia",     status: "confirmado", createdAt: "2026-06-25T00:00:00Z" },
-  { id: "bk26-12", userId: "student-2", title: "Aula Techno Ritual — Revisão",            date: "2026-07-16", time: "16:00", type: "aula",   notes: "Análise do set do dia 18",                      status: "pendente",   createdAt: "2026-07-10T00:00:00Z" },
-  { id: "bk26-13", userId: "student-2", title: "Treino Formatura — Abertura de Set",      date: "2026-08-06", time: "16:00", type: "treino", notes: "Montar set de 30min para formatura SESC",       status: "pendente",   createdAt: "2026-07-28T00:00:00Z" },
-  { id: "bk26-14", userId: "student-2", title: "Aula Pós-Formatura — Próximos Passos",    date: "2026-08-27", time: "16:00", type: "aula",                                                           status: "pendente",   createdAt: "2026-08-01T00:00:00Z" },
-
-  // Pedro Nunes — 2026
-  { id: "bk26-15", userId: "student-3", title: "Aula DJ DJ DJ — Disco e Funk",            date: "2026-06-08", time: "11:00", type: "aula",   notes: "Repertório anos 70/80 para Casa Party",         status: "confirmado", createdAt: "2026-06-01T00:00:00Z" },
-  { id: "bk26-16", userId: "student-3", title: "Treino Mixagem Contínua",                  date: "2026-06-22", time: "11:00", type: "treino", notes: "60min sem parada no set",                       status: "confirmado", createdAt: "2026-06-15T00:00:00Z" },
-  { id: "bk26-17", userId: "student-3", title: "Aula Open Air — Dicas de Performance",    date: "2026-07-06", time: "11:00", type: "aula",   notes: "Set ao ar livre tem particularidades de áudio", status: "confirmado", createdAt: "2026-06-28T00:00:00Z" },
-  { id: "bk26-18", userId: "student-3", title: "Treino Repertório Julho",                  date: "2026-07-20", time: "11:00", type: "treino", notes: "Selecionar 80 músicas para o open air",          status: "pendente",   createdAt: "2026-07-13T00:00:00Z" },
-  { id: "bk26-19", userId: "student-3", title: "Aula EQ ao Vivo",                          date: "2026-08-03", time: "11:00", type: "aula",                                                           status: "pendente",   createdAt: "2026-07-27T00:00:00Z" },
-
-  // Fernanda Lima — 2026
-  { id: "bk26-20", userId: "student-4", title: "Aula D&B Avançado — Amen e Reese",       date: "2026-06-05", time: "09:00", type: "aula",   notes: "Trabalhar breaks clássicos e variações",        status: "confirmado", createdAt: "2026-05-29T00:00:00Z" },
-  { id: "bk26-21", userId: "student-4", title: "Treino Liquid Funk",                       date: "2026-06-19", time: "09:00", type: "treino", notes: "Construir set softer de D&B",                   status: "confirmado", createdAt: "2026-06-12T00:00:00Z" },
-  { id: "bk26-22", userId: "student-4", title: "Aula Set Club Noir — Revisão",             date: "2026-07-13", time: "09:00", type: "aula",   notes: "Análise gravação do set do dia 11",             status: "confirmado", createdAt: "2026-07-07T00:00:00Z" },
-  { id: "bk26-23", userId: "student-4", title: "Treino Jungle Clássico",                   date: "2026-07-20", time: "09:00", type: "treino", notes: "Preparar conteúdo jungle para agosto",           status: "pendente",   createdAt: "2026-07-14T00:00:00Z" },
-  { id: "bk26-24", userId: "student-4", title: "Aula Construção de Energy Arc",            date: "2026-07-27", time: "09:00", type: "aula",   notes: "Desenvolver jornada de energia no set",         status: "pendente",   createdAt: "2026-07-20T00:00:00Z" },
-  { id: "bk26-25", userId: "student-4", title: "Treino Void Club — Agosto",                date: "2026-08-10", time: "09:00", type: "treino", notes: "Simular 2h de jungle e D&B",                    status: "pendente",   createdAt: "2026-07-28T00:00:00Z" },
-
-  // Gabriel Rocha — 2026
-  { id: "bk26-26", userId: "student-5", title: "Aula Progressive Architecture",            date: "2026-06-03", time: "15:00", type: "aula",   notes: "Construção de jornada em sets longos",          status: "confirmado", createdAt: "2026-05-27T00:00:00Z" },
-  { id: "bk26-27", userId: "student-5", title: "Treino Set Hangar 110",                    date: "2026-06-17", time: "15:00", type: "treino", notes: "Preparar 3h de progressive para julho",         status: "confirmado", createdAt: "2026-06-10T00:00:00Z" },
-  { id: "bk26-28", userId: "student-5", title: "Aula Pós-Hangar — Análise",               date: "2026-07-07", time: "15:00", type: "aula",   notes: "Review do set do dia 5",                        status: "confirmado", createdAt: "2026-07-02T00:00:00Z" },
-  { id: "bk26-29", userId: "student-5", title: "Treino Trance Club W",                     date: "2026-07-15", time: "15:00", type: "treino", notes: "Preparar set de trance para dia 19",            status: "confirmado", createdAt: "2026-07-09T00:00:00Z" },
-  { id: "bk26-30", userId: "student-5", title: "Aula Mixing Trance Clássico",               date: "2026-07-22", time: "15:00", type: "aula",   notes: "ATB, Paul van Dyk e técnicas de mixagem",      status: "pendente",   createdAt: "2026-07-16T00:00:00Z" },
-  { id: "bk26-31", userId: "student-5", title: "Treino Formatura — Set Abertura",           date: "2026-08-05", time: "15:00", type: "treino", notes: "Preparar abertura do showcase de inverno",      status: "pendente",   createdAt: "2026-07-28T00:00:00Z" },
-  { id: "bk26-32", userId: "student-5", title: "Aula Técnicas de Improviso ao Vivo",        date: "2026-08-19", time: "15:00", type: "aula",                                                           status: "pendente",   createdAt: "2026-08-05T00:00:00Z" },
-
-  // Dias lotados para validar overflow do calendário mensal
-  { id: "bk26-load-1",  userId: "student-1", title: "Aula Warm-up Club",                     date: "2026-07-20", time: "08:00", type: "aula",   notes: "Aquecimento e abertura de pista",              status: "confirmado", createdAt: "2026-07-15T00:00:00Z" },
-  { id: "bk26-load-2",  userId: "student-2", title: "Treino Transições Techno",              date: "2026-07-20", time: "10:00", type: "treino", notes: "Transições rápidas com loops",                  status: "confirmado", createdAt: "2026-07-15T00:00:00Z" },
-  { id: "bk26-load-3",  userId: "student-5", title: "Aula Construção de Set",                date: "2026-07-20", time: "13:00", type: "aula",   notes: "Curva de energia de 60 minutos",                status: "pendente",   createdAt: "2026-07-15T00:00:00Z" },
-  { id: "bk26-load-4",  userId: "student-1", title: "Treino Grave e Kick",                   date: "2026-07-20", time: "14:00", type: "treino", notes: "Controle de graves na mixagem",                 status: "confirmado", createdAt: "2026-07-15T00:00:00Z" },
-  { id: "bk26-load-5",  userId: "student-2", title: "Aula Revisão de Repertório",            date: "2026-07-20", time: "16:00", type: "aula",   notes: "Seleção final para apresentação",               status: "pendente",   createdAt: "2026-07-15T00:00:00Z" },
-  { id: "bk26-load-6",  userId: "student-5", title: "Treino Fechamento de Noite",            date: "2026-07-20", time: "18:00", type: "treino", notes: "Últimos 20 minutos de set",                     status: "confirmado", createdAt: "2026-07-15T00:00:00Z" },
-  { id: "bk26-load-7",  userId: "student-1", title: "Aula Micromixing",                      date: "2026-07-22", time: "08:00", type: "aula",   notes: "Ajustes curtos de mixagem",                     status: "confirmado", createdAt: "2026-07-16T00:00:00Z" },
-  { id: "bk26-load-8",  userId: "student-2", title: "Treino Acapellas",                      date: "2026-07-22", time: "09:00", type: "treino", notes: "Entradas vocais e efeitos",                     status: "confirmado", createdAt: "2026-07-16T00:00:00Z" },
-  { id: "bk26-load-9",  userId: "student-3", title: "Aula Cue Points",                       date: "2026-07-22", time: "10:00", type: "aula",   notes: "Organização de hot cues",                       status: "pendente",   createdAt: "2026-07-16T00:00:00Z" },
-  { id: "bk26-load-10", userId: "student-4", title: "Treino D&B Drops",                      date: "2026-07-22", time: "11:00", type: "treino", notes: "Drops de alta energia",                         status: "confirmado", createdAt: "2026-07-16T00:00:00Z" },
-  { id: "bk26-load-11", userId: "student-1", title: "Aula CDJ Workflow",                     date: "2026-07-22", time: "13:00", type: "aula",   notes: "Fluxo rápido no equipamento",                   status: "confirmado", createdAt: "2026-07-16T00:00:00Z" },
-  { id: "bk26-load-12", userId: "student-2", title: "Treino FX com Filtros",                 date: "2026-07-22", time: "14:00", type: "treino", notes: "Filtros e eco sem exagero",                     status: "pendente",   createdAt: "2026-07-16T00:00:00Z" },
-  { id: "bk26-load-13", userId: "student-4", title: "Aula Set de Abertura",                  date: "2026-07-22", time: "16:00", type: "aula",   notes: "Abertura para pista vazia",                     status: "confirmado", createdAt: "2026-07-16T00:00:00Z" },
-]
-
-// ─── Seed Materials ───────────────────────────────────────────────────────────
-
-const PDF_SAMPLE = "https://www.w3.org/WAI/WCAG21/Techniques/pdf/PDF1.pdf"
-
-const seedMaterials: Material[] = [
-  {
-    id: "mat-1",
-    title: "Guia de Harmonic Mixing — Camelot Wheel",
-    description: "Entenda a roda de Camelot, tons compatíveis e exemplos práticos de mixagem harmônica no Rekordbox e Traktor.",
-    category: "Técnica",
-    coverImage: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1200&q=80",
-    body: `<h2>O que é Harmonic Mixing?</h2><p>Harmonic mixing é a técnica de combinar faixas que estão em tons musicais compatíveis, criando transições suaves e agradáveis ao ouvido. Em vez de misturar músicas aleatoriamente, você usa a teoria musical para garantir que as notas de duas faixas soem bem juntas.</p><h3>A Roda de Camelot</h3><p>A roda de Camelot traduz a teoria musical em um sistema visual simples de números (1 a 12) e letras (A para menor, B para maior). Faixas com códigos adjacentes ou iguais combinam harmonicamente.</p><ul><li><strong>Mesmo código</strong> (ex: 8A → 8A): combinação perfeita.</li><li><strong>±1 número</strong> (ex: 8A → 7A ou 9A): transição suave.</li><li><strong>Mesma número, troca de letra</strong> (ex: 8A → 8B): muda o clima mantendo a energia.</li></ul><p>Analise sua biblioteca no Rekordbox ou Traktor para que o software detecte automaticamente o tom de cada faixa. A partir daí, é só seguir a roda.</p><blockquote>Dica: comece devagar. Escolha 3 ou 4 faixas no mesmo código e pratique transições até sentir naturalidade.</blockquote>`,
-    attachments: [
-      { id: "att-1a", name: "camelot-wheel-guia.pdf", type: "pdf", url: PDF_SAMPLE, size: "2.4 MB" },
-    ],
-    authorId: "prof-1",
-    authorName: "Rafael Steiner",
-    createdAt: "2026-05-10T10:00:00Z",
-  },
-  {
-    id: "mat-2",
-    title: "Mapa de Gêneros — House e seus subgêneros",
-    description: "A árvore genealógica do House music: deep, tech, afro, melodic, tribal, soulful e mais.",
-    category: "Referência",
-    coverImage: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&q=80",
-    body: `<h2>A família House</h2><p>O House nasceu em Chicago no início dos anos 80 e se ramificou em dezenas de subgêneros. Conhecer essas ramificações ajuda você a construir sets coerentes e a entender onde cada artista se encaixa.</p><h3>Principais ramos</h3><ul><li><strong>Deep House</strong> — atmosférico, groove suave, acordes jazzy.</li><li><strong>Tech House</strong> — batida seca, influência do techno, focado na pista.</li><li><strong>Afro House</strong> — percussão orgânica, elementos africanos, muito groove.</li><li><strong>Melodic House</strong> — melodias emotivas e progressões longas.</li><li><strong>Soulful House</strong> — vocais marcantes e pegada gospel/soul.</li></ul><p>Use este mapa como referência ao organizar suas playlists por energia e clima.</p>`,
-    attachments: [
-      { id: "att-2a", name: "mapa-generos-house.jpg", type: "image", url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1600&q=80", size: "1.1 MB" },
-    ],
-    authorId: "prof-2",
-    authorName: "Camila Souza",
-    createdAt: "2026-05-18T14:30:00Z",
-  },
-  {
-    id: "mat-3",
-    title: "Checklist de Preparação para Gig",
-    description: "Tudo o que checar antes de qualquer apresentação: equipamento, backup, lista de músicas, soundcheck e pós-show.",
-    category: "Performance",
-    coverImage: "https://images.unsplash.com/photo-1571935441005-16924e0d7b7d?w=1200&q=80",
-    body: `<h2>Antes de sair de casa</h2><ul><li>Dois USBs formatados e com a biblioteca atualizada (sempre tenha backup).</li><li>Fones de ouvido + adaptador P2/P10.</li><li>Cabo RCA reserva e pen drive extra.</li></ul><h2>No venue</h2><ul><li>Chegue cedo para o soundcheck.</li><li>Teste os decks, o mixer e o monitor antes do público chegar.</li><li>Confirme com o técnico de som o volume máximo permitido.</li></ul><h2>Depois do show</h2><p>Recolha todo o seu equipamento, agradeça a equipe do venue e anote o que funcionou (e o que não funcionou) para o próximo set.</p>`,
-    attachments: [
-      { id: "att-3a", name: "checklist-preparacao-gig.pdf", type: "pdf", url: PDF_SAMPLE, size: "820 KB" },
-    ],
-    authorId: "prof-1",
-    authorName: "Rafael Steiner",
-    createdAt: "2026-06-02T09:00:00Z",
-  },
-  {
-    id: "mat-4",
-    title: "Setup Técnico da Aula de Produção",
-    description: "Registro do setup completo de produção utilizado nas aulas: controlador, interface de áudio, monitores e softwares.",
-    category: "Equipamento",
-    coverImage: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=1200&q=80",
-    body: `<h2>Nosso setup de estúdio</h2><p>Este é o setup padrão usado nas aulas de produção da DJ ON Academy. Todos os equipamentos foram escolhidos por oferecerem o melhor custo-benefício para quem está começando.</p><ul><li><strong>Interface de áudio:</strong> Focusrite Scarlett 2i2.</li><li><strong>Monitores:</strong> KRK Rokit 5 G4.</li><li><strong>Controlador:</strong> Ableton Push 2.</li><li><strong>DAW:</strong> Ableton Live 12 Suite.</li></ul><p>Na foto em anexo você pode ver a disposição ideal dos monitores formando um triângulo equilátero com a posição de audição.</p>`,
-    attachments: [
-      { id: "att-4a", name: "setup-producao-studio.jpg", type: "image", url: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=1600&q=80", size: "1.4 MB" },
-    ],
-    authorId: "prof-1",
-    authorName: "Rafael Steiner",
-    createdAt: "2026-06-15T11:00:00Z",
-  },
-  {
-    id: "mat-5",
-    title: "Técnicas de EQ ao Vivo — Guia Rápido",
-    description: "Referência rápida para equalização ao vivo: feedback, ressonâncias de sala e ajustes no mixer durante a performance.",
-    category: "Técnica",
-    coverImage: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=1200&q=80",
-    body: `<h2>EQ na prática</h2><p>Durante um set, o EQ é sua principal ferramenta de transição e controle de energia. Aqui vão os princípios essenciais:</p><h3>Os três canais</h3><ul><li><strong>Low</strong> — o kick e o baixo. Nunca deixe dois lows tocando no mesmo volume durante uma transição.</li><li><strong>Mid</strong> — vozes e instrumentos. Cuidado com o acúmulo.</li><li><strong>High</strong> — hi-hats e brilho. Use para criar tensão antes do drop.</li></ul><p>A regra de ouro da transição: corte o low da faixa que está saindo enquanto sobe o low da que está entrando.</p>`,
-    attachments: [
-      { id: "att-5a", name: "eq-ao-vivo-guia-rapido.pdf", type: "pdf", url: PDF_SAMPLE, size: "640 KB" },
-    ],
-    authorId: "prof-2",
-    authorName: "Camila Souza",
-    createdAt: "2026-06-20T16:00:00Z",
-  },
-  {
-    id: "mat-6",
-    title: "Referências Visuais — Afro House e Techno",
-    description: "Painel de inspiração com line-ups, flyers, venues e atmosferas dos gêneros afro house e techno.",
-    category: "Referência",
-    coverImage: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=1200&q=80",
-    body: `<h2>Inspiração visual</h2><p>A identidade visual faz parte da experiência de um DJ. Este painel reúne referências de flyers, iluminação e cenografia dos gêneros afro house e techno ao redor do mundo.</p><p>Observe como o techno tende a usar paletas monocromáticas e industriais, enquanto o afro house abraça cores terrosas e elementos orgânicos.</p>`,
-    attachments: [
-      { id: "att-6a", name: "referencias-afro-techno.jpg", type: "image", url: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=1600&q=80", size: "980 KB" },
-    ],
-    authorId: "prof-2",
-    authorName: "Camila Souza",
-    createdAt: "2026-06-28T13:00:00Z",
-  },
-  {
-    id: "mat-7",
-    title: "Estrutura de Set — Progressão de Energia",
-    description: "Como construir a curva de energia de um set de 1h, 2h e 4h, com exemplos de Ame, Dixon e Maceo Plex.",
-    category: "Performance",
-    coverImage: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=1200&q=80",
-    body: `<h2>A curva de energia</h2><p>Um bom set não é uma linha reta — é uma jornada. Pense na energia como uma onda que sobe, mantém e respira ao longo do tempo.</p><h3>Set de 2 horas</h3><ul><li><strong>0-30min:</strong> aquecimento. Grooves mais lentos, atmosféricos.</li><li><strong>30-90min:</strong> construção e pico. Aumente gradualmente BPM e intensidade.</li><li><strong>90-120min:</strong> clímax e desfecho. Solte as faixas mais fortes e finalize com algo memorável.</li></ul><p>Estude os sets de Dixon e Ame para entender como eles seguram a tensão antes de entregar o pico.</p>`,
-    attachments: [
-      { id: "att-7a", name: "estrutura-set-energia.pdf", type: "pdf", url: PDF_SAMPLE, size: "1.8 MB" },
-    ],
-    authorId: "prof-1",
-    authorName: "Rafael Steiner",
-    createdAt: "2026-07-05T10:00:00Z",
-  },
-  {
-    id: "mat-8",
-    title: "Masterclass Ableton — Julho 2026",
-    description: "Registro fotográfico da masterclass de Ableton Live realizada no estúdio principal da DJ ON Academy.",
-    category: "Registro",
-    coverImage: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&q=80",
-    body: `<h2>Masterclass de Ableton Live</h2><p>Em julho de 2026 realizamos uma masterclass intensiva de Ableton Live no estúdio principal. Os alunos aprenderam workflow de produção, uso de racks e técnicas de arranjo.</p><p>Confira o registro fotográfico do evento nos anexos.</p>`,
-    attachments: [
-      { id: "att-8a", name: "masterclass-ableton-julho-2026.jpg", type: "image", url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1600&q=80", size: "1.2 MB" },
-    ],
-    authorId: "prof-2",
-    authorName: "Camila Souza",
-    createdAt: "2026-07-19T18:00:00Z",
-  },
-]
-
-const seedMaterialCategories = ["Técnica", "Performance", "Referência", "Equipamento", "Registro", "Outro"]
-
-// ─── In-memory store ──────────────────────────────────────────────────────────
-
-function createStore() {
-  let users: User[] = [...seedUsers]
-  let events: DJEvent[] = [...seedEvents]
-  let bookings: Booking[] = [...seedBookings]
-  let materials: Material[] = [...seedMaterials]
-  let materialCategories: string[] = [...seedMaterialCategories]
-  let currentUserId: string | null = null
-
-  const getAllowedEmails = () => users.map((u) => u.email)
-
-  const loginWithEmail = (email: string): User | null => {
-    const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
-    if (!user) return null
-    currentUserId = user.id
-    return user
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
   }
+}
 
-  const logout = () => { currentUserId = null }
+function apiBase() {
+  if (process.env.NEXT_PUBLIC_API_URL)
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  if (typeof window !== "undefined")
+    return `http://${window.location.hostname}:3333/api/v1`;
+  return "http://localhost:3333/api/v1";
+}
 
-  const getCurrentUser = (): User | null => {
-    if (!currentUserId) return null
-    return users.find((u) => u.id === currentUserId) ?? null
-  }
+function assetUrl(value?: string) {
+  if (!value || !value.startsWith("/")) return value;
+  return `${new URL(apiBase()).origin}${value}`;
+}
 
-  const getUsers = () => [...users]
-  const getStudents = () => users.filter((u) => u.role === "student")
-  const getProfessors = () => users.filter((u) => u.role === "professor")
+function assetHtml(value?: string) {
+  if (!value) return value;
+  return value.replace(
+    /(src=["'])(\/api\/v1\/files\/[a-f\d]{24}[^"']*)/gi,
+    (_match, prefix, url) => `${prefix}${assetUrl(url)}`,
+  );
+}
 
-  const addUser = (data: Omit<User, "id" | "createdAt">) => {
-    const newUser: User = { ...data, id: `user-${Date.now()}`, createdAt: new Date().toISOString() }
-    users = [...users, newUser]
-    return newUser
-  }
+function firstImageFromHtml(value?: string) {
+  if (!value) return undefined;
+  const match =
+    /<img\b[^>]*\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s"'=<>`]+))/i.exec(
+      value,
+    );
+  return match?.slice(1).find(Boolean)?.trim() || undefined;
+}
 
-  const updateUser = (id: string, data: Partial<User>) => {
-    users = users.map((u) => (u.id === id ? { ...u, ...data } : u))
-    return users.find((u) => u.id === id) ?? null
-  }
+function reference(value: unknown): ApiRecord | undefined {
+  return value && typeof value === "object" ? (value as ApiRecord) : undefined;
+}
 
-  const deleteUser = (id: string) => { users = users.filter((u) => u.id !== id) }
-  const getUserById = (id: string) => users.find((u) => u.id === id) ?? null
+function referenceId(value: unknown) {
+  return typeof value === "string" ? value : String(reference(value)?.id ?? "");
+}
 
-  const getEvents = () => [...events]
-  const getStudentEvents = () => events.filter((e) => e.type === "student")
-  const getDJOnEvents = () => events.filter((e) => e.type === "djOn")
-  const getProfessorEvents = () => events.filter((e) => e.type === "professor")
+function asString(value: unknown, fallback = "") {
+  return typeof value === "string" ? value : fallback;
+}
 
-  const addEvent = (data: Omit<DJEvent, "id" | "createdAt">) => {
-    const ev: DJEvent = { ...data, id: `evt-${Date.now()}`, createdAt: new Date().toISOString() }
-    events = [...events, ev]
-    return ev
-  }
-
-  const updateEvent = (id: string, data: Partial<DJEvent>) => {
-    events = events.map((e) => (e.id === id ? { ...e, ...data } : e))
-    return events.find((e) => e.id === id) ?? null
-  }
-
-  const deleteEvent = (id: string) => { events = events.filter((e) => e.id !== id) }
-  const getEventsByUser = (userId: string) => events.filter((e) => e.createdBy === userId)
-
-  const getBookings = () => [...bookings]
-  const getBookingsByUser = (userId: string) => bookings.filter((b) => b.userId === userId)
-
-  const addBooking = (data: Omit<Booking, "id" | "createdAt">) => {
-    const bk: Booking = { ...data, id: `bk-${Date.now()}`, createdAt: new Date().toISOString() }
-    bookings = [...bookings, bk]
-    return bk
-  }
-
-  const updateBooking = (id: string, data: Partial<Booking>) => {
-    bookings = bookings.map((b) => (b.id === id ? { ...b, ...data } : b))
-    return bookings.find((b) => b.id === id) ?? null
-  }
-
-  const deleteBooking = (id: string) => { bookings = bookings.filter((b) => b.id !== id) }
-
-  const getMaterials = () => [...materials].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-  const getMaterialById = (id: string) => materials.find((m) => m.id === id) ?? null
-
-  const addMaterial = (data: Omit<Material, "id" | "createdAt">) => {
-    const mat: Material = { ...data, id: `mat-${Date.now()}`, createdAt: new Date().toISOString() }
-    materials = [mat, ...materials]
-    return mat
-  }
-
-  const updateMaterial = (id: string, data: Partial<Material>) => {
-    materials = materials.map((m) => (m.id === id ? { ...m, ...data } : m))
-    return materials.find((m) => m.id === id) ?? null
-  }
-
-  const deleteMaterial = (id: string) => { materials = materials.filter((m) => m.id !== id) }
-
-  const getMaterialCategories = () => [...materialCategories]
-
-  const addMaterialCategory = (name: string) => {
-    const category = name.trim()
-    if (!category) return materialCategories
-    if (!materialCategories.some((c) => c.toLowerCase() === category.toLowerCase())) {
-      materialCategories = [...materialCategories, category]
-    }
-    return [...materialCategories]
-  }
-
-  const updateMaterialCategory = (oldName: string, newName: string) => {
-    const nextName = newName.trim()
-    if (!nextName) return [...materialCategories]
-    const existing = materialCategories.find((c) => c !== oldName && c.toLowerCase() === nextName.toLowerCase())
-    const targetName = existing ?? nextName
-    materialCategories = materialCategories
-      .map((c) => (c === oldName ? targetName : c))
-      .filter((c, i, arr) => arr.findIndex((item) => item.toLowerCase() === c.toLowerCase()) === i)
-    materials = materials.map((m) => (m.category === oldName ? { ...m, category: targetName } : m))
-    return [...materialCategories]
-  }
-
-  const deleteMaterialCategory = (name: string, transferTo: string) => {
-    if (name === transferTo) return [...materialCategories]
-    materials = materials.map((m) => (m.category === name ? { ...m, category: transferTo } : m))
-    materialCategories = materialCategories.filter((c) => c !== name)
-    return [...materialCategories]
-  }
-
+function normalizeUser(raw: ApiRecord): User {
+  const unit = reference(raw.unitId);
   return {
-    getAllowedEmails, loginWithEmail, logout, getCurrentUser,
-    getUsers, getStudents, getProfessors,
-    addUser, updateUser, deleteUser, getUserById,
-    getEvents, getStudentEvents, getDJOnEvents, getProfessorEvents,
-    addEvent, updateEvent, deleteEvent, getEventsByUser,
-    getBookings, getBookingsByUser, addBooking, updateBooking, deleteBooking,
-    getMaterials, getMaterialById, addMaterial, updateMaterial, deleteMaterial,
-    getMaterialCategories, addMaterialCategory, updateMaterialCategory, deleteMaterialCategory,
+    id: asString(raw.id),
+    name: asString(raw.name),
+    email: asString(raw.email),
+    whatsapp: formatPhone(asString(raw.whatsapp)) || undefined,
+    cpf: asString(raw.cpf) || undefined,
+    birthDate: asString(raw.birthDate) || undefined,
+    avatar: assetUrl(asString(raw.avatar)) || undefined,
+    banner: assetUrl(asString(raw.banner)) || undefined,
+    bio: asString(raw.bio) || undefined,
+    socials: (raw.socials as SocialLinks | undefined) ?? {},
+    role: raw.role as Role,
+    unitId: referenceId(raw.unitId) || undefined,
+    unitLabel: asString(unit?.label) || asString(unit?.shortLabel) || undefined,
+    trainingHoursLimit:
+      typeof raw.trainingHoursLimit === "number"
+        ? raw.trainingHoursLimit
+        : undefined,
+    active: raw.active as boolean | undefined,
+    createdAt: asString(raw.createdAt),
+  };
+}
+
+function normalizeEvent(raw: ApiRecord): DJEvent {
+  const author = reference(raw.authorId);
+  return {
+    id: asString(raw.id),
+    title: asString(raw.title),
+    date: asString(raw.date),
+    time: asString(raw.time),
+    location: asString(raw.location),
+    instagram: asString(raw.instagram) || undefined,
+    description: asString(raw.description) || undefined,
+    createdBy: referenceId(raw.authorId),
+    createdByName: asString(author?.name),
+    createdByAvatar: assetUrl(asString(author?.avatar)) || undefined,
+    type: raw.type as DJEvent["type"],
+    createdAt: asString(raw.createdAt),
+  };
+}
+
+function normalizeBooking(raw: ApiRecord): Booking {
+  const student = reference(raw.studentId);
+  const unit = reference(raw.unitId);
+  const professor = reference(raw.professorId);
+  const equipment = reference(raw.equipmentId);
+  return {
+    id: asString(raw.id),
+    userId: referenceId(raw.studentId),
+    studentName: asString(student?.name) || undefined,
+    studentAvatar: assetUrl(asString(student?.avatar)) || undefined,
+    title: asString(raw.title),
+    date: asString(raw.date),
+    time: asString(raw.time),
+    type: raw.type as Booking["type"],
+    notes: asString(raw.notes) || undefined,
+    status: raw.status as Booking["status"],
+    unitId: referenceId(raw.unitId) || undefined,
+    unitLabel: asString(unit?.label) || asString(unit?.shortLabel) || undefined,
+    professorId: referenceId(raw.professorId) || undefined,
+    professorName: asString(professor?.name) || undefined,
+    equipmentId: referenceId(raw.equipmentId) || undefined,
+    equipmentName: asString(equipment?.name) || undefined,
+    durationMinutes:
+      typeof raw.durationMinutes === "number" ? raw.durationMinutes : 60,
+    originalBookingId: referenceId(raw.originalBookingId) || undefined,
+    createdAt: asString(raw.createdAt),
+  };
+}
+
+function normalizeEquipment(raw: ApiRecord): Equipment {
+  const unit = reference(raw.unitId);
+  return {
+    id: asString(raw.id),
+    name: asString(raw.name),
+    description: asString(raw.description) || undefined,
+    unitId: referenceId(raw.unitId),
+    unitLabel: asString(unit?.label) || asString(unit?.shortLabel) || undefined,
+    active: raw.active !== false,
+  };
+}
+
+function normalizeMaterial(raw: ApiRecord): Material {
+  const category = reference(raw.categoryId);
+  const author = reference(raw.authorId);
+  const body = assetHtml(asString(raw.body)) || undefined;
+  const attachments = Array.isArray(raw.attachments)
+    ? raw.attachments.map((item) => {
+        const attachment = item as ApiRecord;
+        return {
+          id: asString(attachment.legacyId) || asString(attachment.id),
+          name: asString(attachment.name),
+          type: attachment.type as MaterialAttachment["type"],
+          url: assetUrl(asString(attachment.url)) ?? "",
+          size: asString(attachment.size) || undefined,
+        };
+      })
+    : [];
+  return {
+    id: asString(raw.id),
+    title: asString(raw.title),
+    description: asString(raw.description) || undefined,
+    category: asString(category?.name),
+    coverImage: assetUrl(asString(raw.coverImage)) || firstImageFromHtml(body),
+    body,
+    attachments,
+    authorId: referenceId(raw.authorId),
+    authorName: asString(author?.name),
+    authorAvatar: assetUrl(asString(author?.avatar)) || undefined,
+    status: raw.status === "draft" ? "draft" : "published",
+    createdAt: asString(raw.createdAt),
+  };
+}
+
+function normalizeUnit(raw: ApiRecord): Unit {
+  return {
+    id: asString(raw.id),
+    key: asString(raw.key),
+    label: asString(raw.label),
+    shortLabel: asString(raw.shortLabel),
+    address: asString(raw.address),
+    mapSrc: asString(raw.mapSrc) || undefined,
+    mapsHref: asString(raw.mapsHref) || undefined,
+    timezone: asString(raw.timezone, "America/Sao_Paulo"),
+    active: raw.active !== false,
+  };
+}
+
+function normalizeLead(raw: ApiRecord): Lead {
+  const assigned = reference(raw.assignedTo);
+  return {
+    id: asString(raw.id),
+    firstName: asString(raw.firstName) || undefined,
+    lastName: asString(raw.lastName) || undefined,
+    email: asString(raw.email),
+    message: asString(raw.message) || undefined,
+    unitKey: asString(raw.unitKey) || undefined,
+    status: raw.status as Lead["status"],
+    internalNotes: asString(raw.internalNotes) || undefined,
+    assignedTo: assigned
+      ? {
+          id: asString(assigned.id),
+          name: asString(assigned.name),
+          email: asString(assigned.email),
+        }
+      : undefined,
+    createdAt: asString(raw.createdAt),
+  };
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  showError = true,
+): Promise<T> {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+  const headers = new Headers(options.headers);
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (options.body && !(options.body instanceof FormData))
+    headers.set("Content-Type", "application/json");
+  let response: Response;
+  try {
+    response = await fetch(`${apiBase()}${path}`, {
+      ...options,
+      headers,
+      cache: "no-store",
+    });
+  } catch (cause) {
+    const error = new ApiError(
+      cause instanceof Error ? cause.message : "Falha de conexão.",
+      0,
+    );
+    if (showError) notifyRequestError(error);
+    throw error;
+  }
+  const payload = (await response.json().catch(() => undefined)) as
+    ApiRecord | undefined;
+  if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem(TOKEN_KEY);
+      if (token && !sessionExpirationAnnounced) {
+        sessionExpirationAnnounced = true;
+        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+      }
+    }
+    const rawMessage = payload?.message;
+    const message = Array.isArray(rawMessage)
+      ? rawMessage.join(" ")
+      : asString(rawMessage, "Não foi possível concluir a operação.");
+    const error = new ApiError(message, response.status);
+    if (showError) notifyRequestError(error);
+    throw error;
+  }
+  return payload as T;
+}
+
+function json(method: string, body?: unknown, keepalive = false): RequestInit {
+  return {
+    method,
+    keepalive,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  };
+}
+
+function failWithFeedback(message: string, status: number): never {
+  const error = new ApiError(message, status);
+  notifyRequestError(error);
+  throw error;
+}
+
+class ApiStore {
+  private currentUser: User | null = null;
+  private users: User[] = [];
+  private events: DJEvent[] = [];
+  private bookings: Booking[] = [];
+  private materials: Material[] = [];
+  private categories: CategoryRecord[] = [];
+  private notifications: Notification[] = [];
+  private units: Unit[] = [];
+  private equipments: Equipment[] = [];
+  private leads: Lead[] = [];
+  private bootstrapPromise: Promise<User | null> | null = null;
+  private restoreSessionPromise: Promise<User | null> | null = null;
+  private publicUnitsPromise: Promise<Unit[]> | null = null;
+
+  hasSession() {
+    return (
+      typeof window !== "undefined" && Boolean(localStorage.getItem(TOKEN_KEY))
+    );
+  }
+
+  async login(email: string, password: string) {
+    const result = await request<{ accessToken: string; user: ApiRecord }>(
+      "/auth/login",
+      json("POST", { email, password }),
+    );
+    localStorage.setItem(TOKEN_KEY, result.accessToken);
+    sessionExpirationAnnounced = false;
+    this.currentUser = normalizeUser(result.user);
+    notifySuccess("Login realizado", `Bem-vindo(a), ${this.currentUser.name}.`);
+    return this.currentUser;
+  }
+
+  logout() {
+    localStorage.removeItem(TOKEN_KEY);
+    sessionExpirationAnnounced = true;
+    this.reset();
+  }
+
+  async bootstrap(force = false): Promise<User | null> {
+    if (!this.hasSession()) return null;
+    if (!force && this.bootstrapPromise) return this.bootstrapPromise;
+    this.bootstrapPromise = this.loadAll().finally(() => {
+      this.bootstrapPromise = null;
+    });
+    return this.bootstrapPromise;
+  }
+
+  async restoreSession(): Promise<User | null> {
+    if (this.currentUser) return this.currentUser;
+    if (!this.hasSession()) return null;
+    if (this.restoreSessionPromise) return this.restoreSessionPromise;
+
+    this.restoreSessionPromise = request<ApiRecord>("/users/me", {}, false)
+      .then((raw) => {
+        const user = normalizeUser(raw);
+        this.currentUser = user;
+        this.users = this.uniqueUsers([user, ...this.users]);
+        return user;
+      })
+      .catch((error: unknown) => {
+        if (error instanceof ApiError && error.status === 401) {
+          this.reset();
+          return null;
+        }
+        throw error;
+      })
+      .finally(() => {
+        this.restoreSessionPromise = null;
+      });
+
+    return this.restoreSessionPromise;
+  }
+
+  private async loadAll() {
+    const me = normalizeUser(await request<ApiRecord>("/users/me"));
+    this.currentUser = me;
+    const usersPath =
+      me.role === "student" ? "/users?role=professor" : "/users";
+    const [
+      userItems,
+      eventItems,
+      bookingItems,
+      materialItems,
+      categories,
+      notifications,
+      units,
+      equipments,
+    ] = await Promise.all([
+      this.fetchAllPages(usersPath),
+      this.fetchAllPages("/events"),
+      this.fetchAllPages("/bookings"),
+      this.fetchAllPages("/materials"),
+      request<ApiRecord[]>("/materials/categories"),
+      request<ApiRecord[]>("/notifications"),
+      request<ApiRecord[]>("/units"),
+      request<ApiRecord[]>("/equipments"),
+    ]);
+    this.users = this.uniqueUsers([me, ...userItems.map(normalizeUser)]);
+    this.events = eventItems.map(normalizeEvent);
+    this.bookings = bookingItems.map(normalizeBooking);
+    this.materials = materialItems.map(normalizeMaterial);
+    this.categories = categories.map((item) => ({
+      id: asString(item.id),
+      name: asString(item.name),
+    }));
+    this.notifications = notifications.map((item) =>
+      this.normalizeNotification(item),
+    );
+    this.units = units.map(normalizeUnit);
+    this.equipments = equipments.map(normalizeEquipment);
+    if (me.role === "admin")
+      this.leads = (await request<ApiRecord[]>("/leads")).map(normalizeLead);
+    return me;
+  }
+
+  getCurrentUser = () => this.currentUser;
+  getUsers = () => [...this.users];
+  getStudents = () => this.users.filter((user) => user.role === "student");
+  getProfessors = () => this.users.filter((user) => user.role === "professor");
+  getUserById = (id: string) =>
+    this.users.find((user) => user.id === id) ?? null;
+  getEvents = () => [...this.events];
+  getStudentEvents = () =>
+    this.events.filter((event) => event.type === "student");
+  getDJOnEvents = () => this.events.filter((event) => event.type === "djOn");
+  getProfessorEvents = () =>
+    this.events.filter((event) => event.type === "professor");
+  getEventsByUser = (id: string) =>
+    this.events.filter((event) => event.createdBy === id);
+  getBookings = () => [...this.bookings];
+  getBookingsByUser = (id: string) =>
+    this.bookings.filter((booking) => booking.userId === id);
+  getMaterials = () =>
+    [...this.materials].sort(
+      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
+    );
+  getMaterialById = (id: string) =>
+    this.materials.find((material) => material.id === id) ?? null;
+  getMaterialCategories = () =>
+    this.categories.map((category) => category.name);
+  getNotifications = () => [...this.notifications];
+  getUnits = () => [...this.units];
+  getEquipments = () => [...this.equipments];
+  getLeads = () => [...this.leads];
+
+  async fetchUserById(id: string) {
+    const cached = this.getUserById(id);
+    if (cached) return cached;
+    const user = normalizeUser(await request<ApiRecord>(`/users/${id}`));
+    this.users = this.uniqueUsers([...this.users, user]);
+    return user;
+  }
+
+  async fetchMaterialById(id: string) {
+    const cached = this.getMaterialById(id);
+    if (cached) return cached;
+    const material = normalizeMaterial(
+      await request<ApiRecord>(`/materials/${id}`),
+    );
+    this.materials = [material, ...this.materials];
+    return material;
+  }
+
+  async refreshNotifications() {
+    const notifications = await request<ApiRecord[]>("/notifications");
+    this.notifications = notifications.map((item) =>
+      this.normalizeNotification(item),
+    );
+    return this.getNotifications();
+  }
+
+  async markNotificationRead(id: string) {
+    const updated = this.normalizeNotification(
+      await request<ApiRecord>(`/notifications/${id}/read`, json("PATCH", {})),
+    );
+    this.notifications = this.notifications.map((item) =>
+      item.id === id ? updated : item,
+    );
+    notifySuccess("Notificação marcada como lida");
+    return updated;
+  }
+
+  async markAllNotificationsRead() {
+    await request("/notifications/read-all", json("PATCH", {}));
+    const readAt = new Date().toISOString();
+    this.notifications = this.notifications.map((item) => ({
+      ...item,
+      readAt: item.readAt ?? readAt,
+    }));
+    notifySuccess(
+      "Notificações atualizadas",
+      "Todas foram marcadas como lidas.",
+    );
+  }
+
+  async refreshBookings() {
+    this.bookings = (await this.fetchAllPages("/bookings")).map(
+      normalizeBooking,
+    );
+    return this.getBookings();
+  }
+
+  async getAvailability(
+    date: string,
+    unitId: string | undefined,
+    resource: Pick<Booking, "type" | "professorId" | "equipmentId">,
+    excludeBookingId?: string,
+    durationMinutes = 60,
+  ) {
+    const unit = unitId ? `&unitId=${encodeURIComponent(unitId)}` : "";
+    const professor = resource.professorId
+      ? `&professorId=${encodeURIComponent(resource.professorId)}`
+      : "";
+    const equipment = resource.equipmentId
+      ? `&equipmentId=${encodeURIComponent(resource.equipmentId)}`
+      : "";
+    const exclude = excludeBookingId
+      ? `&excludeBookingId=${encodeURIComponent(excludeBookingId)}`
+      : "";
+    const duration = `&durationMinutes=${durationMinutes}`;
+    return request<BookingAvailability>(
+      `/bookings/availability?date=${encodeURIComponent(date)}&type=${resource.type}${unit}${professor}${equipment}${exclude}${duration}`,
+    );
+  }
+
+  async getMonthlyAvailability(
+    month: string,
+    unitId: string | undefined,
+    resource: Pick<Booking, "type" | "professorId" | "equipmentId">,
+    excludeBookingId?: string,
+    durationMinutes = 60,
+  ) {
+    const unit = unitId ? `&unitId=${encodeURIComponent(unitId)}` : "";
+    const professor = resource.professorId
+      ? `&professorId=${encodeURIComponent(resource.professorId)}`
+      : "";
+    const equipment = resource.equipmentId
+      ? `&equipmentId=${encodeURIComponent(resource.equipmentId)}`
+      : "";
+    const exclude = excludeBookingId
+      ? `&excludeBookingId=${encodeURIComponent(excludeBookingId)}`
+      : "";
+    const duration = `&durationMinutes=${durationMinutes}`;
+    return request<{ availableDates: string[] }>(
+      `/bookings/availability/month?month=${encodeURIComponent(month)}&type=${resource.type}${unit}${professor}${equipment}${exclude}${duration}`,
+    );
+  }
+
+  async getTrainingBalance() {
+    return request<TrainingBalance>("/bookings/training-balance");
+  }
+
+  async addUser(data: Omit<User, "id" | "createdAt"> & { password: string }) {
+    const user = normalizeUser(
+      await request<ApiRecord>(
+        "/users",
+        json("POST", {
+          ...data,
+          whatsapp: data.whatsapp ? phoneDigits(data.whatsapp) : undefined,
+        }),
+      ),
+    );
+    this.users = this.uniqueUsers([...this.users, user]);
+    notifySuccess(
+      data.role === "professor" ? "Professor cadastrado" : "Aluno cadastrado",
+      `${user.name} já pode acessar o portal.`,
+    );
+    return user;
+  }
+
+  async restoreUser(id: string, options: MutationFeedbackOptions = {}) {
+    const user = normalizeUser(
+      await request<ApiRecord>(`/users/${id}/restore`, json("POST", {})),
+    );
+    this.users = this.uniqueUsers([
+      ...this.users.filter((item) => item.id !== id),
+      user,
+    ]);
+    options.onChange?.();
+    if (!options.silent)
+      notifySuccess(
+        "Usuário restaurado",
+        `${user.name} voltou a ter acesso ao portal.`,
+      );
+    return user;
+  }
+
+  async listAdminUsers(includeInactive = false) {
+    const items = await this.fetchAllPages(
+      `/users${includeInactive ? "?includeInactive=true" : ""}`,
+    );
+    this.users = this.uniqueUsers([
+      ...(this.currentUser ? [this.currentUser] : []),
+      ...items.map(normalizeUser),
+    ]);
+    return this.getUsers();
+  }
+
+  async changePassword(currentPassword: string, newPassword: string) {
+    const result = await request<{ changed: boolean }>(
+      "/users/me/password",
+      json("PATCH", { currentPassword, newPassword }),
+    );
+    notifySuccess("Senha alterada", "Use a nova senha no próximo acesso.");
+    return result;
+  }
+
+  async updateUser(id: string, data: Partial<User>) {
+    const path = id === this.currentUser?.id ? "/users/me" : `/users/${id}`;
+    const payload = {
+      ...data,
+      ...(data.whatsapp !== undefined
+        ? { whatsapp: phoneDigits(data.whatsapp) }
+        : {}),
+      ...(data.avatar ? { avatar: this.relativeAsset(data.avatar) } : {}),
+      ...(data.banner ? { banner: this.relativeAsset(data.banner) } : {}),
+    };
+    const user = normalizeUser(
+      await request<ApiRecord>(path, json("PATCH", payload)),
+    );
+    this.users = this.uniqueUsers([
+      ...this.users.filter((item) => item.id !== id),
+      user,
+    ]);
+    if (id === this.currentUser?.id) this.currentUser = user;
+    notifySuccess(
+      id === this.currentUser?.id ? "Perfil atualizado" : "Usuário atualizado",
+      "As alterações foram salvas.",
+    );
+    return user;
+  }
+
+  async deleteUser(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.users.find((user) => user.id === id);
+    await request(`/users/${id}`, json("DELETE"));
+    this.users = this.users.map((user) =>
+      user.id === id ? { ...user, active: false } : user,
+    );
+    options.onChange?.();
+    notifyUndoable({
+      title: "Usuário desativado",
+      description: "O acesso ao portal foi removido.",
+      undo: async () => {
+        await this.restoreUser(id, { silent: true });
+        options.onChange?.();
+      },
+      undoDescription: previous
+        ? `${previous.name} voltou a ter acesso ao portal.`
+        : "O acesso foi restaurado.",
+    });
+  }
+
+  async addEvent(data: Omit<DJEvent, "id" | "createdAt">) {
+    const event = normalizeEvent(
+      await request<ApiRecord>(
+        "/events",
+        json("POST", {
+          title: data.title,
+          date: data.date,
+          time: data.time,
+          location: data.location,
+          instagram: data.instagram,
+          description: data.description,
+          type: data.type,
+        }),
+      ),
+    );
+    this.events = [...this.events, event];
+    notifySuccess("Evento publicado", `${event.title} já aparece no mural.`);
+    return event;
+  }
+
+  async updateEvent(id: string, data: Partial<DJEvent>) {
+    const event = normalizeEvent(
+      await request<ApiRecord>(
+        `/events/${id}`,
+        json("PATCH", {
+          title: data.title,
+          date: data.date,
+          time: data.time,
+          location: data.location,
+          instagram: data.instagram,
+          description: data.description,
+          type: data.type,
+        }),
+      ),
+    );
+    this.events = this.events.map((item) => (item.id === id ? event : item));
+    notifySuccess(
+      "Evento atualizado",
+      "As alterações já estão disponíveis no mural.",
+    );
+    return event;
+  }
+
+  async deleteEvent(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.events.find((event) => event.id === id);
+    if (!previous) failWithFeedback("Evento não encontrado.", 404);
+    this.events = this.events.filter((event) => event.id !== id);
+    options.onChange?.();
+    notifyUndoable({
+      title: "Evento removido",
+      description: "O evento não aparece mais no mural.",
+      commit: () => request(`/events/${id}`, json("DELETE", undefined, true)),
+      undo: () => {
+        this.events = [
+          ...this.events.filter((event) => event.id !== id),
+          previous,
+        ];
+        options.onChange?.();
+      },
+      undoDescription: `${previous.title} voltou ao mural.`,
+    });
+  }
+
+  async addBooking(data: Omit<Booking, "id" | "createdAt">) {
+    const booking = normalizeBooking(
+      await request<ApiRecord>(
+        "/bookings",
+        json("POST", {
+          studentId: data.userId || undefined,
+          title: data.title,
+          date: data.date,
+          time: data.time,
+          type: data.type,
+          notes: data.notes,
+          status: data.status,
+          unitId: data.unitId,
+          professorId: data.professorId || undefined,
+          equipmentId: data.equipmentId || undefined,
+          durationMinutes: data.durationMinutes,
+        }),
+      ),
+    );
+    this.bookings = [...this.bookings, booking];
+    notifySuccess(
+      booking.status === "pendente"
+        ? "Solicitação enviada"
+        : "Agendamento criado",
+      booking.status === "pendente"
+        ? "Você receberá uma notificação após a análise."
+        : "O horário foi reservado com sucesso.",
+    );
+    return booking;
+  }
+
+  async updateBooking(
+    id: string,
+    data: Partial<Booking>,
+    options: MutationFeedbackOptions & { routingBooking?: Booking } = {},
+  ) {
+    const current =
+      options.routingBooking ??
+      this.bookings.find((booking) => booking.id === id);
+    const statusOnly = Object.entries(data).every(
+      ([key, value]) => key === "status" || value === undefined,
+    );
+    let raw: ApiRecord;
+    if (this.currentUser?.role === "student" && data.status === "cancelado") {
+      raw = await request<ApiRecord>(
+        `/bookings/${id}/cancel`,
+        json("POST", {}, options.keepalive),
+      );
+    } else if (
+      statusOnly &&
+      current?.status === "pendente" &&
+      data.status === "confirmado"
+    ) {
+      raw = await request<ApiRecord>(
+        `/bookings/${id}/approve`,
+        json("POST", {}, options.keepalive),
+      );
+    } else if (
+      statusOnly &&
+      current?.status === "pendente" &&
+      data.status === "cancelado"
+    ) {
+      raw = await request<ApiRecord>(
+        `/bookings/${id}/reject`,
+        json("POST", {}, options.keepalive),
+      );
+    } else {
+      raw = await request<ApiRecord>(
+        `/bookings/${id}`,
+        json(
+          "PATCH",
+          {
+            studentId: data.userId,
+            title: data.title,
+            date: data.date,
+            time: data.time,
+            type: data.type,
+            notes: data.notes,
+            status: data.status,
+            unitId: data.unitId,
+            professorId: data.professorId || undefined,
+            equipmentId: data.equipmentId || undefined,
+            durationMinutes: data.durationMinutes,
+          },
+          options.keepalive,
+        ),
+      );
+    }
+    const booking = normalizeBooking(raw);
+    this.bookings = this.bookings.map((item) =>
+      item.id === id ? booking : item,
+    );
+    const success =
+      data.status === "confirmado" && current?.status === "pendente"
+        ? ["Solicitação aprovada", "O aluno receberá a confirmação."]
+        : data.status === "cancelado" &&
+            current?.status === "pendente" &&
+            this.currentUser?.role !== "student"
+          ? ["Solicitação recusada", "O aluno será informado da decisão."]
+          : data.status === "cancelado"
+            ? ["Agendamento cancelado", "O horário foi liberado na agenda."]
+            : ["Agendamento atualizado", "As alterações foram salvas."];
+    options.onChange?.();
+    if (!options.silent) notifySuccess(success[0], success[1]);
+    return booking;
+  }
+
+  async cancelBooking(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.bookings.find((booking) => booking.id === id);
+    if (!previous) failWithFeedback("Agendamento não encontrado.", 404);
+    if (previous.status === "cancelado") return previous;
+
+    this.bookings = this.bookings.map((booking) =>
+      booking.id === id ? { ...booking, status: "cancelado" } : booking,
+    );
+    options.onChange?.();
+    notifyUndoable({
+      title:
+        previous.status === "pendente" && this.currentUser?.role !== "student"
+          ? "Solicitação recusada"
+          : "Agendamento cancelado",
+      description:
+        previous.status === "pendente" && this.currentUser?.role !== "student"
+          ? "O aluno será informado após o prazo para desfazer."
+          : "O horário será liberado após o prazo para desfazer.",
+      commit: async () => {
+        await this.updateBooking(
+          id,
+          { status: "cancelado" },
+          { silent: true, routingBooking: previous, keepalive: true },
+        );
+      },
+      undo: () => {
+        this.bookings = this.bookings.map((booking) =>
+          booking.id === id ? previous : booking,
+        );
+        options.onChange?.();
+      },
+      undoDescription:
+        previous.status === "pendente"
+          ? "A solicitação voltou para análise."
+          : "O agendamento foi restaurado.",
+    });
+    return { ...previous, status: "cancelado" as const };
+  }
+
+  async deleteBooking(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.bookings.find((booking) => booking.id === id);
+    if (!previous) failWithFeedback("Agendamento não encontrado.", 404);
+
+    this.bookings = this.bookings.filter((booking) => booking.id !== id);
+    options.onChange?.();
+    notifyUndoable({
+      title: "Agendamento removido",
+      description: "O agendamento não aparece mais na agenda.",
+      commit: () => request(`/bookings/${id}`, json("DELETE", undefined, true)),
+      undo: () => {
+        this.bookings = [
+          previous,
+          ...this.bookings.filter((booking) => booking.id !== id),
+        ];
+        options.onChange?.();
+      },
+      undoDescription: "O agendamento voltou para a agenda.",
+    });
+    return previous;
+  }
+
+  async rescheduleBooking(id: string, data: Omit<Booking, "id" | "createdAt">) {
+    const booking = normalizeBooking(
+      await request<ApiRecord>(
+        `/bookings/${id}/reschedule`,
+        json("POST", {
+          title: data.title,
+          date: data.date,
+          time: data.time,
+          type: data.type,
+          notes: data.notes,
+          unitId: data.unitId,
+          professorId: data.professorId || undefined,
+          equipmentId: data.equipmentId || undefined,
+          durationMinutes: data.durationMinutes,
+        }),
+      ),
+    );
+    this.bookings = [...this.bookings, booking];
+    notifySuccess(
+      "Remarcação solicitada",
+      "Você receberá uma notificação após a análise.",
+    );
+    return booking;
+  }
+
+  async addMaterial(data: Omit<Material, "id" | "createdAt">) {
+    const categoryId = data.category
+      ? this.categoryId(data.category)
+      : undefined;
+    const material = normalizeMaterial(
+      await request<ApiRecord>(
+        "/materials",
+        json("POST", {
+          title: data.title,
+          description: data.description,
+          categoryId,
+          status: data.status,
+          coverImage: data.coverImage
+            ? this.relativeAsset(data.coverImage)
+            : undefined,
+          body: data.body ? this.relativeAssetHtml(data.body) : undefined,
+          attachments: data.attachments?.map((item) => ({
+            legacyId: item.id,
+            name: item.name,
+            type: item.type,
+            url: this.relativeAsset(item.url),
+            size: item.size,
+          })),
+        }),
+      ),
+    );
+    this.materials = [material, ...this.materials];
+    if (material.status === "draft") {
+      notifySuccess(
+        "Rascunho salvo",
+        "Você poderá continuar a edição pela categoria Rascunhos.",
+      );
+    } else {
+      notifySuccess(
+        "Material publicado",
+        `${material.title} já está disponível para os alunos.`,
+      );
+    }
+    return material;
+  }
+
+  async updateMaterial(id: string, data: Partial<Material>) {
+    const material = normalizeMaterial(
+      await request<ApiRecord>(
+        `/materials/${id}`,
+        json("PATCH", {
+          title: data.title,
+          description: data.description,
+          status: data.status,
+          categoryId: data.category
+            ? this.categoryId(data.category)
+            : undefined,
+          coverImage: data.coverImage
+            ? this.relativeAsset(data.coverImage)
+            : undefined,
+          body: data.body ? this.relativeAssetHtml(data.body) : data.body,
+          attachments: data.attachments?.map((item) => ({
+            legacyId: item.id,
+            name: item.name,
+            type: item.type,
+            url: this.relativeAsset(item.url),
+            size: item.size,
+          })),
+        }),
+      ),
+    );
+    this.materials = this.materials.map((item) =>
+      item.id === id ? material : item,
+    );
+    notifySuccess(
+      material.status === "draft" ? "Rascunho salvo" : "Material atualizado",
+      material.status === "draft"
+        ? "As alterações do rascunho foram salvas."
+        : "As alterações foram salvas.",
+    );
+    return material;
+  }
+
+  async deleteMaterial(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.materials.find((material) => material.id === id);
+    if (!previous) failWithFeedback("Material não encontrado.", 404);
+    this.materials = this.materials.filter((material) => material.id !== id);
+    options.onChange?.();
+    notifyUndoable({
+      title: "Material removido",
+      description: "O conteúdo não está mais disponível.",
+      commit: () =>
+        request(`/materials/${id}`, json("DELETE", undefined, true)),
+      undo: () => {
+        this.materials = [
+          previous,
+          ...this.materials.filter((material) => material.id !== id),
+        ];
+        options.onChange?.();
+      },
+      undoDescription: `${previous.title} voltou a ficar disponível.`,
+    });
+  }
+
+  async addMaterialCategory(name: string) {
+    const category = await request<ApiRecord>(
+      "/materials/categories",
+      json("POST", { name }),
+    );
+    this.categories.push({
+      id: asString(category.id),
+      name: asString(category.name),
+    });
+    notifySuccess(
+      "Categoria criada",
+      `${asString(category.name)} já pode ser usada nos materiais.`,
+    );
+    return this.getMaterialCategories();
+  }
+
+  async updateMaterialCategory(oldName: string, newName: string) {
+    const category = this.categories.find((item) => item.name === oldName);
+    if (!category) failWithFeedback("Categoria não encontrada.", 404);
+    const updated = await request<ApiRecord>(
+      `/materials/categories/${category.id}`,
+      json("PATCH", { name: newName }),
+    );
+    category.name = asString(updated.name);
+    this.materials = this.materials.map((material) =>
+      material.category === oldName
+        ? { ...material, category: category.name }
+        : material,
+    );
+    notifySuccess(
+      "Categoria atualizada",
+      `A categoria agora se chama ${category.name}.`,
+    );
+    return this.getMaterialCategories();
+  }
+
+  async deleteMaterialCategory(
+    name: string,
+    transferTo?: string,
+    options: MutationFeedbackOptions = {},
+  ) {
+    const category = this.categories.find((item) => item.name === name);
+    const transfer = transferTo
+      ? this.categories.find((item) => item.name === transferTo)
+      : undefined;
+    if (!category || (transferTo && !transfer))
+      failWithFeedback("Categoria não encontrada.", 404);
+    const previousMaterials = this.materials
+      .filter((material) => material.category === name)
+      .map((material) => ({ id: material.id, category: material.category }));
+    this.categories = this.categories.filter((item) => item.id !== category.id);
+    if (transferTo)
+      this.materials = this.materials.map((material) =>
+        material.category === name
+          ? { ...material, category: transferTo }
+          : material,
+      );
+    options.onChange?.();
+    notifyUndoable({
+      title: "Categoria removida",
+      description: transferTo
+        ? `Os materiais foram movidos para ${transferTo}.`
+        : "A categoria foi excluída.",
+      commit: () =>
+        request(
+          `/materials/categories/${category.id}`,
+          json(
+            "DELETE",
+            {
+              transferToCategoryId: transfer?.id,
+            },
+            true,
+          ),
+        ),
+      undo: () => {
+        this.categories = [
+          ...this.categories.filter((item) => item.id !== category.id),
+          category,
+        ];
+        const previousById = new Map(
+          previousMaterials.map((material) => [material.id, material.category]),
+        );
+        this.materials = this.materials.map((material) =>
+          previousById.has(material.id)
+            ? { ...material, category: previousById.get(material.id)! }
+            : material,
+        );
+        options.onChange?.();
+      },
+      undoDescription: `${name} e seus vínculos foram restaurados.`,
+    });
+    return this.getMaterialCategories();
+  }
+
+  async uploadFile(file: File, purpose: string): Promise<UploadedFile> {
+    const body = new FormData();
+    body.append("file", file);
+    body.append("purpose", purpose);
+    const uploaded = await request<UploadedFile>("/files", {
+      method: "POST",
+      body,
+    });
+    notifySuccess(
+      "Arquivo enviado",
+      `${file.name} foi armazenado com segurança.`,
+    );
+    return { ...uploaded, url: assetUrl(uploaded.url) ?? uploaded.url };
+  }
+
+  async deleteFile(
+    id: string,
+    options: { silent?: boolean; keepalive?: boolean } = {},
+  ) {
+    await request(`/files/${id}`, json("DELETE", undefined, options.keepalive));
+    if (!options.silent)
+      notifySuccess("Arquivo removido", "O anexo foi excluído.");
+  }
+
+  async getPublicUnits() {
+    if (!this.publicUnitsPromise) {
+      this.publicUnitsPromise = request<ApiRecord[]>("/units")
+        .then((items) => {
+          this.units = items.map(normalizeUnit);
+          return this.getUnits();
+        })
+        .finally(() => {
+          this.publicUnitsPromise = null;
+        });
+    }
+    return this.publicUnitsPromise;
+  }
+
+  async listAdminUnits() {
+    this.units = (await request<ApiRecord[]>("/units/admin/all")).map(
+      normalizeUnit,
+    );
+    return this.getUnits();
+  }
+
+  async saveUnit(data: Omit<Unit, "id">, id?: string) {
+    const payload = {
+      ...data,
+      mapSrc: data.mapSrc || undefined,
+      mapsHref: data.mapsHref || undefined,
+    };
+    const raw = await request<ApiRecord>(
+      id ? `/units/${id}` : "/units",
+      json(id ? "PATCH" : "POST", payload),
+    );
+    const unit = normalizeUnit(raw);
+    this.units = [...this.units.filter((item) => item.id !== unit.id), unit];
+    notifySuccess(
+      id ? "Unidade atualizada" : "Unidade criada",
+      `${unit.label} foi salva com sucesso.`,
+    );
+    return unit;
+  }
+
+  async deactivateUnit(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.units.find((unit) => unit.id === id);
+    if (!previous) failWithFeedback("Unidade não encontrada.", 404);
+    const inactive = { ...previous, active: false };
+    this.units = [...this.units.filter((item) => item.id !== id), inactive];
+    options.onChange?.();
+    notifyUndoable({
+      title: "Unidade desativada",
+      description: `${previous.label} não aparece mais para novos agendamentos.`,
+      commit: () => request(`/units/${id}`, json("DELETE", undefined, true)),
+      undo: () => {
+        this.units = [...this.units.filter((item) => item.id !== id), previous];
+        options.onChange?.();
+      },
+      undoDescription: `${previous.label} voltou a aceitar agendamentos.`,
+    });
+    return inactive;
+  }
+
+  async listAdminEquipments() {
+    this.equipments = (await request<ApiRecord[]>("/equipments/admin/all")).map(
+      normalizeEquipment,
+    );
+    return this.getEquipments();
+  }
+
+  async saveEquipment(data: Omit<Equipment, "id" | "unitLabel">, id?: string) {
+    const raw = await request<ApiRecord>(
+      id ? `/equipments/${id}` : "/equipments",
+      json(id ? "PATCH" : "POST", data),
+    );
+    const equipment = normalizeEquipment(raw);
+    this.equipments = [
+      ...this.equipments.filter((item) => item.id !== equipment.id),
+      equipment,
+    ];
+    notifySuccess(
+      id ? "Equipamento atualizado" : "Equipamento criado",
+      `${equipment.name} foi salvo com sucesso.`,
+    );
+    return equipment;
+  }
+
+  async deactivateEquipment(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.equipments.find((equipment) => equipment.id === id);
+    if (!previous) failWithFeedback("Equipamento não encontrado.", 404);
+    const inactive = { ...previous, active: false };
+    this.equipments = [
+      ...this.equipments.filter((item) => item.id !== id),
+      inactive,
+    ];
+    options.onChange?.();
+    notifyUndoable({
+      title: "Equipamento desativado",
+      description: `${previous.name} não aparece mais para novos treinos.`,
+      commit: () =>
+        request(`/equipments/${id}`, json("DELETE", undefined, true)),
+      undo: () => {
+        this.equipments = [
+          ...this.equipments.filter((item) => item.id !== id),
+          previous,
+        ];
+        options.onChange?.();
+      },
+      undoDescription: `${previous.name} voltou a ficar disponível.`,
+    });
+    return inactive;
+  }
+
+  async submitLead(
+    data: Pick<
+      Lead,
+      "firstName" | "lastName" | "email" | "message" | "unitKey"
+    >,
+  ) {
+    const result = await request<{ id: string; received: boolean }>(
+      "/leads",
+      json("POST", data),
+    );
+    notifySuccess(
+      "Mensagem enviada",
+      "A equipe da DJ ON entrará em contato com você.",
+    );
+    return result;
+  }
+
+  async updateLead(
+    id: string,
+    data: Partial<Pick<Lead, "status" | "internalNotes">> & {
+      assignedTo?: string;
+    },
+  ) {
+    const lead = normalizeLead(
+      await request<ApiRecord>(`/leads/${id}`, json("PATCH", data)),
+    );
+    this.leads = this.leads.map((item) => (item.id === id ? lead : item));
+    notifySuccess(
+      "Contato atualizado",
+      "O status e as observações foram salvos.",
+    );
+    return lead;
+  }
+
+  async deleteLead(id: string, options: MutationFeedbackOptions = {}) {
+    const previous = this.leads.find((lead) => lead.id === id);
+    if (!previous) failWithFeedback("Contato não encontrado.", 404);
+    this.leads = this.leads.filter((item) => item.id !== id);
+    options.onChange?.();
+    notifyUndoable({
+      title: "Contato removido",
+      description: "O registro foi excluído da lista.",
+      commit: () => request(`/leads/${id}`, json("DELETE", undefined, true)),
+      undo: () => {
+        this.leads = [previous, ...this.leads.filter((lead) => lead.id !== id)];
+        options.onChange?.();
+      },
+      undoDescription: "O contato voltou para a lista.",
+    });
+  }
+
+  async search(query: string) {
+    if (query.trim().length < 2)
+      return { users: [], events: [], materials: [] };
+    const result = await request<{
+      users: ApiRecord[];
+      events: ApiRecord[];
+      materials: ApiRecord[];
+    }>(`/search?q=${encodeURIComponent(query.trim())}`);
+    const normalized = {
+      users: result.users.map(normalizeUser),
+      events: result.events.map(normalizeEvent),
+      materials: result.materials.map(normalizeMaterial),
+    };
+    this.users = this.uniqueUsers([...this.users, ...normalized.users]);
+    this.events = [
+      ...new Map(
+        [...this.events, ...normalized.events].map((item) => [item.id, item]),
+      ).values(),
+    ];
+    this.materials = [
+      ...new Map(
+        [...this.materials, ...normalized.materials].map((item) => [
+          item.id,
+          item,
+        ]),
+      ).values(),
+    ];
+    return normalized;
+  }
+
+  async subscribePush(subscription: PushSubscriptionJSON) {
+    const result = await request(
+      "/notifications/push-subscriptions",
+      json("POST", {
+        endpoint: subscription.endpoint,
+        p256dh: subscription.keys?.p256dh,
+        auth: subscription.keys?.auth,
+      }),
+    );
+    notifySuccess(
+      "Alertas ativados",
+      "Você receberá avisos importantes neste dispositivo.",
+    );
+    return result;
+  }
+
+  private categoryId(name: string) {
+    const category = this.categories.find((item) => item.name === name);
+    if (!category) failWithFeedback("Categoria não encontrada.", 404);
+    return category.id;
+  }
+
+  private relativeAsset(url: string) {
+    if (!url) return url;
+    try {
+      const parsed = new URL(url);
+      return parsed.origin === new URL(apiBase()).origin
+        ? `${parsed.pathname}${parsed.search}`
+        : url;
+    } catch {
+      return url;
+    }
+  }
+
+  private relativeAssetHtml(html: string) {
+    return html.replace(
+      /(src=["'])(https?:\/\/[^"']+\/api\/v1\/files\/[a-f\d]{24}[^"']*)/gi,
+      (_match, prefix, url) => `${prefix}${this.relativeAsset(url)}`,
+    );
+  }
+
+  private async fetchAllPages(path: string) {
+    const items: ApiRecord[] = [];
+    const separator = path.includes("?") ? "&" : "?";
+    for (let page = 1; ; page += 1) {
+      const result = await request<ApiPage>(
+        `${path}${separator}page=${page}&limit=100`,
+      );
+      items.push(...result.items);
+      if (items.length >= result.total || result.items.length === 0)
+        return items;
+    }
+  }
+
+  private uniqueUsers(users: User[]) {
+    return [...new Map(users.map((user) => [user.id, user])).values()].sort(
+      (a, b) => userNameCollator.compare(a.name, b.name),
+    );
+  }
+
+  private normalizeNotification(raw: ApiRecord): Notification {
+    return {
+      id: asString(raw.id),
+      type: asString(raw.type),
+      title: asString(raw.title),
+      body: asString(raw.body),
+      url: asString(raw.url, "/dashboard/student"),
+      metadata: reference(raw.metadata) ?? {},
+      readAt: asString(raw.readAt) || undefined,
+      createdAt: asString(raw.createdAt),
+    };
+  }
+
+  private reset() {
+    this.currentUser = null;
+    this.users = [];
+    this.events = [];
+    this.bookings = [];
+    this.materials = [];
+    this.categories = [];
+    this.notifications = [];
+    this.units = [];
+    this.equipments = [];
+    this.leads = [];
+    this.restoreSessionPromise = null;
+    this.publicUnitsPromise = null;
   }
 }
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __djOnStore: ReturnType<typeof createStore> | undefined
-}
-
-const requiredStoreMethods = [
-  "getMaterialCategories",
-  "addMaterialCategory",
-  "updateMaterialCategory",
-  "deleteMaterialCategory",
-] as const
-
-const existingStore = globalThis.__djOnStore
-const storeNeedsRefresh = !existingStore || requiredStoreMethods.some((method) => typeof existingStore[method] !== "function")
-
-export const store = storeNeedsRefresh ? createStore() : existingStore
-if (typeof window !== "undefined") {
-  globalThis.__djOnStore = store
-}
+export const store = new ApiStore();

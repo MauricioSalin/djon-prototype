@@ -5,7 +5,7 @@ import { useRouter, useParams } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  ArrowLeft, FileText, ImageIcon, Download, Eye, X, Paperclip, File as FileIcon,
+  ArrowLeft, FileText, ImageIcon, Download, Eye, X, Paperclip, File as FileIcon, Edit2,
 } from "lucide-react"
 import { store, type Material, type MaterialAttachment, type User } from "@/lib/store"
 
@@ -140,8 +140,12 @@ export default function MaterialDetailPage() {
     const u = store.getCurrentUser()
     if (!u) { router.replace("/login"); return }
     setUser(u)
-    setMaterial(store.getMaterialById(id))
-    setLoaded(true)
+    let active = true
+    store.fetchMaterialById(id)
+      .then((item) => { if (active) setMaterial(item) })
+      .catch(() => undefined)
+      .finally(() => { if (active) setLoaded(true) })
+    return () => { active = false }
   }, [id, router])
 
   if (!user || !loaded) return null
@@ -196,12 +200,11 @@ export default function MaterialDetailPage() {
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-14 w-full sm:px-6 sm:py-16">
           <motion.div {...fadeUp(0)}>
-            <Link
-              href="/dashboard/material"
-              className="inline-flex items-center gap-2 text-djon-text/50 hover:text-djon-accent text-xs font-black tracking-widest uppercase mb-8 transition-colors"
-            >
-              <ArrowLeft size={14} /> VOLTAR AO MATERIAL
-            </Link>
+            <div className="mb-8 flex flex-wrap items-center gap-4">
+              <Link href="/dashboard/material" className="inline-flex items-center gap-2 text-djon-text/50 hover:text-djon-accent text-xs font-black tracking-widest uppercase transition-colors">
+                <ArrowLeft size={14} /> VOLTAR AO MATERIAL
+              </Link>
+            </div>
           </motion.div>
 
           <motion.span
@@ -220,19 +223,30 @@ export default function MaterialDetailPage() {
 
           <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-5" {...fadeUp(0.3)} />
 
-          <motion.div className="flex items-center gap-3 mt-6" {...fadeUp(0.35)}>
-            <div className="w-8 h-8 rounded-full bg-djon-accent/15 flex items-center justify-center overflow-hidden">
-              {material.authorAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={material.authorAvatar} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-djon-accent text-xs font-black">{authorName.charAt(0)}</span>
-              )}
+          <motion.div className="mt-6 flex items-center justify-between gap-4" {...fadeUp(0.35)}>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="w-8 h-8 shrink-0 rounded-full bg-djon-accent/15 flex items-center justify-center overflow-hidden">
+                {material.authorAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={material.authorAvatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-djon-accent text-xs font-black">{authorName.charAt(0)}</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold leading-tight text-djon-text">{authorName}</p>
+                <p className="text-xs text-djon-text/40">{date}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-djon-text text-sm font-bold leading-tight">{authorName}</p>
-              <p className="text-djon-text/40 text-xs">{date}</p>
-            </div>
+            {(user.role === "admin" || material.authorId === user.id) && (
+              <button
+                type="button"
+                onClick={() => router.push(`/dashboard/material/novo?edit=${material.id}`)}
+                className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90"
+              >
+                <Edit2 size={13} /> EDITAR
+              </button>
+            )}
           </motion.div>
         </div>
       </section>

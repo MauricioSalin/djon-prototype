@@ -6,8 +6,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import {
-  Calendar, Users, GraduationCap, ArrowRight,
-  Clock, CheckCircle, AlertCircle,
+  Calendar, Users, GraduationCap,
+  Clock, CheckCircle, AlertCircle, Music2,
 } from "lucide-react"
 import { store, type User, type Booking } from "@/lib/store"
 
@@ -25,12 +25,16 @@ export default function ProfessorHomePage() {
   const [students, setStudents] = useState<User[]>([])
 
   useEffect(() => {
-    const u = store.getCurrentUser()
-    if (!u) { router.replace("/login"); return }
-    if (u.role !== "professor") { router.replace("/dashboard/student"); return }
-    setUser(u)
-    setBookings(store.getBookings())
-    setStudents(store.getStudents())
+    let mounted = true
+    void store.bootstrap().then((u) => {
+      if (!mounted) return
+      if (!u) { router.replace("/login"); return }
+      if (u.role !== "professor") { router.replace("/dashboard/student"); return }
+      setUser(u)
+      setBookings(store.getBookings())
+      setStudents(store.getStudents().filter((student) => student.active !== false))
+    })
+    return () => { mounted = false }
   }, [router])
 
   if (!user) return null
@@ -47,6 +51,7 @@ export default function ProfessorHomePage() {
 
   const quickLinks = [
     { label: "Agenda Completa", desc: "Todos os agendamentos", href: "/dashboard/agenda", icon: Calendar },
+    { label: "Meus Eventos", desc: "Divulgue onde você vai tocar", href: "/dashboard/professor/evento", icon: Music2 },
     { label: "Alunos", desc: "Veja os perfis dos alunos", href: "/dashboard/professor/alunos", icon: Users },
     { label: "Professores", desc: "Equipe da DJ ON Academy", href: "/dashboard/professor/professores", icon: GraduationCap },
   ]
@@ -195,7 +200,6 @@ export default function ProfessorHomePage() {
                     <p className="text-djon-text font-black text-base tracking-tight group-hover:text-djon-accent transition-colors">{q.label}</p>
                     <p className="text-djon-text/30 text-xs mt-0.5">{q.desc}</p>
                   </div>
-                  <ArrowRight size={14} className="text-djon-text/20 group-hover:text-djon-accent transition-colors mt-auto" />
                 </Link>
               </motion.div>
             ))}
@@ -238,6 +242,7 @@ export default function ProfessorHomePage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcoming.map((b, i) => {
                 const student = store.getUserById(b.userId)
+                const studentName = student?.name ?? b.studentName ?? "Aluno"
                 return (
                   <motion.div
                     key={b.id}
@@ -251,10 +256,10 @@ export default function ProfessorHomePage() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0">
-                          <span className="text-djon-accent font-black text-xs">{student?.name.charAt(0) ?? "?"}</span>
+                          <span className="text-djon-accent font-black text-xs">{studentName.charAt(0)}</span>
                         </div>
                         <div>
-                          <p className="text-djon-text text-xs font-black">{student?.name}</p>
+                          <p className="text-djon-text text-xs font-black">{studentName}</p>
                           <p className="text-djon-text/30 text-djon-label capitalize">{b.type}</p>
                         </div>
                       </div>

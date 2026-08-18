@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Save, CheckCircle, Instagram, Music, Youtube, Camera } from "lucide-react"
+import { Save, Instagram, Music, Youtube, Camera } from "lucide-react"
 import { store, type User } from "@/lib/store"
 import { useRef } from "react"
 
@@ -11,7 +11,6 @@ const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py
 export default function AdminConfigPage() {
   const [user, setUser] = useState<User | null>(null)
   const [form, setForm] = useState({ name: "", bio: "", instagram: "", soundcloud: "", youtube: "" })
-  const [saved, setSaved] = useState(false)
   const avatarRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
 
@@ -23,24 +22,23 @@ export default function AdminConfigPage() {
     }
   }, [])
 
-  const handleImageUpload = (file: File, field: "avatar" | "banner") => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const url = e.target?.result as string
-      if (!user) return
-      store.updateUser(user.id, { [field]: url })
-      setUser(store.getCurrentUser())
+  const handleImageUpload = async (file: File, field: "avatar" | "banner") => {
+    if (!user) return
+    const uploaded = await store.uploadFile(file, field)
+    try {
+      const updated = await store.updateUser(user.id, { [field]: uploaded.url })
+      setUser(updated)
+    } catch (error) {
+      await store.deleteFile(uploaded.id, { silent: true }).catch(() => undefined)
+      throw error
     }
-    reader.readAsDataURL(file)
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
-    store.updateUser(user.id, { name: form.name, bio: form.bio, socials: { instagram: form.instagram, soundcloud: form.soundcloud, youtube: form.youtube } })
-    setUser(store.getCurrentUser())
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+    const updated = await store.updateUser(user.id, { name: form.name, bio: form.bio, socials: { instagram: form.instagram, soundcloud: form.soundcloud, youtube: form.youtube } })
+    setUser(updated)
   }
 
   if (!user) return null
@@ -69,7 +67,7 @@ export default function AdminConfigPage() {
               <Camera size={13} /> Alterar banner
             </div>
           </div>
-          <input ref={bannerRef} type="file" accept="image/*" className="hidden"
+          <input ref={bannerRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden"
             onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "banner")} />
         </div>
         <div className="px-4 pb-6 sm:px-6">
@@ -87,7 +85,7 @@ export default function AdminConfigPage() {
               <div className="absolute inset-0 bg-djon-page/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera size={14} className="text-djon-text" />
               </div>
-              <input ref={avatarRef} type="file" accept="image/*" className="hidden"
+              <input ref={avatarRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "avatar")} />
             </div>
             <div>
@@ -152,7 +150,7 @@ export default function AdminConfigPage() {
           <motion.button type="submit"
             className="w-full bg-djon-accent text-djon-ink rounded-xl py-3 font-black text-sm tracking-wide flex items-center justify-center gap-2"
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-            {saved ? <><CheckCircle size={15} /> SALVO!</> : <><Save size={15} /> SALVAR CONFIGURAÇÕES</>}
+            <Save size={15} /> SALVAR CONFIGURAÇÕES
           </motion.button>
         </form>
       </motion.div>

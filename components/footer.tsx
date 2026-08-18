@@ -12,6 +12,7 @@ import {
   isAcademyLocationKey,
   type AcademyLocationKey,
 } from "@/lib/locations"
+import { store, type Unit } from "@/lib/store"
 
 
 const containerVariants = {
@@ -35,12 +36,15 @@ export function Footer() {
   const [formData, setFormData] = useState({ nome: "", sobrenome: "", email: "", mensagem: "" })
   const [selectedLocation, setSelectedLocation] = useState<AcademyLocationKey>("poa")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [units, setUnits] = useState<Unit[]>([])
   const footerRef = useRef(null)
   const isInView = useInView(footerRef, { once: true, margin: "-100px" })
-  const location = academyLocations[selectedLocation]
+  const unit = units.find((item) => item.key === selectedLocation)
+  const fallbackLocation = academyLocations[selectedLocation] ?? academyLocations.poa
+  const location = { ...fallbackLocation, ...(unit ?? {}), lines: unit ? [unit.address, ""] : fallbackLocation.lines }
 
   useEffect(() => {
+    store.getPublicUnits().then(setUnits).catch(() => undefined)
     const storedLocation = window.localStorage.getItem(academyLocationStorageKey)
     if (isAcademyLocationKey(storedLocation)) {
       setSelectedLocation(storedLocation)
@@ -69,13 +73,23 @@ export function Footer() {
   }, [])
 
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    setTimeout(() => {
+    try {
+      await store.submitLead({
+        firstName: formData.nome.trim() || undefined,
+        lastName: formData.sobrenome.trim() || undefined,
+        email: formData.email.trim(),
+        message: formData.mensagem.trim() || undefined,
+        unitKey: selectedLocation,
+      })
+      setFormData({ nome: "", sobrenome: "", email: "", mensagem: "" })
+    } catch {
+      // O cliente HTTP já apresenta o erro de forma padronizada.
+    } finally {
       setIsSubmitting(false)
-      setSubmitted(true)
-    }, 1500)
+    }
   }
 
   return (
@@ -135,8 +149,8 @@ export function Footer() {
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 <Phone className="w-4 h-4 text-djon-accent shrink-0" />
-                <a href="tel:+555199700-7846" className="text-djon-text/60 text-sm hover:text-djon-accent transition-colors">
-                  +55 51 99700-7846
+                <a href="tel:+5551997007846" className="text-djon-text/60 text-sm hover:text-djon-accent transition-colors">
+                  (51) 99700-7846
                 </a>
               </motion.div>
               <motion.div
@@ -198,24 +212,7 @@ export function Footer() {
               </p>
             </div>
 
-            {submitted ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-djon-accent/10 border border-djon-accent/30 rounded-2xl p-8 text-center"
-              >
-                <motion.div
-                  className="text-djon-accent text-4xl font-black mb-2"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 0.5 }}
-                >
-                  ✓
-                </motion.div>
-                <p className="text-djon-text font-black">Mensagem enviada!</p>
-                <p className="text-djon-text/60 text-xs mt-1">Entraremos em contato em breve.</p>
-              </motion.div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <motion.div whileFocus={{ scale: 1.01 }}>
                     <label className="block text-xs text-djon-text/50 mb-1">Nome</label>
@@ -277,8 +274,7 @@ export function Footer() {
                     {isSubmitting ? "ENVIANDO..." : "ENVIAR"}
                   </span>
                 </motion.button>
-              </form>
-            )}
+            </form>
           </motion.div>
         </div>
 

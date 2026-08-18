@@ -12,16 +12,20 @@ export default function PublicPerfilPage() {
   const router = useRouter()
   const [viewedUser, setViewedUser] = useState<User | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     const cu = store.getCurrentUser()
     if (!cu) { router.replace("/login"); return }
     setCurrentUser(cu)
-    const u = store.getUserById(id)
-    if (!u) { router.replace("/dashboard/mural"); return }
-    setViewedUser(u)
+    let active = true
+    store.fetchUserById(id)
+      .then((profile) => { if (active) setViewedUser(profile) })
+      .catch(() => { if (active) setLoadError(true) })
+    return () => { active = false }
   }, [id, router])
 
+  if (loadError) return <div className="min-h-[50vh] flex items-center justify-center text-djon-text/50 font-bold">Perfil não encontrado.</div>
   if (!viewedUser || !currentUser) return null
 
   const isOwner = currentUser.id === viewedUser.id

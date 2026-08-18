@@ -169,13 +169,7 @@ export default function StudentPage() {
               {...fadeUp(0.2)}
             >
               <CalendarPlus size={40} className="text-djon-text/15 mx-auto mb-4" />
-              <p className="text-djon-text/30 text-sm font-bold mb-4">Nenhum agendamento futuro</p>
-              <Link
-                href="/dashboard/student/agendar"
-                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-6 py-2.5 rounded-full font-black text-xs tracking-widest"
-              >
-                <CalendarPlus size={13} /> SOLICITAR TREINO
-              </Link>
+              <p className="text-djon-text/30 text-sm font-bold">Nenhum agendamento futuro</p>
             </motion.div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -11,6 +11,7 @@ import {
   isAcademyLocationKey,
   type AcademyLocationKey,
 } from "@/lib/locations"
+import { store, type Unit } from "@/lib/store"
 
 type LocationDropdownProps = {
   className?: string
@@ -21,10 +22,13 @@ type LocationDropdownProps = {
 export function LocationDropdown({ className = "", align = "right", mobile = false }: LocationDropdownProps) {
   const [selectedLocation, setSelectedLocation] = useState<AcademyLocationKey>("poa")
   const [open, setOpen] = useState(false)
+  const [units, setUnits] = useState<Unit[]>([])
   const rootRef = useRef<HTMLDivElement>(null)
-  const location = academyLocations[selectedLocation]
+  const backendLocation = units.find((unit) => unit.key === selectedLocation)
+  const location = backendLocation ?? academyLocations[selectedLocation] ?? academyLocations.poa
 
   useEffect(() => {
+    store.getPublicUnits().then(setUnits).catch(() => undefined)
     const storedLocation = window.localStorage.getItem(academyLocationStorageKey)
     if (isAcademyLocationKey(storedLocation)) {
       setSelectedLocation(storedLocation)
@@ -108,8 +112,9 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
             } top-full space-y-1`}
             role="listbox"
           >
-            {academyLocationKeys.map((key) => {
-              const item = academyLocations[key]
+            {(units.length > 0 ? units.map((unit) => unit.key) : academyLocationKeys).map((key) => {
+              const item = units.find((unit) => unit.key === key) ?? academyLocations[key]
+              if (!item) return null
               const selected = key === selectedLocation
 
               return (

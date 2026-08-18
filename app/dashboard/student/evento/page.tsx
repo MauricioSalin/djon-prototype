@@ -5,6 +5,8 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Trash2, MapPin, Clock, Instagram, Music2, X, Edit2 } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
+import { ListPagination, useListPagination } from "@/components/list-pagination"
+import { useConfirmation } from "@/components/confirmation-provider"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
@@ -19,6 +21,7 @@ type FormState = { title: string; date: string; time: string; location: string; 
 const emptyForm: FormState = { title: "", date: "", time: "", location: "", instagram: "", description: "" }
 
 export default function StudentEventPage() {
+  const { confirm } = useConfirmation()
   const [events, setEvents] = useState<DJEvent[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -38,24 +41,40 @@ export default function StudentEventPage() {
     setShowForm(true)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const u = store.getCurrentUser()
     if (!u) return
     if (editingId) {
-      store.updateEvent(editingId, { ...form })
+      await store.updateEvent(editingId, { ...form })
     } else {
-      store.addEvent({ ...form, createdBy: u.id, createdByName: u.name, createdByAvatar: u.avatar, type: "student" })
+      await store.addEvent({
+        ...form,
+        createdBy: u.id,
+        createdByName: u.name,
+        createdByAvatar: u.avatar,
+        type: u.role === "professor" ? "professor" : "student",
+      })
     }
     setShowForm(false)
     load()
   }
 
-  const handleDelete = (id: string) => { store.deleteEvent(id); load() }
+  const handleDelete = async (event: DJEvent) => {
+    const confirmed = await confirm({
+      title: "Remover evento?",
+      description: `${event.title} deixará de aparecer no mural. Você poderá desfazer pelo aviso exibido em seguida.`,
+      confirmLabel: "REMOVER",
+      confirmVariant: "outline",
+    })
+    if (confirmed) await store.deleteEvent(event.id, { onChange: load })
+  }
   const isPast = (date: string) => new Date(date + "T00:00:00") < new Date()
 
   const upcoming = events.filter((e) => !isPast(e.date))
   const past = events.filter((e) => isPast(e.date))
+  const upcomingPagination = useListPagination(upcoming)
+  const historyPagination = useListPagination(past)
 
   const fmt = (date: string) =>
     new Date(date + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "long", year: "numeric" })
@@ -211,7 +230,7 @@ export default function StudentEventPage() {
             </motion.div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {upcoming.map((ev, i) => (
+              {upcomingPagination.paginatedItems.map((ev, i) => (
                 <motion.div key={ev.id}
                   className="bg-djon-surface-2 border border-djon-text/8 hover:border-djon-accent/30 rounded-2xl p-6 transition-all group"
                   initial={{ opacity: 0, y: 30 }}
@@ -225,10 +244,10 @@ export default function StudentEventPage() {
                       <Music2 size={18} className="text-djon-accent" />
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => openEdit(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:text-djon-text hover:bg-djon-text/10 transition-all">
+                      <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:text-djon-text hover:bg-djon-text/10 transition-all">
                         <Edit2 size={13} />
                       </button>
-                      <button onClick={() => handleDelete(ev.id)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:text-djon-danger hover:bg-djon-danger/10 transition-all">
+                      <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:text-djon-danger hover:bg-djon-danger/10 transition-all">
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -255,6 +274,14 @@ export default function StudentEventPage() {
               ))}
             </div>
           )}
+          <ListPagination
+            totalItems={upcoming.length}
+            page={upcomingPagination.page}
+            pageSize={upcomingPagination.pageSize}
+            totalPages={upcomingPagination.totalPages}
+            onPageChange={upcomingPagination.setPage}
+            onPageSizeChange={upcomingPagination.setPageSize}
+          />
         </div>
       </section>
 
@@ -270,7 +297,7 @@ export default function StudentEventPage() {
             </motion.h2>
             <motion.div className="h-[3px] w-10 bg-djon-text/15 rounded-full mb-10" {...fadeUp(0.15)} />
             <div className="space-y-3">
-              {past.map((ev, i) => (
+              {historyPagination.paginatedItems.map((ev, i) => (
                 <motion.div key={ev.id}
                   className="flex flex-col gap-3 rounded-2xl border border-djon-text/6 bg-djon-surface px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:px-6"
                   initial={{ opacity: 0, x: -20 }}
@@ -290,12 +317,20 @@ export default function StudentEventPage() {
                   <div className="shrink-0 text-djon-text/20 text-xs font-bold">
                     {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                   </div>
-                  <button onClick={() => handleDelete(ev.id)} className="cursor-pointer text-djon-text/10 hover:text-djon-danger/50 transition-colors">
+                  <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/10 hover:text-djon-danger/50 transition-colors">
                     <Trash2 size={13} />
                   </button>
                 </motion.div>
               ))}
             </div>
+            <ListPagination
+              totalItems={past.length}
+              page={historyPagination.page}
+              pageSize={historyPagination.pageSize}
+              totalPages={historyPagination.totalPages}
+              onPageChange={historyPagination.setPage}
+              onPageSizeChange={historyPagination.setPageSize}
+            />
           </div>
         </section>
       )}

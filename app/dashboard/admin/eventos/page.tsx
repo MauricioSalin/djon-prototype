@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Trash2, Edit2, X, Music2, MapPin, Clock, Instagram, Star } from "lucide-react"
+import { Plus, Trash2, Edit2, X, Music2, MapPin, Clock, Instagram, Star, GraduationCap } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
+import { ListPagination, useListPagination } from "@/components/list-pagination"
+import { useConfirmation } from "@/components/confirmation-provider"
 
 const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
 
@@ -11,11 +13,12 @@ type FormState = { title: string; date: string; time: string; location: string; 
 const emptyForm: FormState = { title: "", date: "", time: "", location: "", instagram: "", description: "", type: "djOn" }
 
 export default function AdminEventosPage() {
+  const { confirm } = useConfirmation()
   const [events, setEvents] = useState<DJEvent[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
-  const [tab, setTab] = useState<"djOn" | "student">("djOn")
+  const [tab, setTab] = useState<DJEvent["type"]>("djOn")
 
   const load = () => {
     const all = store.getEvents().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -32,22 +35,31 @@ export default function AdminEventosPage() {
     setShowForm(true)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const u = store.getCurrentUser()
     if (!u) return
     if (editingId) {
-      store.updateEvent(editingId, { ...form })
+      await store.updateEvent(editingId, { ...form })
     } else {
-      store.addEvent({ ...form, createdBy: u.id, createdByName: u.name, createdByAvatar: u.avatar })
+      await store.addEvent({ ...form, createdBy: u.id, createdByName: u.name, createdByAvatar: u.avatar })
     }
     setShowForm(false)
     load()
   }
 
-  const handleDelete = (id: string) => { store.deleteEvent(id); load() }
+  const handleDelete = async (event: DJEvent) => {
+    const confirmed = await confirm({
+      title: "Remover evento?",
+      description: `${event.title} deixará de aparecer no mural. Você poderá desfazer pelo aviso exibido em seguida.`,
+      confirmLabel: "REMOVER",
+      confirmVariant: "outline",
+    })
+    if (confirmed) await store.deleteEvent(event.id, { onChange: load })
+  }
 
   const displayed = events.filter((e) => e.type === tab)
+  const pagination = useListPagination(displayed, tab)
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">
@@ -66,12 +78,16 @@ export default function AdminEventosPage() {
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2">
-        {(["djOn", "student"] as const).map((t) => (
+        {(["djOn", "professor", "student"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-wide transition-all ${
               tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:text-djon-text"
             }`}>
-            {t === "djOn" ? <><Star size={11} /> EVENTOS DJ ON</> : <><Music2 size={11} /> EVENTOS ALUNOS</>}
+            {t === "djOn"
+              ? <><Star size={11} /> EVENTOS DJ ON</>
+              : t === "professor"
+                ? <><GraduationCap size={11} /> EVENTOS PROFESSORES</>
+                : <><Music2 size={11} /> EVENTOS ALUNOS</>}
           </button>
         ))}
       </div>
@@ -92,12 +108,12 @@ export default function AdminEventosPage() {
                 <div>
                   <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">TIPO DE EVENTO</label>
                   <div className="flex gap-2">
-                    {(["djOn", "student"] as const).map((t) => (
+                    {(["djOn", "professor", "student"] as const).map((t) => (
                       <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
                         className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
                           form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:text-djon-text"
                         }`}>
-                        {t === "djOn" ? "DJ ON" : "ALUNO"}
+                        {t === "djOn" ? "DJ ON" : t === "professor" ? "PROFESSOR" : "ALUNO"}
                       </button>
                     ))}
                   </div>
@@ -150,11 +166,11 @@ export default function AdminEventosPage() {
       {displayed.length === 0 ? (
         <div className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-10 text-center">
           <Music2 size={32} className="text-djon-text/20 mx-auto mb-3" />
-          <p className="text-djon-text/30 text-sm">Nenhum evento {tab === "djOn" ? "da DJ ON" : "de alunos"} cadastrado.</p>
+          <p className="text-djon-text/30 text-sm">Nenhum evento {tab === "djOn" ? "da DJ ON" : tab === "professor" ? "de professores" : "de alunos"} cadastrado.</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {displayed.map((ev, i) => (
+          {pagination.paginatedItems.map((ev, i) => (
             <motion.div key={ev.id}
               className={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border bg-djon-surface-2 px-4 py-4 sm:flex sm:px-5 ${ev.type === "djOn" ? "border-djon-accent/20" : "border-djon-text/8"}`}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
@@ -168,6 +184,11 @@ export default function AdminEventosPage() {
                   <Music2 size={16} className="text-djon-info" />
                 </div>
               )}
+              {ev.type === "professor" && (
+                <div className="w-9 h-9 rounded-xl bg-djon-text/10 flex items-center justify-center shrink-0">
+                  <GraduationCap size={16} className="text-djon-text/60" />
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="text-djon-text font-black text-base truncate">{ev.title}</p>
                 <p className="text-djon-text/40 text-xs truncate">{ev.createdByName}</p>
@@ -178,10 +199,10 @@ export default function AdminEventosPage() {
                 </div>
               </div>
               <div className="col-span-2 flex w-full items-center justify-end gap-1 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
-                <button onClick={() => openEdit(ev)} className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1.5">
+                <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1.5">
                   <Edit2 size={14} />
                 </button>
-                <button onClick={() => handleDelete(ev.id)} className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1.5">
+                <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1.5">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -189,6 +210,14 @@ export default function AdminEventosPage() {
           ))}
         </div>
       )}
+      <ListPagination
+        totalItems={displayed.length}
+        page={pagination.page}
+        pageSize={pagination.pageSize}
+        totalPages={pagination.totalPages}
+        onPageChange={pagination.setPage}
+        onPageSizeChange={pagination.setPageSize}
+      />
     </div>
   )
 }

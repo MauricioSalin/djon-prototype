@@ -1,4 +1,13 @@
-export const academyLocations = {
+export type AcademyLocation = {
+  label: string
+  shortLabel: string
+  address: string
+  lines: readonly string[]
+  mapSrc: string
+  mapsHref: string
+}
+
+export const academyLocations: Record<string, AcademyLocation> = {
   poa: {
     label: "Porto Alegre / RS",
     shortLabel: "POA",
@@ -17,14 +26,14 @@ export const academyLocations = {
       "https://www.openstreetmap.org/export/embed.html?bbox=-48.65211135766976%2C-27.036794365919074%2C-48.64611135766976%2C-27.032794365919072&layer=mapnik",
     mapsHref: "https://www.google.com/maps/search/?api=1&query=-27.034794365919073,-48.64911135766976",
   },
-} as const
+}
 
-export type AcademyLocationKey = keyof typeof academyLocations
+export type AcademyLocationKey = string
 
 export const academyLocationKeys = Object.keys(academyLocations) as AcademyLocationKey[]
 export const academyLocationStorageKey = "djon-academy-location"
 export const academyLocationChangeEvent = "djon-academy-location-change"
 
 export function isAcademyLocationKey(value: string | null | undefined): value is AcademyLocationKey {
-  return value === "poa" || value === "camboriu"
+  return Boolean(value?.trim())
 }

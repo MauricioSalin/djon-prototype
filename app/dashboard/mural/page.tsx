@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { MapPin, Clock, Instagram, Music2, Star } from "lucide-react"
+import { MapPin, Clock, Instagram, Music2, Search, Star } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
+import { ListPagination, useListPagination } from "@/components/list-pagination"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
@@ -26,6 +27,14 @@ function sortUpcomingFirst(arr: DJEvent[]) {
   })
 }
 
+function normalizeSearchText(value: string) {
+  return value
+    .trim()
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+}
+
 function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
   const isDJOn = ev.type === "djOn"
   const isPast = new Date(ev.date + "T00:00:00") < new Date()
@@ -36,8 +45,7 @@ function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
         isDJOn ? "border-djon-accent/40 bg-djon-accent/5" : "border-djon-text/8 bg-djon-surface-2"
       } ${isPast ? "opacity-40" : ""}`}
       initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: isPast ? 0.4 : 1, y: 0 }}
-      viewport={{ once: true, amount: 0 }}
+      animate={{ opacity: isPast ? 0.4 : 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const }}
       whileHover={!isPast ? { y: -6 } : {}}
     >
@@ -113,6 +121,7 @@ export default function MuralPage() {
   const [studentEvents, setStudentEvents] = useState<DJEvent[]>([])
   const [professorEvents, setProfessorEvents] = useState<DJEvent[]>([])
   const [filter, setFilter] = useState<"todos" | "djOn" | "alunos" | "professores">("todos")
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     setDJOnEvents(sortUpcomingFirst(store.getDJOnEvents()))
@@ -121,11 +130,18 @@ export default function MuralPage() {
   }, [])
 
   const allEvents = sortUpcomingFirst([...djOnEvents, ...studentEvents, ...professorEvents])
-  const displayed =
+  const eventsByType =
     filter === "todos" ? allEvents
     : filter === "djOn" ? djOnEvents
     : filter === "alunos" ? studentEvents
     : professorEvents
+  const normalizedSearch = normalizeSearchText(search)
+  const displayed = normalizedSearch
+    ? eventsByType.filter((event) =>
+        normalizeSearchText(`${event.title} ${event.createdByName}`).includes(normalizedSearch),
+      )
+    : eventsByType
+  const pagination = useListPagination(displayed, `${filter}:${normalizedSearch}`)
 
   return (
     <div className="bg-djon-page">
@@ -166,7 +182,7 @@ export default function MuralPage() {
       <section className="py-14 sm:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Filter tabs */}
-          <motion.div className="flex items-center gap-2 flex-wrap mb-10" {...fadeUp(0.1)}>
+          <motion.div className="mb-5 flex flex-wrap items-center gap-2" {...fadeUp(0.1)}>
             {(["todos", "djOn", "professores", "alunos"] as const).map((f) => (
               <button
                 key={f}
@@ -185,21 +201,47 @@ export default function MuralPage() {
             </span>
           </motion.div>
 
+          <motion.div className="relative mb-10" {...fadeUp(0.15)}>
+            <Search
+              size={17}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Buscar evento ou pessoa que vai tocar"
+              placeholder="Buscar pelo nome do evento ou de quem vai tocar..."
+              className="w-full rounded-xl border border-djon-text/10 bg-djon-surface-2 py-3 pl-11 pr-4 text-sm text-djon-text outline-none transition-colors placeholder:text-djon-text/25 focus:border-djon-accent/60"
+            />
+          </motion.div>
+
           {displayed.length === 0 ? (
             <motion.div
               className="rounded-3xl border-2 border-dashed border-djon-text/8 p-8 text-center sm:p-20"
               {...fadeUp(0.2)}
             >
               <Music2 size={48} className="text-djon-text/15 mx-auto mb-4" />
-              <p className="text-djon-text/20 text-sm font-bold">Nenhum evento para mostrar.</p>
+              <p className="text-djon-text/20 text-sm font-bold">
+                {normalizedSearch ? "Nenhum evento encontrado para esta busca." : "Nenhum evento para mostrar."}
+              </p>
             </motion.div>
           ) : (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-              {displayed.map((ev, i) => (
+              {pagination.paginatedItems.map((ev, i) => (
                 <EventCard key={ev.id} ev={ev} index={i} />
               ))}
             </div>
           )}
+          <ListPagination
+            totalItems={displayed.length}
+            page={pagination.page}
+            pageSize={pagination.pageSize}
+            totalPages={pagination.totalPages}
+            onPageChange={pagination.setPage}
+            onPageSizeChange={pagination.setPageSize}
+          />
         </div>
       </section>
 

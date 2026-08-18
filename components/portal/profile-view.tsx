@@ -4,11 +4,12 @@ import { useRef, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import {
-  Camera, Instagram, Youtube, Save, CheckCircle,
+  Camera, Instagram, Youtube, Save,
   MapPin, Clock, ArrowRight, Edit3, Music, Mail, Phone,
 } from "lucide-react"
 import { SoundCloudIcon } from "@/components/social-icons"
 import { store, type User, type DJEvent } from "@/lib/store"
+import { formatPhone } from "@/lib/phone"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
@@ -46,29 +47,31 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
-    whatsapp: user.whatsapp ?? "",
+    whatsapp: formatPhone(user.whatsapp),
     bio: user.bio ?? "",
     instagram: user.socials?.instagram ?? "",
     soundcloud: user.socials?.soundcloud ?? "",
     youtube: user.socials?.youtube ?? "",
   })
-  const [saved, setSaved] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" })
+  const [passwordMessage, setPasswordMessage] = useState("")
   const avatarRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
 
-  const handleImageUpload = (file: File, field: "avatar" | "banner") => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const url = e.target?.result as string
-      const updated = store.updateUser(user.id, { [field]: url })
-      if (updated && onUserUpdate) onUserUpdate(updated)
+  const handleImageUpload = async (file: File, field: "avatar" | "banner") => {
+    const uploaded = await store.uploadFile(file, field)
+    try {
+      const updated = await store.updateUser(user.id, { [field]: uploaded.url })
+      if (onUserUpdate) onUserUpdate(updated)
+    } catch (error) {
+      await store.deleteFile(uploaded.id, { silent: true }).catch(() => undefined)
+      throw error
     }
-    reader.readAsDataURL(file)
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    const updated = store.updateUser(user.id, {
+    const updated = await store.updateUser(user.id, {
       name: form.name,
       email: form.email,
       whatsapp: form.whatsapp,
@@ -76,9 +79,22 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       socials: { instagram: form.instagram, soundcloud: form.soundcloud, youtube: form.youtube },
     })
     if (updated && onUserUpdate) onUserUpdate(updated)
-    setSaved(true)
     setEditing(false)
-    setTimeout(() => setSaved(false), 3000)
+  }
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordMessage("")
+    if (passwordForm.next !== passwordForm.confirm) {
+      setPasswordMessage("A confirmação da nova senha não confere.")
+      return
+    }
+    try {
+      await store.changePassword(passwordForm.current, passwordForm.next)
+      setPasswordForm({ current: "", next: "", confirm: "" })
+    } catch {
+      // O cliente HTTP já apresenta o erro de forma padronizada.
+    }
   }
 
   const upcomingEvents = events.filter((e) => new Date(e.date + "T00:00:00") >= new Date())
@@ -106,7 +122,16 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         <div
           className={`h-56 md:h-72 relative overflow-hidden ${isOwner ? "cursor-pointer group" : ""}`}
           style={{ background: bannerBg }}
+          role={isOwner ? "button" : undefined}
+          tabIndex={isOwner ? 0 : undefined}
+          aria-label={isOwner ? "Alterar banner" : undefined}
           onClick={isOwner ? () => bannerRef.current?.click() : undefined}
+          onKeyDown={isOwner ? (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault()
+              bannerRef.current?.click()
+            }
+          } : undefined}
         >
 
           {/* Subtle static dark vignette at bottom so avatar sits on it */}
@@ -121,7 +146,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
           <input
             ref={bannerRef}
             type="file"
-            accept="image/*"
+            accept=".jpg,.jpeg,.png,.webp,.gif"
             className="hidden"
             onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "banner")}
           />
@@ -134,7 +159,16 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             {/* Avatar */}
             <div
               className={`relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-djon-page bg-djon-accent/15 sm:h-28 sm:w-28 md:h-36 md:w-36 ${isOwner ? "cursor-pointer group" : ""}`}
+              role={isOwner ? "button" : undefined}
+              tabIndex={isOwner ? 0 : undefined}
+              aria-label={isOwner ? "Alterar foto de perfil" : undefined}
               onClick={isOwner ? () => avatarRef.current?.click() : undefined}
+              onKeyDown={isOwner ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  avatarRef.current?.click()
+                }
+              } : undefined}
             >
               {user.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -150,7 +184,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
               <input
                 ref={avatarRef}
                 type="file"
-                accept="image/*"
+                accept=".jpg,.jpeg,.png,.webp,.gif"
                 className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0], "avatar")}
               />
@@ -295,8 +329,11 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                       <input
                         type="tel"
                         value={form.whatsapp}
-                        onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                        placeholder="51 9 9999-0000"
+                        onChange={(e) => setForm({ ...form, whatsapp: formatPhone(e.target.value) })}
+                        placeholder="(51) 99999-0000"
+                        inputMode="numeric"
+                        autoComplete="tel"
+                        maxLength={15}
                         className={`${inputCls} pl-10`}
                       />
                     </div>
@@ -334,8 +371,26 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    {saved ? <><CheckCircle size={15} /> SALVO!</> : <><Save size={15} /> SALVAR PERFIL</>}
+                    <Save size={15} /> SALVAR PERFIL
                   </motion.button>
+                </div>
+              </form>
+              <form onSubmit={handlePasswordChange} className="mt-10 max-w-3xl border-t border-djon-text/10 pt-8">
+                <p className="mb-5 text-xs font-black tracking-widest text-djon-accent">SEGURANÇA DA CONTA</p>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <input type="password" required value={passwordForm.current} autoComplete="current-password"
+                    onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                    placeholder="Senha atual" className={inputCls} />
+                  <input type="password" required minLength={8} value={passwordForm.next} autoComplete="new-password"
+                    onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
+                    placeholder="Nova senha" className={inputCls} />
+                  <input type="password" required minLength={8} value={passwordForm.confirm} autoComplete="new-password"
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                    placeholder="Confirmar nova senha" className={inputCls} />
+                </div>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <button type="submit" className="rounded-xl bg-djon-text/10 px-5 py-3 text-xs font-black tracking-widest text-djon-text hover:bg-djon-text/15">ALTERAR SENHA</button>
+                  {passwordMessage && <p role="status" className="text-xs font-bold text-djon-text/60">{passwordMessage}</p>}
                 </div>
               </form>
             </motion.div>

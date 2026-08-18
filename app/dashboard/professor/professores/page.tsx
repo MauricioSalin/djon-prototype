@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import { GraduationCap, Instagram } from "lucide-react"
 import { SoundCloudIcon } from "@/components/social-icons"
 import { store, type User } from "@/lib/store"
+import { ListPagination, useListPagination } from "@/components/list-pagination"
 
 export default function ProfessorProfessoresPage() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function ProfessorProfessoresPage() {
     if (u.role === "student") { router.replace("/dashboard/student"); return }
     setProfessors(store.getProfessors())
   }, [router])
+  const pagination = useListPagination(professors)
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 sm:px-6 sm:py-10">
@@ -33,7 +35,7 @@ export default function ProfessorProfessoresPage() {
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {professors.map((u, i) => (
+          {pagination.paginatedItems.map((u, i) => (
             <motion.div
               key={u.id}
               className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5"
@@ -53,7 +55,7 @@ export default function ProfessorProfessoresPage() {
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/perfil/${u.id}`}
-                    className="block text-djon-text hover:text-djon-accent font-black text-base truncate transition-colors underline-offset-4 hover:underline"
+                    className="block text-djon-text hover:text-djon-accent font-black text-base truncate transition-colors"
                   >
                     {u.name}
                   </Link>
@@ -87,6 +89,14 @@ export default function ProfessorProfessoresPage() {
           ))}
         </div>
       )}
+      <ListPagination
+        totalItems={professors.length}
+        page={pagination.page}
+        pageSize={pagination.pageSize}
+        totalPages={pagination.totalPages}
+        onPageChange={pagination.setPage}
+        onPageSizeChange={pagination.setPageSize}
+      />
     </div>
   )
 }

@@ -9,6 +9,7 @@ import {
   isAcademyLocationKey,
   type AcademyLocationKey,
 } from "@/lib/locations"
+import { store, type Unit } from "@/lib/store"
 
 
 const containerVariants = {
@@ -37,9 +38,11 @@ const highlights = [
 
 export function SocialSection() {
   const [selectedLocation, setSelectedLocation] = useState<AcademyLocationKey>("poa")
-  const location = academyLocations[selectedLocation]
+  const [units, setUnits] = useState<Unit[]>([])
+  const location = units.find((unit) => unit.key === selectedLocation) ?? academyLocations[selectedLocation] ?? academyLocations.poa
 
   useEffect(() => {
+    store.getPublicUnits().then(setUnits).catch(() => undefined)
     const storedLocation = window.localStorage.getItem(academyLocationStorageKey)
     if (isAcademyLocationKey(storedLocation)) {
       setSelectedLocation(storedLocation)

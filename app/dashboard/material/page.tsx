@@ -9,6 +9,10 @@ import {
   Plus, Paperclip, Edit2,
 } from "lucide-react"
 import { store, type Material, type User } from "@/lib/store"
+import { DjonSelect } from "@/components/djon-select"
+import { ListPagination, useListPagination } from "@/components/list-pagination"
+
+const DRAFTS_CATEGORY = "Rascunhos"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 32 },
@@ -27,7 +31,7 @@ function CardThumb({ mat }: { mat: Material }) {
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
-        alt={mat.title}
+        alt={mat.title || "Rascunho sem título"}
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         onError={() => setErr(true)}
       />
@@ -67,12 +71,27 @@ export default function MaterialPage() {
     setUser(u)
     load()
     loadCategories()
+    const requestedCategory = new URLSearchParams(window.location.search).get("category")
+    if (
+      requestedCategory === DRAFTS_CATEGORY &&
+      (u.role === "admin" || u.role === "professor")
+    ) {
+      setActiveCategory(DRAFTS_CATEGORY)
+    }
   }, [router])
 
-  const categories = ["Todos", ...materialCategories]
-  const filtered = activeCategory === "Todos"
-    ? materials
-    : materials.filter((m) => m.category === activeCategory)
+  const categories = [
+    "Todos",
+    ...(isProfessor ? [DRAFTS_CATEGORY] : []),
+    ...materialCategories,
+  ]
+  const publishedMaterials = materials.filter((material) => material.status === "published")
+  const filtered = activeCategory === DRAFTS_CATEGORY
+    ? materials.filter((material) => material.status === "draft" && material.authorId === user?.id)
+    : activeCategory === "Todos"
+      ? publishedMaterials
+      : publishedMaterials.filter((material) => material.category === activeCategory)
+  const pagination = useListPagination(filtered, activeCategory)
 
   const openDeleteCategory = (category: string) => {
     const fallback = materialCategories.find((c) => c !== category) ?? ""
@@ -80,17 +99,17 @@ export default function MaterialPage() {
     setCategoryDelete(category)
   }
 
-  const saveCategory = () => {
+  const saveCategory = async () => {
     if (!categoryModal) return
     const nextName = categoryModal.value.trim()
     if (!nextName) return
 
     if (categoryModal.mode === "create") {
-      const nextCategories = store.addMaterialCategory(nextName)
+      const nextCategories = await store.addMaterialCategory(nextName)
       const target = nextCategories.find((c) => c.toLowerCase() === nextName.toLowerCase()) ?? nextName
       setActiveCategory(target)
     } else if (categoryModal.original) {
-      const nextCategories = store.updateMaterialCategory(categoryModal.original, nextName)
+      const nextCategories = await store.updateMaterialCategory(categoryModal.original, nextName)
       const target = nextCategories.find((c) => c.toLowerCase() === nextName.toLowerCase()) ?? nextName
       if (activeCategory === categoryModal.original) setActiveCategory(target)
     }
@@ -100,20 +119,25 @@ export default function MaterialPage() {
     setCategoryModal(null)
   }
 
-  const confirmDeleteCategory = () => {
-    if (!categoryDelete || !transferCategory) return
-    store.deleteMaterialCategory(categoryDelete, transferCategory)
-    if (activeCategory === categoryDelete) setActiveCategory(transferCategory)
-    load()
-    loadCategories()
+  const confirmDeleteCategory = async () => {
+    if (!categoryDelete || (categoryDeleteCount > 0 && !transferCategory)) return
+    const removedCategory = categoryDelete
+    const transferTarget = categoryDeleteCount > 0 ? transferCategory : undefined
+    await store.deleteMaterialCategory(categoryDelete, transferTarget, {
+      onChange: () => {
+        load()
+        loadCategories()
+        if (store.getMaterialCategories().includes(removedCategory)) setActiveCategory(removedCategory)
+      },
+    })
+    if (activeCategory === categoryDelete) setActiveCategory(transferTarget || "Todos")
     setCategoryDelete(null)
     setTransferCategory("")
   }
 
-  const handleDelete = (id: string) => {
-    store.deleteMaterial(id)
+  const handleDelete = async (id: string) => {
+    await store.deleteMaterial(id, { onChange: load })
     setDeleteId(null)
-    load()
   }
 
   const categoryDeleteCount = categoryDelete
@@ -150,7 +174,7 @@ export default function MaterialPage() {
           <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-4" {...fadeUp(0.3)} />
           <motion.p className="text-djon-text/40 text-base max-w-md leading-relaxed mt-4" {...fadeUp(0.35)}>
             {isProfessor
-              ? "Publique artigos, PDFs e imagens para seus alunos. Todo material fica disponível imediatamente."
+              ? "Crie artigos, PDFs e imagens, salve rascunhos ou publique para seus alunos."
               : "Acesse o material publicado pelos professores da DJ ON Academy."}
           </motion.p>
         </div>
@@ -162,7 +186,8 @@ export default function MaterialPage() {
           <motion.div className="flex flex-1 min-w-0 items-center gap-2 flex-wrap" {...fadeUp(0.1)}>
             {categories.map((cat) => {
               const active = activeCategory === cat
-              const canManageCategory = isAdmin && active && cat !== "Todos"
+              const canManageCategory =
+                isAdmin && active && cat !== "Todos" && cat !== DRAFTS_CATEGORY
 
               if (canManageCategory) {
                 return (
@@ -245,13 +270,19 @@ export default function MaterialPage() {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((mat, i) => (
+            {pagination.paginatedItems.map((mat, i) => (
               <motion.div
                 key={mat.id}
                 className="group bg-djon-text/4 border border-djon-text/8 rounded-2xl overflow-hidden hover:border-djon-text/16 transition-all cursor-pointer flex flex-col min-h-[322px]"
                 {...fadeUp(i * 0.04)}
                 whileHover={{ y: -4 }}
-                onClick={() => router.push(`/dashboard/material/${mat.id}`)}
+                onClick={() =>
+                  router.push(
+                    mat.status === "draft"
+                      ? `/dashboard/material/novo?edit=${mat.id}`
+                      : `/dashboard/material/${mat.id}`,
+                  )
+                }
               >
                 {/* Thumbnail */}
                 <div className="relative h-44 bg-djon-muted-panel overflow-hidden">
@@ -260,7 +291,7 @@ export default function MaterialPage() {
                   {/* Category badge */}
                   <div className="absolute top-3 left-3">
                     <span className="bg-djon-page/80 backdrop-blur-sm text-djon-text/50 text-djon-caption font-black tracking-widest uppercase px-2.5 py-1 rounded-full border border-djon-text/10">
-                      {mat.category}
+                      {mat.status === "draft" ? DRAFTS_CATEGORY : mat.category}
                     </span>
                   </div>
 
@@ -276,9 +307,16 @@ export default function MaterialPage() {
 
                 {/* Info */}
                 <div className="p-4 flex flex-1 flex-col">
-                  <p className="text-djon-text font-black text-sm leading-snug line-clamp-2 mb-1">{mat.title}</p>
+                  <p className="text-djon-text font-black text-sm leading-snug line-clamp-2 mb-1">
+                    {mat.title || "Rascunho sem título"}
+                  </p>
                   {mat.description && (
                     <p className="text-djon-text/35 text-xs leading-relaxed line-clamp-3">{mat.description}</p>
+                  )}
+                  {mat.status === "draft" && (
+                    <span className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-djon-accent/10 px-2.5 py-1 text-djon-caption font-black tracking-widest text-djon-accent">
+                      <Edit2 size={10} /> CONTINUAR EDIÇÃO
+                    </span>
                   )}
                   <div className="flex items-center justify-between mt-auto pt-4">
                     <div className="flex items-center gap-2">
@@ -289,10 +327,13 @@ export default function MaterialPage() {
                           : <span className="text-djon-accent text-djon-micro font-black">{mat.authorName.charAt(0)}</span>
                         }
                       </div>
-                      <span className="text-djon-text/30 text-djon-label font-bold">{mat.authorName.split(" ")[0]}</span>
+                      <span className="text-djon-text/30 text-djon-label font-bold">
+                        {mat.authorName || "DJ ON Academy"}
+                      </span>
                     </div>
-                    {isProfessor && mat.authorId === user.id && (
+                    {isProfessor && (user.role === "admin" || mat.authorId === user.id) && (
                       <button
+                        aria-label={`Excluir material ${mat.title}`}
                         onClick={(e) => { e.stopPropagation(); setDeleteId(mat.id) }}
                         className="cursor-pointer opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-djon-danger/10 hover:bg-djon-danger/20 flex items-center justify-center transition-all"
                       >
@@ -305,6 +346,14 @@ export default function MaterialPage() {
             ))}
           </div>
         )}
+        <ListPagination
+          totalItems={filtered.length}
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          totalPages={pagination.totalPages}
+          onPageChange={pagination.setPage}
+          onPageSizeChange={pagination.setPageSize}
+        />
       </section>
 
       {/* ── MODALS ──────────────────────────────────────────────────────── */}
@@ -403,22 +452,17 @@ export default function MaterialPage() {
 
               <p className="text-djon-text/45 text-sm leading-relaxed mb-5">
                 Existem <span className="text-djon-text font-black">{categoryDeleteCount}</span> materiais nessa categoria.
-                Escolha para qual categoria eles serão transferidos antes de excluir.
+                {categoryDeleteCount > 0 ? " Escolha para qual categoria eles serão transferidos antes de excluir." : " Ela pode ser excluída sem transferência."}
+                {" Você poderá desfazer pelo aviso exibido em seguida."}
               </p>
 
               <div className="space-y-5">
-                <div>
+                {categoryDeleteCount > 0 && <div>
                   <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Transferir para</label>
-                  <select
-                    value={transferCategory}
-                    onChange={(e) => setTransferCategory(e.target.value)}
-                    className="w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm focus:outline-none focus:border-djon-accent/40 transition-colors cursor-pointer"
-                  >
-                    {transferOptions.map((cat) => (
-                      <option key={cat} value={cat} className="bg-djon-calendar-cell">{cat}</option>
-                    ))}
-                  </select>
-                </div>
+                  <DjonSelect value={transferCategory} onChange={setTransferCategory}
+                    options={transferOptions.map((category) => ({ value: category, label: category }))}
+                    placeholder="Selecionar categoria..." className="h-12" />
+                </div>}
 
                 <div className="flex gap-3">
                   <button
@@ -430,7 +474,7 @@ export default function MaterialPage() {
                   </button>
                   <button
                     onClick={confirmDeleteCategory}
-                    disabled={!transferCategory}
+                    disabled={categoryDeleteCount > 0 && !transferCategory}
                     className="cursor-pointer flex-1 py-3 rounded-full bg-djon-danger/80 hover:bg-djon-danger disabled:opacity-40 disabled:cursor-not-allowed text-djon-text text-xs font-black tracking-widest transition-colors"
                     type="button"
                   >
@@ -459,7 +503,7 @@ export default function MaterialPage() {
               exit={{ scale: 0.95, opacity: 0 }}
             >
               <p className="text-djon-text font-black text-lg mb-2">Remover material?</p>
-              <p className="text-djon-text/40 text-sm mb-6">Esta ação não pode ser desfeita.</p>
+              <p className="text-djon-text/40 text-sm mb-6">O material e seus anexos serão removidos. Você poderá desfazer pelo aviso exibido em seguida.</p>
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteId(null)}

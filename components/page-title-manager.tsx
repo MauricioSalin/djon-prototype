@@ -13,6 +13,7 @@ const pageTitles: Array<[RegExp, string]> = [
   [/^\/dashboard\/student\/perfil\/?$/, "Meu perfil | DJ ON"],
   [/^\/dashboard\/student\/professores\/?$/, "Professores | DJ ON"],
   [/^\/dashboard\/professor\/?$/, "Portal do professor | DJ ON"],
+  [/^\/dashboard\/professor\/evento\/?$/, "Meus eventos | DJ ON"],
   [/^\/dashboard\/professor\/alunos\/?$/, "Alunos | DJ ON"],
   [/^\/dashboard\/professor\/professores\/?$/, "Professores | DJ ON"],
   [/^\/dashboard\/admin\/?$/, "Administração | DJ ON"],
@@ -20,12 +21,13 @@ const pageTitles: Array<[RegExp, string]> = [
   [/^\/dashboard\/admin\/professores\/?$/, "Gerenciar professores | DJ ON"],
   [/^\/dashboard\/admin\/eventos\/?$/, "Gerenciar eventos | DJ ON"],
   [/^\/dashboard\/admin\/agendar\/?$/, "Novo agendamento | DJ ON"],
+  [/^\/dashboard\/admin\/equipamentos\/?$/, "Gerenciar equipamentos | DJ ON"],
   [/^\/dashboard\/admin\/config\/?$/, "Configurações | DJ ON"],
   [/^\/dashboard\/agenda\/?$/, "Agenda da escola | DJ ON"],
   [/^\/dashboard\/material\/?$/, "Material de aula | DJ ON"],
   [/^\/dashboard\/material\/novo\/?$/, "Novo material | DJ ON"],
   [/^\/dashboard\/material\/[^/]+\/?$/, "Material aberto | DJ ON"],
-  [/^\/dashboard\/mural\/?$/, "Mural de GIGs | DJ ON"],
+  [/^\/dashboard\/mural\/?$/, "Mural | DJ ON"],
   [/^\/dashboard\/perfil\/[^/]+\/?$/, "Perfil da comunidade | DJ ON"],
 ]
 

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { Users, Music2, CalendarPlus, Newspaper, ArrowRight, CheckCircle, AlertCircle, GraduationCap, Calendar } from "lucide-react"
+import Image from "next/image"
+import { Users, Music2, CalendarPlus, Newspaper, CheckCircle, AlertCircle, GraduationCap, Calendar } from "lucide-react"
 import { store, type Booking } from "@/lib/store"
 
 const fadeUp = (delay = 0) => ({
@@ -18,20 +19,33 @@ export default function AdminPage() {
   const [bookings, setBookings] = useState<Booking[]>([])
 
   useEffect(() => {
-    const allUsers = store.getUsers().filter((u) => u.role === "student")
-    const allBookings = store.getBookings()
-    setStats({
-      users: allUsers.length,
-      events: store.getStudentEvents().length,
-      bookings: allBookings.length,
-      djOnEvents: store.getProfessors().length,
+    let mounted = true
+    void store.bootstrap().then((authenticatedUser) => {
+      if (!mounted || authenticatedUser?.role !== "admin") return
+      const allUsers = store.getUsers()
+      const allBookings = store.getBookings()
+      const activeBookings = allBookings.filter((booking) => booking.status !== "cancelado")
+      const now = new Date()
+      setStats({
+        users: allUsers.filter((user) => user.role === "student" && user.active !== false).length,
+        events: store.getStudentEvents().length,
+        bookings: activeBookings.length,
+        djOnEvents: allUsers.filter((user) => user.role === "professor" && user.active !== false).length,
+      })
+      setBookings(
+        activeBookings
+          .filter((booking) => new Date(`${booking.date}T${booking.time}`) >= now)
+          .sort(
+            (a, b) =>
+              new Date(`${a.date}T${a.time}`).getTime() -
+              new Date(`${b.date}T${b.time}`).getTime(),
+          )
+          .slice(0, 6),
+      )
     })
-    setBookings(
-      allBookings
-        .filter((b) => new Date(b.date + "T00:00:00") >= new Date())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .slice(0, 6)
-    )
+    return () => {
+      mounted = false
+    }
   }, [])
 
   const statCards = [
@@ -55,7 +69,20 @@ export default function AdminPage() {
 
       {/* ── HERO ───────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden py-20 sm:py-28 md:py-32">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/djon-showcase.png"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-page/70 via-transparent to-djon-page/20" />
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <motion.span className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4" {...fadeUp(0.1)}>
             PAINEL ADMINISTRATIVO
           </motion.span>
@@ -136,7 +163,6 @@ export default function AdminPage() {
                     <p className="text-djon-text font-black text-base tracking-tight">{q.label}</p>
                     <p className="text-djon-text/30 text-xs mt-0.5">{q.desc}</p>
                   </div>
-                  <ArrowRight size={14} className="text-djon-text/20 group-hover:text-djon-accent transition-colors mt-auto" />
                 </Link>
               </motion.div>
             ))}
@@ -176,6 +202,7 @@ export default function AdminPage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {bookings.map((b, i) => {
                 const owner = store.getUserById(b.userId)
+                const ownerName = owner?.name ?? b.studentName ?? "Aluno"
                 return (
                   <motion.div
                     key={b.id}
@@ -188,10 +215,10 @@ export default function AdminPage() {
                   >
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-9 h-9 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0">
-                        <span className="text-djon-accent text-sm font-black">{owner?.name.charAt(0) ?? "?"}</span>
+                        <span className="text-djon-accent text-sm font-black">{ownerName.charAt(0)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-djon-text text-xs font-black truncate">{owner?.name}</p>
+                        <p className="text-djon-text text-xs font-black truncate">{ownerName}</p>
                         <p className="text-djon-text/30 text-djon-label capitalize">{b.type}</p>
                       </div>
                       {b.status === "confirmado"

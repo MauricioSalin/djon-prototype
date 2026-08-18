@@ -273,8 +273,13 @@
 @layer base {
   :root {
     color-scheme: dark;
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--page-scrollbar-thumb) var(--page-scrollbar-track);
+  }
+
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
   }
 
   html,
@@ -298,6 +303,22 @@
   select,
   button {
     font: inherit;
+  }
+
+  button:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer !important;
+  }
+
+  button:disabled,
+  input[type="button"]:disabled,
+  input[type="submit"]:disabled,
+  input[type="reset"]:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed !important;
   }
 
   @media (max-width: 767px) {
@@ -657,6 +678,28 @@
   color: rgba(255, 255, 255, 0.75);
   line-height: 1.75;
 }
+.material-prose::after,
+.material-editor::after {
+  clear: both;
+  content: "";
+  display: table;
+}
+.material-prose [data-text-align="left"],
+.material-editor [data-text-align="left"] {
+  text-align: left;
+}
+.material-prose [data-text-align="center"],
+.material-editor [data-text-align="center"] {
+  text-align: center;
+}
+.material-prose [data-text-align="right"],
+.material-editor [data-text-align="right"] {
+  text-align: right;
+}
+.material-prose [data-text-align="justify"],
+.material-editor [data-text-align="justify"] {
+  text-align: justify;
+}
 .material-prose h2,
 .material-editor h2 {
   color: var(--djon-color-text);
@@ -717,6 +760,122 @@
   margin: 1.25rem 0;
   max-width: 100%;
   height: auto;
+}
+.material-prose img[data-image-width="25%"],
+.material-editor img[data-image-width="25%"] {
+  width: 25%;
+}
+.material-prose img[data-image-width="50%"],
+.material-editor img[data-image-width="50%"] {
+  width: 50%;
+}
+.material-prose img[data-image-width="75%"],
+.material-editor img[data-image-width="75%"] {
+  width: 75%;
+}
+.material-prose img[data-image-width="100%"],
+.material-editor img[data-image-width="100%"] {
+  width: 100%;
+}
+.material-prose img[data-image-align="left"],
+.material-editor img[data-image-align="left"] {
+  float: left;
+  margin: 0.25rem 1.25rem 1rem 0;
+}
+.material-prose img[data-image-align="right"],
+.material-editor img[data-image-align="right"] {
+  float: right;
+  margin: 0.25rem 0 1rem 1.25rem;
+}
+.material-prose img[data-image-align="block"],
+.material-editor img[data-image-align="block"] {
+  clear: both;
+  display: block;
+  float: none;
+  margin: 1.25rem auto;
+}
+.material-prose [data-image-layout],
+.material-editor [data-image-layout] {
+  align-items: flex-start;
+  display: flex;
+  gap: 1.25rem;
+  margin: 1.25rem 0;
+  width: 100%;
+}
+.material-prose [data-image-layout="right"],
+.material-editor [data-image-layout="right"] {
+  flex-direction: row-reverse;
+}
+.material-prose [data-image-layout] > img,
+.material-editor [data-image-layout] > img {
+  clear: none;
+  flex: none;
+  float: none;
+  margin: 0;
+}
+.material-prose [data-image-text],
+.material-editor [data-image-text] {
+  align-self: stretch;
+  cursor: text;
+  flex: 1;
+  min-height: 7rem;
+  min-width: 0;
+  padding: 0.15rem 0.25rem;
+  position: relative;
+}
+.material-editor [data-image-text] {
+  border-radius: 0.75rem;
+  outline: none;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+.material-editor [data-image-text]:hover {
+  background: color-mix(in srgb, var(--djon-color-text) 3%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--djon-color-accent) 18%, transparent);
+}
+.material-editor [data-image-text]:focus,
+.material-editor [data-image-text]:focus-within {
+  background: color-mix(in srgb, var(--djon-color-accent) 3%, transparent);
+  box-shadow: inset 0 0 0 1px var(--djon-color-accent);
+  outline: none;
+}
+.material-editor [data-image-tail-container] {
+  min-height: 1.5rem;
+}
+.material-editor [data-image-tail] {
+  cursor: text;
+  min-height: 1.5rem;
+  outline: none;
+}
+.material-editor [data-image-text]:has(> p:only-child > br:only-child)::before {
+  color: color-mix(in srgb, var(--djon-color-text) 28%, transparent);
+  content: "Escreva ao lado da imagem...";
+  font-size: 0.8rem;
+  pointer-events: none;
+  position: absolute;
+}
+.material-editor img {
+  cursor: pointer;
+  transition: outline-color 150ms ease, opacity 150ms ease;
+}
+.material-editor img:hover {
+  opacity: 0.92;
+  outline: 1px solid color-mix(in srgb, var(--djon-color-accent) 45%, transparent);
+  outline-offset: 3px;
+}
+.material-editor img[data-editor-selected="true"] {
+  outline: 2px solid var(--djon-color-accent);
+  outline-offset: 3px;
+}
+
+.djon-header-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.djon-header-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 .material-prose h2:first-child,
 .material-prose h3:first-child,

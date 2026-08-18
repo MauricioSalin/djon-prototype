@@ -3,26 +3,36 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Trash2, Edit2, X, GraduationCap, CheckCircle, Mail, Phone } from "lucide-react"
-import { store, type User } from "@/lib/store"
+import { Plus, Trash2, Edit2, X, GraduationCap, Mail, Phone, RotateCcw, MapPin } from "lucide-react"
+import { store, type Unit, type User } from "@/lib/store"
+import { formatPhone, phoneMatchesSearch } from "@/lib/phone"
+import { ListPagination, useListPagination } from "@/components/list-pagination"
+import { useConfirmation } from "@/components/confirmation-provider"
+import { DjonSelect } from "@/components/djon-select"
 
 const inp =
   "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
 
-type FormState = { name: string; email: string; whatsapp: string }
-const emptyForm: FormState = { name: "", email: "", whatsapp: "" }
+type FormState = { name: string; email: string; whatsapp: string; password: string; unitId: string }
+const emptyForm: FormState = { name: "", email: "", whatsapp: "", password: "", unitId: "" }
 
 export default function ProfessoresAdminPage() {
+  const { confirm } = useConfirmation()
   const [professors, setProfessors] = useState<User[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
-  const [saved, setSaved] = useState(false)
   const [search, setSearch] = useState("")
 
   const load = () => setProfessors(store.getProfessors())
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    void Promise.all([store.listAdminUsers(true), store.getPublicUnits()]).then(() => {
+      load()
+      setUnits(store.getUnits().filter((unit) => unit.active))
+    })
+  }, [])
 
   const openNew = () => { setForm(emptyForm); setEditingId(null); setShowForm(true) }
 
@@ -30,42 +40,54 @@ export default function ProfessoresAdminPage() {
     setForm({
       name: u.name,
       email: u.email,
-      whatsapp: u.whatsapp ?? "",
+      whatsapp: formatPhone(u.whatsapp),
+      password: "",
+      unitId: u.unitId ?? "",
     })
     setEditingId(u.id)
     setShowForm(true)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (editingId) {
-      store.updateUser(editingId, {
+      await store.updateUser(editingId, {
         name: form.name,
         email: form.email,
         whatsapp: form.whatsapp,
+        unitId: form.unitId,
       })
     } else {
-      store.addUser({
+      await store.addUser({
         name: form.name,
         email: form.email,
         whatsapp: form.whatsapp,
+        password: form.password,
         role: "professor",
+        unitId: form.unitId,
       })
     }
     setShowForm(false)
-    setSaved(true)
     load()
-    setTimeout(() => setSaved(false), 3000)
   }
 
-  const handleDelete = (id: string) => { store.deleteUser(id); load() }
+  const handleDelete = async (user: User) => {
+    const confirmed = await confirm({
+      title: "Desativar professor?",
+      description: `${user.name} perderá o acesso à plataforma. Você poderá desfazer pelo aviso exibido em seguida.`,
+      confirmLabel: "DESATIVAR",
+    })
+    if (confirmed) await store.deleteUser(user.id, { onChange: load })
+  }
+  const handleRestore = async (id: string) => { await store.restoreUser(id); load() }
 
   const filtered = professors.filter(
     (u) =>
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||
-      (u.whatsapp ?? "").includes(search)
+      phoneMatchesSearch(u.whatsapp, search)
   )
+  const pagination = useListPagination(filtered, search)
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">
@@ -83,20 +105,6 @@ export default function ProfessoresAdminPage() {
           <Plus size={14} /> NOVO PROFESSOR
         </motion.button>
       </div>
-
-      <AnimatePresence>
-        {saved && (
-          <motion.div
-            className="flex items-center gap-3 bg-djon-accent/10 border border-djon-accent/30 rounded-xl px-4 py-3"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-          >
-            <CheckCircle size={16} className="text-djon-accent" />
-            <span className="text-djon-accent text-sm font-bold">Professor salvo com sucesso!</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <input
         value={search}
@@ -160,12 +168,34 @@ export default function ProfessoresAdminPage() {
                     <input
                       type="tel"
                       value={form.whatsapp}
-                      onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
-                      placeholder="51 9 9999-0000"
+                      onChange={(e) => setForm({ ...form, whatsapp: formatPhone(e.target.value) })}
+                      placeholder="(51) 99999-0000"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      maxLength={15}
                       className={inp + " pl-10"}
                     />
                   </div>
                 </div>
+                <div>
+                  <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">UNIDADE</label>
+                  <DjonSelect
+                    required
+                    value={form.unitId}
+                    onChange={(unitId) => setForm({ ...form, unitId })}
+                    options={units.map((unit) => ({ value: unit.id, label: unit.label }))}
+                    placeholder="Selecionar unidade..."
+                  />
+                </div>
+                {!editingId && (
+                  <div>
+                    <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">SENHA INICIAL</label>
+                    <input type="password" required minLength={8} value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      autoComplete="new-password" placeholder="Mínimo de 8 caracteres" className={inp} />
+                    <p className="mt-1 text-djon-text/25 text-xs">Informe esta senha ao professor por um canal seguro.</p>
+                  </div>
+                )}
                 <p className="text-djon-text/25 text-xs leading-relaxed border-t border-djon-text/8 pt-3">
                   Bio e redes sociais são editadas pelo próprio usuário no perfil dele.
                 </p>
@@ -191,10 +221,10 @@ export default function ProfessoresAdminPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((u, i) => (
+          {pagination.paginatedItems.map((u, i) => (
             <motion.div
               key={u.id}
-              className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 px-4 py-4 sm:flex sm:items-center"
+              className={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 px-4 py-4 sm:flex sm:items-center ${u.active === false ? "opacity-55" : ""}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
@@ -220,12 +250,17 @@ export default function ProfessoresAdminPage() {
                 </p>
                 {u.whatsapp && (
                   <p className="text-djon-text/30 text-xs flex items-center gap-1.5 mt-1">
-                    <Phone size={10} /> {u.whatsapp}
+                    <Phone size={10} /> {formatPhone(u.whatsapp)}
+                  </p>
+                )}
+                {u.unitLabel && (
+                  <p className="text-djon-text/30 text-xs flex items-center gap-1.5 mt-1">
+                    <MapPin size={10} /> {u.unitLabel}
                   </p>
                 )}
               </div>
               <div className="col-span-2 flex w-full items-center justify-end gap-2 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
-                <button
+                {u.active !== false && <button
                   onClick={() => openEdit(u)}
                   className="cursor-pointer text-djon-text/30 hover:text-djon-accent transition-colors p-1.5"
                   type="button"
@@ -233,19 +268,27 @@ export default function ProfessoresAdminPage() {
                   aria-label={`Editar ${u.name}`}
                 >
                   <Edit2 size={14} />
-                </button>
-                <button
-                  onClick={() => handleDelete(u.id)}
+                </button>}
+                {u.active !== false ? <button
+                  onClick={() => void handleDelete(u)}
                   className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1.5"
                   type="button"
                 >
                   <Trash2 size={14} />
-                </button>
+                </button> : <button onClick={() => void handleRestore(u.id)} type="button" title="Restaurar" aria-label={`Restaurar ${u.name}`} className="cursor-pointer p-1.5 text-djon-accent"><RotateCcw size={14} /></button>}
               </div>
             </motion.div>
           ))}
         </div>
       )}
+      <ListPagination
+        totalItems={filtered.length}
+        page={pagination.page}
+        pageSize={pagination.pageSize}
+        totalPages={pagination.totalPages}
+        onPageChange={pagination.setPage}
+        onPageSizeChange={pagination.setPageSize}
+      />
     </div>
   )
 }

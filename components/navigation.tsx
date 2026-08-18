@@ -1,17 +1,88 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { useLenis } from "lenis/react"
-import { Menu, X, LogIn } from "lucide-react"
+import { ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react"
 import { LocationDropdown } from "@/components/location-dropdown"
+import { store, type User } from "@/lib/store"
+
+function portalHomeForRole(role: User["role"]) {
+  if (role === "admin") return "/dashboard/admin"
+  if (role === "professor") return "/dashboard/professor"
+  return "/dashboard/student"
+}
+
+function roleLabelFor(role: User["role"]) {
+  if (role === "admin") return "Admin"
+  if (role === "professor") return "Professor"
+  return "Aluno"
+}
+
+function UserIdentity({ user }: { user: User }) {
+  return (
+    <>
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-djon-accent/40 bg-djon-accent/20">
+        {user.avatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={user.avatar} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="text-xs font-black text-djon-accent">
+            {user.name.charAt(0)}
+          </span>
+        )}
+      </div>
+      <div className="min-w-0 text-left">
+        <p className="max-w-[120px] truncate text-xs font-bold leading-tight text-djon-text">
+          {user.name.split(" ").slice(0, 2).join(" ")}
+        </p>
+        <p className="text-djon-caption font-black uppercase leading-tight tracking-widest text-djon-accent">
+          {roleLabelFor(user.role)}
+        </p>
+      </div>
+    </>
+  )
+}
 
 export function Navigation() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [sessionLoading, setSessionLoading] = useState(true)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const accountRef = useRef<HTMLDivElement>(null)
   const lenis = useLenis()
+
+  useEffect(() => {
+    let active = true
+    void store
+      .restoreSession()
+      .then((sessionUser) => {
+        if (active) setUser(sessionUser)
+      })
+      .catch(() => {
+        if (active) setUser(null)
+      })
+      .finally(() => {
+        if (active) setSessionLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!accountOpen) return
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!accountRef.current?.contains(event.target as Node)) {
+        setAccountOpen(false)
+      }
+    }
+    window.addEventListener("pointerdown", handlePointerDown)
+    return () => window.removeEventListener("pointerdown", handlePointerDown)
+  }, [accountOpen])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,6 +122,13 @@ export function Navigation() {
     if (element && lenis) {
       lenis.scrollTo(element, { offset: -100 })
     }
+    setMobileMenuOpen(false)
+  }
+
+  const handleLogout = () => {
+    store.logout()
+    setUser(null)
+    setAccountOpen(false)
     setMobileMenuOpen(false)
   }
 
@@ -130,17 +208,70 @@ export function Navigation() {
             />
             <span className="relative z-10">CONTATO</span>
           </motion.button>
-          <Link href="/login">
-            <motion.div
-              className="flex items-center gap-1.5 border border-djon-text/20 text-djon-text/70 hover:text-djon-text hover:border-djon-text/40 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
-            >
-              <LogIn size={13} />
-              LOGIN
-            </motion.div>
-          </Link>
+          {sessionLoading ? (
+            <div
+              aria-hidden="true"
+              className="h-10 w-40 animate-pulse rounded-full border border-djon-text/10 bg-djon-text/5"
+            />
+          ) : user ? (
+            <div ref={accountRef} className="relative">
+              <motion.button
+                type="button"
+                aria-expanded={accountOpen}
+                aria-label="Abrir menu da conta"
+                onClick={() => setAccountOpen((open) => !open)}
+                className="cursor-pointer flex items-center gap-2.5 rounded-full border border-djon-text/15 bg-djon-text/6 py-1 pl-1 pr-3 transition-colors hover:bg-djon-text/10"
+                whileTap={{ scale: 0.97 }}
+              >
+                <UserIdentity user={user} />
+                <ChevronDown
+                  size={12}
+                  className={`text-djon-text/40 transition-transform ${accountOpen ? "rotate-180" : ""}`}
+                />
+              </motion.button>
+
+              <AnimatePresence>
+                {accountOpen && (
+                  <motion.div
+                    className="absolute right-0 top-full mt-2 w-52 overflow-hidden rounded-2xl border border-djon-text/12 bg-djon-surface py-2 shadow-2xl"
+                    initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Link
+                      href={portalHomeForRole(user.role)}
+                      onClick={() => setAccountOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-text/65 transition-colors hover:bg-djon-text/6 hover:text-djon-text"
+                    >
+                      <LayoutDashboard size={14} />
+                      Acessar portal
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="cursor-pointer flex w-full items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-danger/75 transition-colors hover:bg-djon-danger/10 hover:text-djon-danger"
+                    >
+                      <LogOut size={14} />
+                      Sair
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <Link href="/login">
+              <motion.div
+                className="flex items-center gap-1.5 border border-djon-text/20 text-djon-text/70 hover:text-djon-text hover:border-djon-text/40 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
+              >
+                <LogIn size={13} />
+                LOGIN
+              </motion.div>
+            </Link>
+          )}
         </div>
 
         <motion.button
@@ -207,17 +338,50 @@ export function Navigation() {
               >
                 CONTATO
               </motion.button>
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+              {sessionLoading ? (
+                <div className="mt-2 h-12 w-full animate-pulse rounded-full border border-djon-text/10 bg-djon-text/5" />
+              ) : user ? (
                 <motion.div
-                  className="w-full flex items-center justify-center gap-2 border border-djon-text/20 text-djon-text/70 px-6 py-3 rounded-full font-black text-xs tracking-widest mt-2"
+                  className="mt-2 rounded-2xl border border-djon-text/12 bg-djon-text/5 p-2"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <LogIn size={13} />
-                  LOGIN
+                  <div className="flex items-center gap-2.5 px-2 py-2">
+                    <UserIdentity user={user} />
+                  </div>
+                  <div className="mt-2 grid gap-2">
+                    <Link
+                      href={portalHomeForRole(user.role)}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-xs font-black tracking-widest text-djon-ink"
+                    >
+                      <LayoutDashboard size={14} />
+                      ACESSAR PORTAL
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-djon-danger/25 px-6 py-3 text-xs font-black tracking-widest text-djon-danger"
+                    >
+                      <LogOut size={14} />
+                      SAIR
+                    </button>
+                  </div>
                 </motion.div>
-              </Link>
+              ) : (
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                  <motion.div
+                    className="w-full flex items-center justify-center gap-2 border border-djon-text/20 text-djon-text/70 px-6 py-3 rounded-full font-black text-xs tracking-widest mt-2"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
+                  >
+                    <LogIn size={13} />
+                    LOGIN
+                  </motion.div>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

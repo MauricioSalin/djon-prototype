@@ -1,74 +1,159 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react"
-import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Trash2, Calendar, Clock, FileText, CheckCircle, X } from "lucide-react"
-import { store, type Booking } from "@/lib/store"
-import { DjonDatePicker, DjonTimeSelect } from "@/components/djon-date-time-picker"
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Plus,
+  Trash2,
+  Calendar,
+  Clock,
+  FileText,
+  X,
+  MapPin,
+} from "lucide-react";
+import {
+  store,
+  type Booking,
+  type Equipment,
+  type TrainingBalance,
+  type Unit,
+} from "@/lib/store";
+import { academyLocationStorageKey } from "@/lib/locations";
+import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
+import { DjonSelect } from "@/components/djon-select";
+import {
+  ListPagination,
+  useListPagination,
+} from "@/components/list-pagination";
+import { useConfirmation } from "@/components/confirmation-provider";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0 },
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
-})
+});
 
-const inputCls = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all"
-const BOOKING_HOURS = Array.from({ length: 14 }, (_, i) => `${String(i + 8).padStart(2, "0")}:00`)
-
-function toLocalIso(date: Date) {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
-}
-
+const inputCls =
+  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all";
 function StatusBadge({ status }: { status: Booking["status"] }) {
   const map = {
     confirmado: "bg-djon-accent/15 text-djon-accent",
     pendente: "bg-yellow-400/15 text-yellow-400",
     cancelado: "bg-djon-danger/15 text-djon-danger",
-  }
+  };
   return (
-    <span className={`text-djon-caption font-black px-2.5 py-1 rounded-full tracking-widest ${map[status]}`}>
+    <span
+      className={`text-djon-caption font-black px-2.5 py-1 rounded-full tracking-widest ${map[status]}`}
+    >
       {status.toUpperCase()}
     </span>
-  )
+  );
 }
 
 export default function AgendarPage() {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [allBookings, setAllBookings] = useState<Booking[]>([])
-  const [showForm, setShowForm] = useState(false)
-  const [reschedulingFrom, setReschedulingFrom] = useState<Booking | null>(null)
-  const [form, setForm] = useState({ title: "", date: "", time: "", notes: "" })
-  const [success, setSuccess] = useState(false)
+  const { confirm } = useConfirmation();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [reschedulingFrom, setReschedulingFrom] = useState<Booking | null>(
+    null,
+  );
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [equipments, setEquipments] = useState<Equipment[]>([]);
+  const [trainingBalance, setTrainingBalance] =
+    useState<TrainingBalance | null>(null);
+  const [form, setForm] = useState({
+    title: "",
+    date: "",
+    time: "",
+    type: "treino" as const,
+    notes: "",
+    unitId: "",
+    professorId: "",
+    equipmentId: "",
+    durationMinutes: 60,
+  });
 
   const load = () => {
-    const u = store.getCurrentUser()
-    setAllBookings(store.getBookings())
-    if (u) setBookings(store.getBookingsByUser(u.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()))
-  }
+    const u = store.getCurrentUser();
+    if (u)
+      setBookings(
+        store
+          .getBookingsByUser(u.id)
+          .sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+          ),
+      );
+  };
 
-  useEffect(() => { load() }, [])
+  const syncLocalTrainingBalance = () => {
+    setTrainingBalance((current) => {
+      if (!current) return current;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const activeTrainings = store
+        .getBookingsByUser(store.getCurrentUser()?.id ?? "")
+        .filter(
+          (booking) =>
+            booking.type === "treino" &&
+            booking.status !== "cancelado" &&
+            new Date(`${booking.date}T00:00:00`) >= today,
+        );
+      const replacedBookingIds = new Set(
+        activeTrainings
+          .map((booking) => booking.originalBookingId)
+          .filter((id): id is string => Boolean(id)),
+      );
+      const reservedHours = activeTrainings
+        .filter((booking) => !replacedBookingIds.has(booking.id))
+        .reduce((total, booking) => total + booking.durationMinutes / 60, 0);
+      return {
+        limitHours: current.limitHours,
+        reservedHours,
+        remainingHours: Math.max(0, current.limitHours - reservedHours),
+      };
+    });
+  };
+
+  useEffect(() => {
+    load();
+    const availableUnits = store.getUnits().filter((unit) => unit.active);
+    setUnits(availableUnits);
+    setEquipments(
+      store.getEquipments().filter((equipment) => equipment.active),
+    );
+    void store.getTrainingBalance().then(setTrainingBalance);
+    const selectedKey = window.localStorage.getItem(academyLocationStorageKey);
+    const studentUnitId = store.getCurrentUser()?.unitId;
+    const preferred =
+      availableUnits.find((unit) => unit.id === studentUnitId) ??
+      availableUnits.find((unit) => unit.key === selectedKey) ??
+      availableUnits[0];
+    if (preferred) setForm((current) => ({ ...current, unitId: preferred.id }));
+  }, []);
 
   const openRequest = (booking?: Booking) => {
-    setReschedulingFrom(booking ?? null)
+    setReschedulingFrom(booking ?? null);
     setForm({
       title: booking?.title ?? "",
       date: "",
       time: "",
       notes: booking?.notes ?? "",
-    })
-    setShowForm(true)
-  }
+      type: "treino",
+      unitId: booking?.unitId ?? form.unitId,
+      professorId: booking?.professorId ?? "",
+      equipmentId: booking?.equipmentId ?? "",
+      durationMinutes: booking?.durationMinutes ?? 60,
+    });
+    setShowForm(true);
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const u = store.getCurrentUser()
-    if (!u) return
-    store.addBooking({
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const u = store.getCurrentUser();
+    if (!u) return;
+    const payload: Omit<Booking, "id" | "createdAt"> = {
       ...form,
       title: form.title.trim() || "Solicitação de treino",
       notes: reschedulingFrom
@@ -77,71 +162,80 @@ export default function AgendarPage() {
       userId: u.id,
       type: "treino",
       status: "pendente",
-    })
-    setForm({ title: "", date: "", time: "", notes: "" })
-    setReschedulingFrom(null)
-    setShowForm(false)
-    setSuccess(true)
-    load()
-    setTimeout(() => setSuccess(false), 4000)
-  }
+    };
+    if (reschedulingFrom)
+      await store.rescheduleBooking(reschedulingFrom.id, payload);
+    else await store.addBooking(payload);
+    setForm((current) => ({
+      title: "",
+      date: "",
+      time: "",
+      type: "treino",
+      notes: "",
+      unitId: current.unitId,
+      professorId: "",
+      equipmentId: current.equipmentId,
+      durationMinutes: 60,
+    }));
+    setReschedulingFrom(null);
+    setShowForm(false);
+    load();
+    setTrainingBalance(await store.getTrainingBalance());
+  };
 
-  const handleCancel = (id: string) => {
-    store.updateBooking(id, { status: "cancelado" })
-    load()
-  }
-
-  const occupiedByDate = useMemo(() => {
-    const map = new Map<string, Set<string>>()
-    allBookings
-      .filter((booking) => booking.status !== "cancelado")
-      .forEach((booking) => {
-        if (!map.has(booking.date)) map.set(booking.date, new Set())
-        map.get(booking.date)?.add(booking.time)
-      })
-    return map
-  }, [allBookings])
-
-  const getAvailableTimes = useCallback((date: string) => {
-    if (!date) return []
-    const occupied = occupiedByDate.get(date) ?? new Set<string>()
-    return BOOKING_HOURS.filter((time) => !occupied.has(time))
-  }, [occupiedByDate])
-
-  const availableTimes = useMemo(() => getAvailableTimes(form.date), [form.date, getAvailableTimes])
-
-  useEffect(() => {
-    if (form.time && form.date && !availableTimes.includes(form.time)) {
-      setForm((current) => ({ ...current, time: "" }))
+  const handleCancel = async (booking: Booking) => {
+    const confirmed = await confirm({
+      title: "Cancelar agendamento?",
+      description: `${booking.title} será cancelado. Você poderá desfazer pelo aviso exibido em seguida.`,
+      confirmLabel: "CANCELAR AGENDAMENTO",
+    });
+    if (confirmed) {
+      await store.cancelBooking(booking.id, {
+        onChange: () => {
+          load();
+          syncLocalTrainingBalance();
+        },
+      });
     }
-  }, [availableTimes, form.date, form.time])
+  };
 
-  const isDateUnavailable = (date: Date) => {
-    const iso = toLocalIso(date)
-    const today = toLocalIso(new Date())
-    if (iso < today) return true
-    return getAvailableTimes(iso).length === 0
-  }
-
-  const upcoming = bookings.filter((b) => new Date(b.date + "T00:00:00") >= new Date())
-  const past = bookings.filter((b) => new Date(b.date + "T00:00:00") < new Date())
+  const upcoming = bookings.filter(
+    (b) => new Date(b.date + "T00:00:00") >= new Date(),
+  );
+  const past = bookings.filter(
+    (b) => new Date(b.date + "T00:00:00") < new Date(),
+  );
+  const upcomingPagination = useListPagination(upcoming);
+  const historyPagination = useListPagination(past);
 
   const fmt = (date: string) =>
-    new Date(date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
+    new Date(date + "T00:00:00").toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
 
   return (
     <div className="bg-djon-page">
-
       {/* ── HERO ───────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden py-20 sm:py-28 md:py-32">
         <div className="absolute inset-0 z-0">
-          <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-30" priority />
+          <Image
+            src="/images/djon-hero.png"
+            alt=""
+            fill
+            className="object-cover opacity-30"
+            priority
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-transparent to-transparent" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <div>
-            <motion.span className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4" {...fadeUp(0.1)}>
+            <motion.span
+              className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4"
+              {...fadeUp(0.1)}
+            >
               PORTAL DO ALUNO
             </motion.span>
             <motion.h1
@@ -150,28 +244,20 @@ export default function AgendarPage() {
             >
               Agendamentos
             </motion.h1>
-            <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-4" {...fadeUp(0.3)} />
-            <motion.p className="text-djon-text/40 text-base max-w-md leading-relaxed mt-4" {...fadeUp(0.35)}>
-              Solicite treinos para praticar nos horários disponíveis. As aulas são agendadas pelo professor.
+            <motion.div
+              className="h-[3px] w-10 bg-djon-accent rounded-full mt-4"
+              {...fadeUp(0.3)}
+            />
+            <motion.p
+              className="text-djon-text/40 text-base max-w-md leading-relaxed mt-4"
+              {...fadeUp(0.35)}
+            >
+              Solicite seus treinos nos horários disponíveis. Aulas são
+              agendadas diretamente pelos professores ou pela administração.
             </motion.p>
           </div>
         </div>
       </section>
-
-      {/* ── SUCCESS TOAST ──────────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {success && (
-          <motion.div
-            className="fixed bottom-4 left-4 right-4 z-50 flex items-center justify-center gap-3 rounded-2xl bg-djon-accent px-5 py-4 text-djon-ink shadow-2xl sm:left-auto sm:right-6 sm:bottom-6"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          >
-            <CheckCircle size={18} />
-            <span className="font-black text-sm tracking-wide">Solicitação enviada!</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ── FORM MODAL ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
@@ -188,54 +274,150 @@ export default function AgendarPage() {
               initial={{ scale: 0.95, y: 30 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 30 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] as const }}
+              transition={{
+                duration: 0.3,
+                ease: [0.25, 0.4, 0.25, 1] as const,
+              }}
             >
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <p className="text-djon-accent text-xs font-black tracking-widest uppercase mb-1">
                     {reschedulingFrom ? "REMARCAR" : "NOVO"}
                   </p>
-                  <h2 className="text-2xl font-black text-djon-text tracking-tighter">Treino</h2>
+                  <h2 className="text-2xl font-black text-djon-text tracking-tighter">
+                    {reschedulingFrom ? "Remarcar treino" : "Solicitar treino"}
+                  </h2>
                 </div>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:text-djon-text hover:bg-djon-text/15 transition-all">
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:text-djon-text hover:bg-djon-text/15 transition-all"
+                >
                   <X size={16} />
                 </button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">TÍTULO</label>
-                  <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    placeholder="Ex: Treino de Beat Match" className={inputCls} />
-                </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">DATA</label>
-                    <DjonDatePicker
-                      value={form.date}
-                      onChange={(date) => setForm({ ...form, date, time: getAvailableTimes(date).includes(form.time) ? form.time : "" })}
-                      isDateDisabled={isDateUnavailable}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">HORÁRIO</label>
-                    <DjonTimeSelect
-                      value={form.time}
-                      onChange={(time) => setForm({ ...form, time })}
-                      options={availableTimes}
-                      disabled={!form.date}
-                    />
-                  </div>
+                <div className="rounded-xl border border-djon-accent/15 bg-djon-accent/5 px-4 py-3">
+                  <p className="text-xs font-black tracking-widest text-djon-accent">
+                    SOLICITAÇÃO DE TREINO
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-djon-text/40">
+                    O horário e o equipamento ficam reservados enquanto um
+                    professor analisa a solicitação.
+                  </p>
                 </div>
                 <div>
-                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">OBSERVAÇÕES</label>
-                  <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    placeholder="O que você quer trabalhar nesse treino?" rows={3} className={`${inputCls} resize-none`} />
+                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">
+                    UNIDADE
+                  </label>
+                  <DjonSelect
+                    required
+                    value={form.unitId}
+                    onChange={(unitId) =>
+                      setForm({
+                        ...form,
+                        unitId,
+                        professorId: "",
+                        equipmentId: "",
+                        date: "",
+                        time: "",
+                      })
+                    }
+                    options={units.map((unit) => ({
+                      value: unit.id,
+                      label: unit.label,
+                    }))}
+                    placeholder="Selecione uma unidade"
+                    className="h-12"
+                  />
                 </div>
-                <motion.button type="submit"
-                  disabled={!form.title.trim() || !form.date || !form.time}
+                <div>
+                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">
+                    EQUIPAMENTO
+                  </label>
+                  <DjonSelect
+                    required
+                    value={form.equipmentId}
+                    onChange={(equipmentId) =>
+                      setForm({ ...form, equipmentId, date: "", time: "" })
+                    }
+                    options={equipments
+                      .filter((equipment) => equipment.unitId === form.unitId)
+                      .map((equipment) => ({
+                        value: equipment.id,
+                        label: equipment.name,
+                      }))}
+                    placeholder={
+                      form.unitId
+                        ? "Selecione um equipamento"
+                        : "Selecione a unidade primeiro"
+                    }
+                    disabled={!form.unitId}
+                    className="h-12"
+                  />
+                </div>
+                <div>
+                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">
+                    TÍTULO
+                  </label>
+                  <input
+                    required
+                    value={form.title}
+                    onChange={(e) =>
+                      setForm({ ...form, title: e.target.value })
+                    }
+                    placeholder="Ex: Treino de Beat Match"
+                    className={inputCls}
+                  />
+                </div>
+                <BookingDateTimeFields
+                  type={form.type}
+                  unitId={form.unitId}
+                  professorId={form.professorId}
+                  equipmentId={form.equipmentId}
+                  date={form.date}
+                  time={form.time}
+                  durationMinutes={form.durationMinutes}
+                  onDateChange={(date) =>
+                    setForm((current) => ({ ...current, date }))
+                  }
+                  onTimeChange={(time) =>
+                    setForm((current) => ({ ...current, time }))
+                  }
+                  onDurationChange={(durationMinutes) =>
+                    setForm((current) => ({ ...current, durationMinutes }))
+                  }
+                  excludeBookingId={reschedulingFrom?.id}
+                />
+                <div>
+                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">
+                    OBSERVAÇÕES
+                  </label>
+                  <textarea
+                    value={form.notes}
+                    onChange={(e) =>
+                      setForm({ ...form, notes: e.target.value })
+                    }
+                    placeholder="Conte o que você quer trabalhar neste agendamento."
+                    rows={3}
+                    className={`${inputCls} resize-none`}
+                  />
+                </div>
+                <motion.button
+                  type="submit"
+                  disabled={
+                    !form.title.trim() ||
+                    !form.unitId ||
+                    !form.equipmentId ||
+                    !form.date ||
+                    !form.time
+                  }
                   className="w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-widest disabled:cursor-not-allowed disabled:opacity-40"
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-                  {reschedulingFrom ? "Solicitar remarcação" : "SOLICITAR TREINO"}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  {reschedulingFrom
+                    ? "SOLICITAR REMARCAÇÃO"
+                    : "SOLICITAR TREINO"}
                 </motion.button>
               </form>
             </motion.div>
@@ -246,15 +428,52 @@ export default function AgendarPage() {
       {/* ── UPCOMING ───────────────────────────────────────────────────────── */}
       <section className="py-16 bg-djon-muted-panel sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {trainingBalance && (
+            <div className="mb-8 grid gap-3 rounded-2xl border border-djon-accent/15 bg-djon-accent/5 p-4 sm:grid-cols-3 sm:p-5">
+              <div>
+                <p className="text-djon-label font-black tracking-widest text-djon-text/35">
+                  LIMITE DE TREINO
+                </p>
+                <p className="mt-1 text-xl font-black text-djon-text">
+                  {trainingBalance.limitHours}h
+                </p>
+              </div>
+              <div>
+                <p className="text-djon-label font-black tracking-widest text-djon-text/35">
+                  HORAS RESERVADAS
+                </p>
+                <p className="mt-1 text-xl font-black text-djon-warning">
+                  {trainingBalance.reservedHours}h
+                </p>
+              </div>
+              <div>
+                <p className="text-djon-label font-black tracking-widest text-djon-text/35">
+                  DISPONÍVEIS
+                </p>
+                <p className="mt-1 text-xl font-black text-djon-accent">
+                  {trainingBalance.remainingHours}h
+                </p>
+              </div>
+            </div>
+          )}
           <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
             <div>
-              <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+              <motion.span
+                className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2"
+                {...fadeUp(0)}
+              >
                 PRÓXIMOS
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2" {...fadeUp(0.1)}>
-                Próximos Treinos
+              <motion.h2
+                className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2"
+                {...fadeUp(0.1)}
+              >
+                Próximos Agendamentos
               </motion.h2>
-              <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full" {...fadeUp(0.15)} />
+              <motion.div
+                className="h-[3px] w-10 bg-djon-accent rounded-full"
+                {...fadeUp(0.15)}
+              />
             </div>
             <motion.button
               onClick={() => openRequest()}
@@ -274,18 +493,26 @@ export default function AgendarPage() {
           </div>
 
           {upcoming.length === 0 ? (
-            <motion.div className="rounded-3xl border-2 border-dashed border-djon-text/8 p-8 text-center sm:p-20" {...fadeUp(0.2)}>
+            <motion.div
+              className="rounded-3xl border-2 border-dashed border-djon-text/8 p-8 text-center sm:p-20"
+              {...fadeUp(0.2)}
+            >
               <Calendar size={48} className="text-djon-text/12 mx-auto mb-4" />
-              <p className="text-djon-text/25 text-sm font-bold mb-6">Nenhum treino solicitado</p>
-              <button onClick={() => openRequest()}
-                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest">
+              <p className="text-djon-text/25 text-sm font-bold mb-6">
+                Nenhum agendamento solicitado
+              </p>
+              <button
+                onClick={() => openRequest()}
+                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest"
+              >
                 <Plus size={14} /> SOLICITAR TREINO
               </button>
             </motion.div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {upcoming.map((b, i) => (
-                <motion.div key={b.id}
+              {upcomingPagination.paginatedItems.map((b, i) => (
+                <motion.div
+                  key={b.id}
                   className="bg-djon-surface-2 border border-djon-text/8 hover:border-djon-text/20 rounded-2xl p-6 transition-all"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -294,34 +521,59 @@ export default function AgendarPage() {
                   whileHover={{ y: -4 }}
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-                      b.type === "aula" ? "bg-djon-accent/12" : "bg-blue-400/12"
-                    }`}>
-                      {b.type === "aula"
-                        ? <FileText size={18} className="text-djon-accent" />
-                        : <Clock size={18} className="text-blue-400" />
-                      }
+                    <div
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                        b.type === "aula"
+                          ? "bg-djon-accent/12"
+                          : "bg-blue-400/12"
+                      }`}
+                    >
+                      {b.type === "aula" ? (
+                        <FileText size={18} className="text-djon-accent" />
+                      ) : (
+                        <Clock size={18} className="text-blue-400" />
+                      )}
                     </div>
                     <StatusBadge status={b.status} />
                   </div>
-                  <h3 className="text-djon-text font-black text-lg tracking-tight mb-3 leading-tight">{b.title}</h3>
+                  <h3 className="text-djon-text font-black text-lg tracking-tight mb-3 leading-tight">
+                    {b.title}
+                  </h3>
                   <div className="space-y-1.5 mb-4">
                     <div className="flex items-center gap-2 text-djon-text/40 text-xs">
-                      <Calendar size={11} />{fmt(b.date)}
+                      <Calendar size={11} />
+                      {fmt(b.date)}
                     </div>
                     <div className="flex items-center gap-2 text-djon-text/40 text-xs">
-                      <Clock size={11} />{b.time}
+                      <Clock size={11} />
+                      {b.time} · {b.durationMinutes / 60}h
                     </div>
+                    {b.unitLabel && (
+                      <div className="flex items-center gap-2 text-djon-text/40 text-xs">
+                        <MapPin size={11} />
+                        {b.unitLabel}
+                      </div>
+                    )}
                   </div>
-                  {b.notes && <p className="text-djon-text/30 text-xs leading-relaxed border-t border-djon-text/8 pt-3">{b.notes}</p>}
+                  {b.notes && (
+                    <p className="text-djon-text/30 text-xs leading-relaxed border-t border-djon-text/8 pt-3">
+                      {b.notes}
+                    </p>
+                  )}
                   <div className="flex flex-wrap gap-3 mt-4">
-                    <button onClick={() => openRequest(b)}
-                      className="cursor-pointer text-djon-text/35 hover:text-djon-accent transition-colors flex items-center gap-1.5 text-xs font-bold">
-                      <Calendar size={12} /> Remarcar
-                    </button>
+                    {b.type === "treino" && b.status !== "cancelado" && (
+                      <button
+                        onClick={() => openRequest(b)}
+                        className="cursor-pointer text-djon-text/35 hover:text-djon-accent transition-colors flex items-center gap-1.5 text-xs font-bold"
+                      >
+                        <Calendar size={12} /> Remarcar
+                      </button>
+                    )}
                     {b.status !== "cancelado" && (
-                      <button onClick={() => handleCancel(b.id)}
-                        className="cursor-pointer text-djon-text/15 hover:text-djon-danger transition-colors flex items-center gap-1.5 text-xs font-bold">
+                      <button
+                        onClick={() => void handleCancel(b)}
+                        className="cursor-pointer text-djon-text/15 hover:text-djon-danger transition-colors flex items-center gap-1.5 text-xs font-bold"
+                      >
                         <Trash2 size={12} /> Cancelar
                       </button>
                     )}
@@ -330,6 +582,14 @@ export default function AgendarPage() {
               ))}
             </div>
           )}
+          <ListPagination
+            totalItems={upcoming.length}
+            page={upcomingPagination.page}
+            pageSize={upcomingPagination.pageSize}
+            totalPages={upcomingPagination.totalPages}
+            onPageChange={upcomingPagination.setPage}
+            onPageSizeChange={upcomingPagination.setPageSize}
+          />
         </div>
       </section>
 
@@ -337,16 +597,26 @@ export default function AgendarPage() {
       {past.length > 0 && (
         <section className="py-16 bg-djon-page sm:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <motion.span className="block text-djon-text/25 text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
+            <motion.span
+              className="block text-djon-text/25 text-xs tracking-widest font-black uppercase mb-2"
+              {...fadeUp(0)}
+            >
               HISTÓRICO
             </motion.span>
-            <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text/50 tracking-tighter mb-2" {...fadeUp(0.1)}>
+            <motion.h2
+              className="text-3xl md:text-5xl font-black text-djon-text/50 tracking-tighter mb-2"
+              {...fadeUp(0.1)}
+            >
               Histórico
             </motion.h2>
-            <motion.div className="h-[3px] w-10 bg-djon-text/15 rounded-full mb-10" {...fadeUp(0.15)} />
+            <motion.div
+              className="h-[3px] w-10 bg-djon-text/15 rounded-full mb-10"
+              {...fadeUp(0.15)}
+            />
             <div className="space-y-3">
-              {past.map((b, i) => (
-                <motion.div key={b.id}
+              {historyPagination.paginatedItems.map((b, i) => (
+                <motion.div
+                  key={b.id}
                   className="flex flex-col gap-3 rounded-2xl border border-djon-text/6 bg-djon-surface px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:px-6"
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -354,23 +624,45 @@ export default function AgendarPage() {
                   transition={{ delay: i * 0.05 }}
                 >
                   <div className="w-10 h-10 rounded-xl bg-djon-text/5 flex items-center justify-center shrink-0">
-                    {b.type === "aula" ? <FileText size={15} className="text-djon-text/20" /> : <Clock size={15} className="text-djon-text/20" />}
+                    {b.type === "aula" ? (
+                      <FileText size={15} className="text-djon-text/20" />
+                    ) : (
+                      <Clock size={15} className="text-djon-text/20" />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-djon-text/40 font-black text-sm truncate">{b.title}</p>
-                    <p className="text-djon-text/20 text-xs mt-0.5 capitalize">{b.type}</p>
+                    <p className="text-djon-text/40 font-black text-sm truncate">
+                      {b.title}
+                    </p>
+                    <p className="text-djon-text/20 text-xs mt-0.5 capitalize">
+                      {b.type}
+                    </p>
                   </div>
-                  <div className="shrink-0 text-djon-text/20 text-xs font-bold">{fmt(b.date)}</div>
-                  <button onClick={() => handleCancel(b.id)} className="cursor-pointer text-djon-text/10 hover:text-djon-danger/50 transition-colors">
-                    <Trash2 size={13} />
-                  </button>
+                  <div className="shrink-0 text-djon-text/20 text-xs font-bold">
+                    {fmt(b.date)}
+                  </div>
+                  {b.status !== "cancelado" && (
+                    <button
+                      onClick={() => void handleCancel(b)}
+                      className="cursor-pointer text-djon-text/10 hover:text-djon-danger/50 transition-colors"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
                 </motion.div>
               ))}
             </div>
+            <ListPagination
+              totalItems={past.length}
+              page={historyPagination.page}
+              pageSize={historyPagination.pageSize}
+              totalPages={historyPagination.totalPages}
+              onPageChange={historyPagination.setPage}
+              onPageSizeChange={historyPagination.setPageSize}
+            />
           </div>
         </section>
       )}
-
     </div>
-  )
+  );
 }
