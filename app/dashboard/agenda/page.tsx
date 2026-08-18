@@ -38,6 +38,7 @@ import {
 } from "@/components/list-pagination";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
+import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -1199,6 +1200,7 @@ export default function AgendaPage() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("todos");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(today.getFullYear());
+  const [loading, setLoading] = useState(true);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1240,19 +1242,23 @@ export default function AgendaPage() {
 
   useEffect(() => {
     let mounted = true;
-    void store.bootstrap().then((user) => {
-      if (!mounted) return;
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-      if (user.role === "student") {
-        router.replace("/dashboard/student");
-        return;
-      }
-      setCurrentUser(user);
-      loadBookings();
-    });
+    void store.bootstrap()
+      .then((user) => {
+        if (!mounted) return;
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+        if (user.role === "student") {
+          router.replace("/dashboard/student");
+          return;
+        }
+        setCurrentUser(user);
+        loadBookings();
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
     return () => {
       mounted = false;
     };
@@ -1410,6 +1416,8 @@ export default function AgendaPage() {
     });
     setShowNewForm(false);
   };
+
+  if (loading) return <DashboardPageSkeleton variant="agenda" />;
 
   return (
     <div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-djon-page">

@@ -5,6 +5,7 @@ import { Edit2, Headphones, Plus, Save, Trash2, X } from "lucide-react"
 import { DjonSelect } from "@/components/djon-select"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 import { store, type Equipment, type Unit } from "@/lib/store"
 
 const field = "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none placeholder:text-djon-text/25 focus:border-djon-accent/50"
@@ -18,6 +19,7 @@ export default function EquipmentsAdminPage() {
   const [form, setForm] = useState<EquipmentForm>(empty)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const sync = useCallback(() => setEquipments(store.getEquipments()), [])
   const load = useCallback(async () => {
@@ -26,7 +28,9 @@ export default function EquipmentsAdminPage() {
     sync()
   }, [sync])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load().finally(() => setLoading(false))
+  }, [load])
 
   const openNew = () => {
     setForm({ ...empty, unitId: store.getUnits().find((unit) => unit.active)?.id ?? "" })
@@ -64,6 +68,8 @@ export default function EquipmentsAdminPage() {
   }
 
   const pagination = useListPagination(equipments)
+
+  if (loading) return <DashboardPageSkeleton variant="grid" rows={4} />
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">

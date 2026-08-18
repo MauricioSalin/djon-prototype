@@ -25,6 +25,7 @@ import {
 } from "@/components/list-pagination";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
+import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 
 const inp =
   "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all";
@@ -82,6 +83,7 @@ export default function AdminAgendarPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const load = () => {
     setBookings(
@@ -109,9 +111,13 @@ export default function AdminAgendarPage() {
 
   useEffect(() => {
     let mounted = true;
-    void store.bootstrap().then((user) => {
-      if (mounted && user?.role === "admin") load();
-    });
+    void store.bootstrap()
+      .then((user) => {
+        if (mounted && user?.role === "admin") load();
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
     return () => {
       mounted = false;
     };
@@ -192,6 +198,8 @@ export default function AdminAgendarPage() {
     );
   });
   const pagination = useListPagination(filtered, search);
+
+  if (loading) return <DashboardPageSkeleton variant="list" />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">

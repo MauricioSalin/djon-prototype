@@ -10,6 +10,7 @@ import {
   Clock, CheckCircle, AlertCircle, Music2,
 } from "lucide-react"
 import { store, type User, type Booking } from "@/lib/store"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
@@ -37,7 +38,7 @@ export default function ProfessorHomePage() {
     return () => { mounted = false }
   }, [router])
 
-  if (!user) return null
+  if (!user) return <DashboardPageSkeleton variant="dashboard" />
 
   const upcoming = bookings
     .filter((b) => new Date(`${b.date}T${b.time}`) >= new Date() && b.status !== "cancelado")

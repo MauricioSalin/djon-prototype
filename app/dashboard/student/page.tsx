@@ -9,6 +9,7 @@ import {
   MapPin, Clock, Star, CheckCircle, AlertCircle,
 } from "lucide-react"
 import { store, type User as StoreUser, type Booking, type DJEvent } from "@/lib/store"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
@@ -35,7 +36,7 @@ export default function StudentPage() {
     setStudentEvents(store.getStudentEvents().sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()))
   }, [])
 
-  if (!user) return null
+  if (!user) return <DashboardPageSkeleton variant="dashboard" />
 
   const upcoming = bookings
     .filter((b) => b.status !== "cancelado" && new Date(b.date + "T00:00:00") >= new Date())

@@ -35,7 +35,7 @@ export default function LoginPage() {
   const fieldClass = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all"
 
   return (
-    <div className="min-h-svh flex flex-col items-center justify-[safe_center] px-4 py-8 sm:py-10 relative overflow-x-hidden overflow-y-auto noise-overlay bg-djon-page">
+    <div className="min-h-svh flex flex-col items-center justify-[safe_center] px-4 py-8 sm:py-10 relative overflow-x-clip noise-overlay bg-djon-page">
       <div className="absolute inset-0 z-0">
         <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-25" priority />
         <div className="absolute inset-0 bg-djon-page/75" />

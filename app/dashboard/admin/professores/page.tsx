@@ -9,6 +9,7 @@ import { formatPhone, phoneMatchesSearch } from "@/lib/phone"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
 import { DjonSelect } from "@/components/djon-select"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const inp =
   "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
@@ -24,14 +25,17 @@ export default function ProfessoresAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [search, setSearch] = useState("")
+  const [loading, setLoading] = useState(true)
 
   const load = () => setProfessors(store.getProfessors())
 
   useEffect(() => {
-    void Promise.all([store.listAdminUsers(true), store.getPublicUnits()]).then(() => {
-      load()
-      setUnits(store.getUnits().filter((unit) => unit.active))
-    })
+    void Promise.all([store.listAdminUsers(true), store.getPublicUnits()])
+      .then(() => {
+        load()
+        setUnits(store.getUnits().filter((unit) => unit.active))
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const openNew = () => { setForm(emptyForm); setEditingId(null); setShowForm(true) }
@@ -88,6 +92,8 @@ export default function ProfessoresAdminPage() {
       phoneMatchesSearch(u.whatsapp, search)
   )
   const pagination = useListPagination(filtered, search)
+
+  if (loading) return <DashboardPageSkeleton variant="list" />
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">

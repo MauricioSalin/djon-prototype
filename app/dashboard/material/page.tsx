@@ -11,6 +11,7 @@ import {
 import { store, type Material, type User } from "@/lib/store"
 import { DjonSelect } from "@/components/djon-select"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const DRAFTS_CATEGORY = "Rascunhos"
 
@@ -145,7 +146,7 @@ export default function MaterialPage() {
     : 0
   const transferOptions = materialCategories.filter((c) => c !== categoryDelete)
 
-  if (!user) return null
+  if (!user) return <DashboardPageSkeleton variant="grid" />
 
   return (
     <div className="bg-djon-page min-h-screen">

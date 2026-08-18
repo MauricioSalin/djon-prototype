@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Save, Instagram, Music, Youtube, Camera } from "lucide-react"
 import { store, type User } from "@/lib/store"
 import { useRef } from "react"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
 
@@ -41,7 +42,7 @@ export default function AdminConfigPage() {
     setUser(updated)
   }
 
-  if (!user) return null
+  if (!user) return <DashboardPageSkeleton variant="form" />
 
   const totalStudents = store.getUsers().filter((u) => u.role === "student").length
   const totalEvents = store.getEvents().length

@@ -13,6 +13,7 @@ import { RichTextEditor } from "@/components/rich-text-editor"
 import { DjonSelect } from "@/components/djon-select"
 import { useConfirmation } from "@/components/confirmation-provider"
 import { notifyError, notifyUndoable } from "@/lib/feedback"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -346,7 +347,9 @@ export default function NovoMaterialPage() {
     }
   }
 
-  if (!user) return null
+  if (!user) return <DashboardPageSkeleton variant="form" />
+
+  if (!loaded) return <DashboardPageSkeleton variant="form" />
 
   return (
     <div className="min-h-screen bg-djon-page">

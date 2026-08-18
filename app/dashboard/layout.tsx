@@ -43,6 +43,10 @@ import {
   NotificationItem,
   TrainingRequestActions,
 } from "@/components/notification-item";
+import {
+  DashboardPageSkeleton,
+  DashboardShellSkeleton,
+} from "@/components/loading-skeletons";
 
 const studentNav = [
   { label: "Início", href: "/dashboard/student", icon: Home },
@@ -102,6 +106,24 @@ function getPerfilHref(user: StoreUser) {
   if (user.role === "admin") return `/dashboard/perfil/${user.id}`;
   if (user.role === "professor") return `/dashboard/perfil/${user.id}`;
   return `/dashboard/student/perfil`;
+}
+
+function DashboardRouteContent({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <>
+      {ready ? null : <DashboardPageSkeleton />}
+      <div className={ready ? undefined : "hidden"} aria-hidden={!ready}>
+        {children}
+      </div>
+    </>
+  );
 }
 
 type SearchResult =
@@ -568,11 +590,9 @@ export default function DashboardLayout({
   }, []);
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-djon-page flex items-center justify-center text-djon-text/50 text-sm">
-        {sessionError || "Carregando portal..."}
-      </div>
-    );
+    if (!sessionError) return <DashboardShellSkeleton />;
+
+    return <div className="min-h-screen bg-djon-page flex items-center justify-center text-djon-text/50 text-sm">{sessionError}</div>;
   }
 
   const nav = getNav(user.role);
@@ -1240,7 +1260,9 @@ export default function DashboardLayout({
         </AnimatePresence>
       </header>
 
-      <main className="pt-16 overflow-x-hidden">{children}</main>
+      <main className="pt-16 overflow-x-hidden">
+        <DashboardRouteContent key={pathname}>{children}</DashboardRouteContent>
+      </main>
     </div>
   );
 }

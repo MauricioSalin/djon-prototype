@@ -8,6 +8,7 @@ import {
   ArrowLeft, FileText, ImageIcon, Download, Eye, X, Paperclip, File as FileIcon, Edit2,
 } from "lucide-react"
 import { store, type Material, type MaterialAttachment, type User } from "@/lib/store"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -148,7 +149,7 @@ export default function MaterialDetailPage() {
     return () => { active = false }
   }, [id, router])
 
-  if (!user || !loaded) return null
+  if (!user || !loaded) return <DashboardPageSkeleton variant="profile" />
 
   if (!material) {
     return (

@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useConfirmation } from "@/components/confirmation-provider";
+import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import {
   ListPagination,
   useListPagination,
@@ -150,6 +151,8 @@ export default function NotificationsPage() {
     (notification) => !notification.readAt,
   ).length;
 
+  if (loading) return <DashboardPageSkeleton variant="list" />;
+
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -226,11 +229,7 @@ export default function NotificationsPage() {
         />
       </div>
 
-      {loading ? (
-        <div className="rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-10 text-center text-sm font-bold text-djon-text/30">
-          Carregando notificações...
-        </div>
-      ) : displayedNotifications.length === 0 ? (
+      {displayedNotifications.length === 0 ? (
         <div className="rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-10 text-center">
           <Inbox size={32} className="mx-auto mb-3 text-djon-text/20" />
           <p className="text-sm font-bold text-djon-text/30">

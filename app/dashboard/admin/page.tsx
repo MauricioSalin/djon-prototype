@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Users, Music2, CalendarPlus, Newspaper, CheckCircle, AlertCircle, GraduationCap, Calendar } from "lucide-react"
 import { store, type Booking } from "@/lib/store"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
@@ -17,32 +18,37 @@ const fadeUp = (delay = 0) => ({
 export default function AdminPage() {
   const [stats, setStats] = useState({ users: 0, events: 0, bookings: 0, djOnEvents: 0 })
   const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
-    void store.bootstrap().then((authenticatedUser) => {
-      if (!mounted || authenticatedUser?.role !== "admin") return
-      const allUsers = store.getUsers()
-      const allBookings = store.getBookings()
-      const activeBookings = allBookings.filter((booking) => booking.status !== "cancelado")
-      const now = new Date()
-      setStats({
-        users: allUsers.filter((user) => user.role === "student" && user.active !== false).length,
-        events: store.getStudentEvents().length,
-        bookings: activeBookings.length,
-        djOnEvents: allUsers.filter((user) => user.role === "professor" && user.active !== false).length,
+    void store.bootstrap()
+      .then((authenticatedUser) => {
+        if (!mounted || authenticatedUser?.role !== "admin") return
+        const allUsers = store.getUsers()
+        const allBookings = store.getBookings()
+        const activeBookings = allBookings.filter((booking) => booking.status !== "cancelado")
+        const now = new Date()
+        setStats({
+          users: allUsers.filter((user) => user.role === "student" && user.active !== false).length,
+          events: store.getStudentEvents().length,
+          bookings: activeBookings.length,
+          djOnEvents: allUsers.filter((user) => user.role === "professor" && user.active !== false).length,
+        })
+        setBookings(
+          activeBookings
+            .filter((booking) => new Date(`${booking.date}T${booking.time}`) >= now)
+            .sort(
+              (a, b) =>
+                new Date(`${a.date}T${a.time}`).getTime() -
+                new Date(`${b.date}T${b.time}`).getTime(),
+            )
+            .slice(0, 6),
+        )
       })
-      setBookings(
-        activeBookings
-          .filter((booking) => new Date(`${booking.date}T${booking.time}`) >= now)
-          .sort(
-            (a, b) =>
-              new Date(`${a.date}T${a.time}`).getTime() -
-              new Date(`${b.date}T${b.time}`).getTime(),
-          )
-          .slice(0, 6),
-      )
-    })
+      .finally(() => {
+        if (mounted) setLoading(false)
+      })
     return () => {
       mounted = false
     }
@@ -63,6 +69,8 @@ export default function AdminPage() {
     { label: "Mural", href: "/dashboard/mural", icon: Newspaper, desc: "Ver todos os eventos" },
     { label: "Agendar", href: "/dashboard/admin/agendar", icon: CalendarPlus, desc: "Gestão de aulas" },
   ]
+
+  if (loading) return <DashboardPageSkeleton variant="dashboard" />
 
   return (
     <div className="bg-djon-page">

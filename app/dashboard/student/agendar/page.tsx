@@ -21,6 +21,7 @@ import {
 } from "@/lib/store";
 import { academyLocationStorageKey } from "@/lib/locations";
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
+import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { DjonSelect } from "@/components/djon-select";
 import {
   ListPagination,
@@ -63,6 +64,7 @@ export default function AgendarPage() {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [trainingBalance, setTrainingBalance] =
     useState<TrainingBalance | null>(null);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
     title: "",
     date: "",
@@ -123,7 +125,9 @@ export default function AgendarPage() {
     setEquipments(
       store.getEquipments().filter((equipment) => equipment.active),
     );
-    void store.getTrainingBalance().then(setTrainingBalance);
+    void store.getTrainingBalance()
+      .then(setTrainingBalance)
+      .finally(() => setLoading(false));
     const selectedKey = window.localStorage.getItem(academyLocationStorageKey);
     const studentUnitId = store.getCurrentUser()?.unitId;
     const preferred =
@@ -214,6 +218,8 @@ export default function AgendarPage() {
       month: "long",
       year: "numeric",
     });
+
+  if (loading) return <DashboardPageSkeleton variant="list" />;
 
   return (
     <div className="bg-djon-page">

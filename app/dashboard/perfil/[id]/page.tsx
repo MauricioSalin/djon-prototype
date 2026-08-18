@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { store, type User } from "@/lib/store"
 import { ProfileView } from "@/components/portal/profile-view"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 export default function PublicPerfilPage() {
   const { id } = useParams<{ id: string }>()
@@ -26,7 +27,7 @@ export default function PublicPerfilPage() {
   }, [id, router])
 
   if (loadError) return <div className="min-h-[50vh] flex items-center justify-center text-djon-text/50 font-bold">Perfil não encontrado.</div>
-  if (!viewedUser || !currentUser) return null
+  if (!viewedUser || !currentUser) return <DashboardPageSkeleton variant="profile" />
 
   const isOwner = currentUser.id === viewedUser.id
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { store } from "@/lib/store"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -16,6 +17,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }).catch(() => router.replace("/login"))
   }, [router])
 
-  if (!allowed) return <div className="min-h-[50vh] bg-djon-page" />
+  if (!allowed) return <DashboardPageSkeleton />
   return children
 }

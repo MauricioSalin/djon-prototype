@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 export function AppToaster() {
   return (
     <Toaster
+      className="app-toaster"
       position="top-right"
       richColors
       closeButton
