@@ -465,8 +465,8 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
 
   const btn = (active = false) => `cursor-pointer w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
     active
-      ? "bg-djon-accent text-djon-ink shadow-[0_0_0_1px_rgba(174,255,0,0.2)]"
-      : "text-djon-text/50 hover:text-djon-accent hover:bg-djon-text/10"
+      ? "bg-djon-accent text-djon-ink shadow-[var(--djon-shadow-focus-soft)]"
+      : "text-djon-text/50 hover:brightness-110"
   }`
   const preserveSelection = (event: React.MouseEvent<HTMLButtonElement>) => {
     rememberSelection()
@@ -527,7 +527,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
                 className={`cursor-pointer flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
                   selectedImageAlignment === alignment
                     ? "bg-djon-accent text-djon-ink"
-                    : "bg-djon-text/5 text-djon-text/45 hover:text-djon-accent"
+                    : "bg-djon-text/5 text-djon-text/45 hover:brightness-110"
                 }`}
               >
                 <Icon size={13} />
@@ -544,7 +544,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
                 className={`cursor-pointer rounded-lg px-2 py-1.5 text-djon-label font-black tracking-wide transition-colors ${
                   selectedImageWidth === size.width
                     ? "bg-djon-accent text-djon-ink"
-                    : "bg-djon-text/5 text-djon-text/45 hover:text-djon-accent"
+                    : "bg-djon-text/5 text-djon-text/45 hover:brightness-110"
                 }`}
               >
                 {size.label}
@@ -555,7 +555,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
               onClick={removeSelectedImage}
               aria-label="Remover imagem do conteúdo"
               title="Remover imagem"
-              className="cursor-pointer ml-1 flex h-7 w-7 items-center justify-center rounded-lg bg-djon-danger/10 text-djon-danger transition-colors hover:bg-djon-danger/20"
+              className="cursor-pointer ml-1 flex h-7 w-7 items-center justify-center rounded-lg bg-djon-warning-red/10 text-djon-warning-red transition-colors hover:brightness-110"
             >
               <Trash2 size={13} />
             </button>

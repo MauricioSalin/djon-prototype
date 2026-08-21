@@ -86,8 +86,8 @@ export default function AdminPage() {
             sizes="100vw"
             className="object-cover object-center opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-page/70 via-transparent to-djon-page/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-black/70 via-transparent to-djon-black/20" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
@@ -124,7 +124,7 @@ export default function AdminPage() {
             {statCards.map((s, i) => (
               <motion.div
                 key={s.label}
-                className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-6 hover:border-djon-accent/20 transition-all"
+                className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-6 hover:brightness-110 transition-all"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0 }}
@@ -162,9 +162,9 @@ export default function AdminPage() {
               >
                 <Link
                   href={q.href}
-                  className="group flex flex-col gap-4 bg-djon-surface-2 border border-djon-text/8 hover:border-djon-accent/30 rounded-2xl p-6 transition-all"
+                  className="group flex flex-col gap-4 bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-djon-accent/10 flex items-center justify-center group-hover:bg-djon-accent/20 transition-colors">
+                  <div className="w-12 h-12 rounded-xl bg-djon-accent/10 flex items-center justify-center group-hover:brightness-110 transition-colors">
                     <q.icon size={20} className="text-djon-accent" />
                   </div>
                   <div>
@@ -214,7 +214,7 @@ export default function AdminPage() {
                 return (
                   <motion.div
                     key={b.id}
-                    className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:border-djon-text/20 transition-all"
+                    className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:brightness-110 transition-all"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0 }}
@@ -231,7 +231,7 @@ export default function AdminPage() {
                       </div>
                       {b.status === "confirmado"
                         ? <CheckCircle size={14} className="text-djon-accent shrink-0" />
-                        : <AlertCircle size={14} className="text-yellow-400 shrink-0" />
+                        : <AlertCircle size={14} className="text-djon-light-purple shrink-0" />
                       }
                     </div>
                     <h3 className="text-djon-text font-black text-base tracking-tight mb-2">{b.title}</h3>

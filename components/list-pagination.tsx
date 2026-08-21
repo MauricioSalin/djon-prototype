@@ -129,7 +129,7 @@ export function ListPagination({
             aria-label="Página anterior"
             disabled={page === 1}
             onClick={() => onPageChange(page - 1)}
-            className={`${buttonClass} border-djon-text/10 text-djon-text/50 hover:border-djon-accent/40 hover:text-djon-accent`}
+            className={`${buttonClass} border-djon-text/10 text-djon-text/50 hover:brightness-110`}
           >
             <ChevronLeft size={15} />
           </button>
@@ -150,7 +150,7 @@ export function ListPagination({
                   className={`${buttonClass} ${
                     item === page
                       ? "border-djon-accent bg-djon-accent text-djon-ink"
-                      : "border-djon-text/10 text-djon-text/50 hover:border-djon-accent/40 hover:text-djon-accent"
+                      : "border-djon-text/10 text-djon-text/50 hover:brightness-110"
                   }`}
                 >
                   {item}
@@ -172,7 +172,7 @@ export function ListPagination({
             aria-label="Próxima página"
             disabled={page === totalPages}
             onClick={() => onPageChange(page + 1)}
-            className={`${buttonClass} border-djon-text/10 text-djon-text/50 hover:border-djon-accent/40 hover:text-djon-accent`}
+            className={`${buttonClass} border-djon-text/10 text-djon-text/50 hover:brightness-110`}
           >
             <ChevronRight size={15} />
           </button>

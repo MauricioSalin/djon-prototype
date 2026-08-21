@@ -174,7 +174,7 @@ export function Navigation() {
             <motion.button
               key={item.label}
               onClick={() => scrollToSection(item.href)}
-              className="cursor-pointer text-xs font-bold tracking-widest transition-colors relative text-djon-text/80 hover:text-djon-accent"
+              className="cursor-pointer text-xs font-bold tracking-widest transition-colors relative text-djon-text/80 hover:brightness-110"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1, duration: 0.4, ease: [0.25, 0.4, 0.25, 1] as const }}
@@ -220,7 +220,7 @@ export function Navigation() {
                 aria-expanded={accountOpen}
                 aria-label="Abrir menu da conta"
                 onClick={() => setAccountOpen((open) => !open)}
-                className="cursor-pointer flex items-center gap-2.5 rounded-full border border-djon-text/15 bg-djon-text/6 py-1 pl-1 pr-3 transition-colors hover:bg-djon-text/10"
+                className="cursor-pointer flex items-center gap-2.5 rounded-full border border-djon-text/15 bg-djon-text/6 py-1 pl-1 pr-3 transition-colors hover:brightness-110"
                 whileTap={{ scale: 0.97 }}
               >
                 <UserIdentity user={user} />
@@ -242,7 +242,7 @@ export function Navigation() {
                     <Link
                       href={portalHomeForRole(user.role)}
                       onClick={() => setAccountOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-text/65 transition-colors hover:bg-djon-text/6 hover:text-djon-text"
+                      className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-text/65 transition-colors hover:brightness-110"
                     >
                       <LayoutDashboard size={14} />
                       Acessar portal
@@ -250,7 +250,7 @@ export function Navigation() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="cursor-pointer flex w-full items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-danger/75 transition-colors hover:bg-djon-danger/10 hover:text-djon-danger"
+                      className="cursor-pointer flex w-full items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-warning-red/75 transition-colors hover:brightness-110"
                     >
                       <LogOut size={14} />
                       Sair
@@ -262,7 +262,7 @@ export function Navigation() {
           ) : (
             <Link href="/login">
               <motion.div
-                className="flex items-center gap-1.5 border border-djon-text/20 text-djon-text/70 hover:text-djon-text hover:border-djon-text/40 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
+                className="flex items-center gap-1.5 border border-djon-text/20 text-djon-text/70 hover:brightness-110 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -320,7 +320,7 @@ export function Navigation() {
                 <motion.button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="cursor-pointer block w-full text-left text-djon-text/80 hover:text-djon-accent text-base font-black tracking-widest py-2"
+                  className="cursor-pointer block w-full text-left text-djon-text/80 hover:brightness-110 text-base font-black tracking-widest py-2"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
@@ -362,7 +362,7 @@ export function Navigation() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-djon-danger/25 px-6 py-3 text-xs font-black tracking-widest text-djon-danger"
+                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-djon-warning-red/25 px-6 py-3 text-xs font-black tracking-widest text-djon-warning-red"
                     >
                       <LogOut size={14} />
                       SAIR

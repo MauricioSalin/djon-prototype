@@ -63,8 +63,8 @@ export default function AdminConfigPage() {
           style={{ background: user.banner ? `url(${user.banner}) center/cover` : "var(--djon-gradient-config-banner)" }}
           onClick={() => bannerRef.current?.click()}
         >
-          <div className="absolute inset-0 bg-djon-page/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <div className="bg-djon-page/60 rounded-xl px-4 py-2 flex items-center gap-2 text-djon-text text-xs font-bold">
+          <div className="absolute inset-0 bg-djon-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <div className="bg-djon-black/60 rounded-xl px-4 py-2 flex items-center gap-2 text-djon-text text-xs font-bold">
               <Camera size={13} /> Alterar banner
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function AdminConfigPage() {
               ) : (
                 <span className="text-djon-ink text-xl font-black">{user.name.charAt(0)}</span>
               )}
-              <div className="absolute inset-0 bg-djon-page/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <div className="absolute inset-0 bg-djon-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera size={14} className="text-djon-text" />
               </div>
               <input ref={avatarRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden"
@@ -101,8 +101,8 @@ export default function AdminConfigPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[
           { label: "Alunos", value: totalStudents, color: "var(--djon-color-accent)" },
-          { label: "Eventos", value: totalEvents, color: "var(--djon-color-info)" },
-          { label: "Agendamentos", value: totalBookings, color: "var(--djon-color-purple)" },
+          { label: "Eventos", value: totalEvents, color: "var(--djon-color-light-purple)" },
+          { label: "Agendamentos", value: totalBookings, color: "var(--djon-color-light-purple)" },
         ].map((s, i) => (
           <motion.div key={s.label} className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-4 text-center"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}>

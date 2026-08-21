@@ -19,7 +19,7 @@ const fadeUp = (delay = 0) => ({
 })
 
 const inputCls =
-  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all"
+  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:brightness-110 transition-all"
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Administrador DJ ON",
@@ -137,8 +137,8 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
           {/* Subtle static dark vignette at bottom so avatar sits on it */}
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-djon-page to-transparent" />
           {isOwner && (
-            <div className="absolute inset-0 bg-djon-page/0 group-hover:bg-djon-page/30 transition-all flex items-center justify-center">
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-djon-page/70 backdrop-blur rounded-full px-5 py-2.5 flex items-center gap-2 text-djon-text text-xs font-bold">
+            <div className="absolute inset-0 bg-djon-black/0 group-hover:brightness-110 transition-all flex items-center justify-center">
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-djon-black/70 backdrop-blur rounded-full px-5 py-2.5 flex items-center gap-2 text-djon-text text-xs font-bold">
                 <Camera size={13} /> Alterar banner
               </div>
             </div>
@@ -177,7 +177,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 <span className="text-djon-accent text-4xl font-black sm:text-5xl">{user.name.charAt(0)}</span>
               )}
               {isOwner && (
-                <div className="absolute inset-0 bg-djon-page/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="absolute inset-0 bg-djon-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <Camera size={22} className="text-djon-text" />
                 </div>
               )}
@@ -214,7 +214,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             {isOwner && (
               <motion.button
                 onClick={() => setEditing((v) => !v)}
-                className="cursor-pointer hidden md:flex items-center gap-2 shrink-0 mb-2 border border-djon-text/15 text-djon-text/50 hover:text-djon-text hover:border-djon-text/30 px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all"
+                className="cursor-pointer hidden md:flex items-center gap-2 shrink-0 mb-2 border border-djon-text/15 text-djon-text/50 hover:brightness-110 px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -228,7 +228,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             {isOwner && (
               <motion.button
                 onClick={() => setEditing((v) => !v)}
-                className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-all hover:border-djon-text/30 hover:text-djon-text md:hidden"
+                className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-all hover:brightness-110 md:hidden"
                 whileTap={{ scale: 0.97 }}
               >
                 <Edit3 size={13} /> EDITAR PERFIL
@@ -259,7 +259,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://instagram.com/${user.socials.instagram}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-bold transition-colors"
                   >
                     <Instagram size={18} /> @{user.socials.instagram}
                   </a>
@@ -269,7 +269,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://soundcloud.com/${user.socials.soundcloud}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-bold transition-colors"
                   >
                     <SoundCloudIcon size={22} /> {user.socials.soundcloud}
                   </a>
@@ -279,7 +279,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://youtube.com/@${user.socials.youtube}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-bold transition-colors"
                   >
                     <Youtube size={18} /> {user.socials.youtube}
                   </a>
@@ -389,7 +389,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     placeholder="Confirmar nova senha" className={inputCls} />
                 </div>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button type="submit" className="rounded-xl bg-djon-text/10 px-5 py-3 text-xs font-black tracking-widest text-djon-text hover:bg-djon-text/15">ALTERAR SENHA</button>
+                  <button type="submit" className="rounded-xl bg-djon-text/10 px-5 py-3 text-xs font-black tracking-widest text-djon-text hover:brightness-110">ALTERAR SENHA</button>
                   {passwordMessage && <p role="status" className="text-xs font-bold text-djon-text/60">{passwordMessage}</p>}
                 </div>
               </form>
@@ -470,7 +470,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
               </Link>
               <Link
                 href="/dashboard/student/evento"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-8 py-3.5 text-sm font-black tracking-widest text-djon-text transition-all hover:border-djon-text/40 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-8 py-3.5 text-sm font-black tracking-widest text-djon-text transition-all hover:brightness-110 sm:w-auto"
               >
                 <Music size={14} /> NOVO EVENTO
               </Link>
@@ -486,7 +486,7 @@ function EventCard({ ev, i }: { ev: DJEvent; i: number }) {
   return (
     <motion.div
       key={ev.id}
-      className="bg-djon-surface-2 border border-djon-text/8 hover:border-djon-accent/30 rounded-2xl p-6 transition-all"
+      className="bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0 }}

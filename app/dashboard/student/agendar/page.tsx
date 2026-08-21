@@ -37,12 +37,12 @@ const fadeUp = (delay = 0) => ({
 });
 
 const inputCls =
-  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all";
+  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:brightness-110 transition-all";
 function StatusBadge({ status }: { status: Booking["status"] }) {
   const map = {
     confirmado: "bg-djon-accent/15 text-djon-accent",
-    pendente: "bg-yellow-400/15 text-yellow-400",
-    cancelado: "bg-djon-danger/15 text-djon-danger",
+    pendente: "bg-djon-light-purple/15 text-djon-light-purple",
+    cancelado: "bg-djon-warning-red/15 text-djon-warning-red",
   };
   return (
     <span
@@ -233,8 +233,8 @@ export default function AgendarPage() {
             className="object-cover opacity-30"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <div>
@@ -269,7 +269,7 @@ export default function AgendarPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/80 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -296,7 +296,7 @@ export default function AgendarPage() {
                 </div>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:text-djon-text hover:bg-djon-text/15 transition-all"
+                  className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:brightness-110 transition-all"
                 >
                   <X size={16} />
                 </button>
@@ -448,7 +448,7 @@ export default function AgendarPage() {
                 <p className="text-djon-label font-black tracking-widest text-djon-text/35">
                   HORAS RESERVADAS
                 </p>
-                <p className="mt-1 text-xl font-black text-djon-warning">
+                <p className="mt-1 text-xl font-black text-djon-light-purple">
                   {trainingBalance.reservedHours}h
                 </p>
               </div>
@@ -519,7 +519,7 @@ export default function AgendarPage() {
               {upcomingPagination.paginatedItems.map((b, i) => (
                 <motion.div
                   key={b.id}
-                  className="bg-djon-surface-2 border border-djon-text/8 hover:border-djon-text/20 rounded-2xl p-6 transition-all"
+                  className="bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0 }}
@@ -531,13 +531,13 @@ export default function AgendarPage() {
                       className={`w-11 h-11 rounded-xl flex items-center justify-center ${
                         b.type === "aula"
                           ? "bg-djon-accent/12"
-                          : "bg-blue-400/12"
+                          : "bg-djon-light-purple/12"
                       }`}
                     >
                       {b.type === "aula" ? (
                         <FileText size={18} className="text-djon-accent" />
                       ) : (
-                        <Clock size={18} className="text-blue-400" />
+                        <Clock size={18} className="text-djon-light-purple" />
                       )}
                     </div>
                     <StatusBadge status={b.status} />
@@ -570,7 +570,7 @@ export default function AgendarPage() {
                     {b.type === "treino" && b.status !== "cancelado" && (
                       <button
                         onClick={() => openRequest(b)}
-                        className="cursor-pointer text-djon-text/35 hover:text-djon-accent transition-colors flex items-center gap-1.5 text-xs font-bold"
+                        className="cursor-pointer text-djon-text/35 hover:brightness-110 transition-colors flex items-center gap-1.5 text-xs font-bold"
                       >
                         <Calendar size={12} /> Remarcar
                       </button>
@@ -578,7 +578,7 @@ export default function AgendarPage() {
                     {b.status !== "cancelado" && (
                       <button
                         onClick={() => void handleCancel(b)}
-                        className="cursor-pointer text-djon-text/15 hover:text-djon-danger transition-colors flex items-center gap-1.5 text-xs font-bold"
+                        className="cursor-pointer text-djon-text/15 hover:brightness-110 transition-colors flex items-center gap-1.5 text-xs font-bold"
                       >
                         <Trash2 size={12} /> Cancelar
                       </button>
@@ -650,7 +650,7 @@ export default function AgendarPage() {
                   {b.status !== "cancelado" && (
                     <button
                       onClick={() => void handleCancel(b)}
-                      className="cursor-pointer text-djon-text/10 hover:text-djon-danger/50 transition-colors"
+                      className="cursor-pointer text-djon-text/10 hover:brightness-110 transition-colors"
                     >
                       <Trash2 size={13} />
                     </button>

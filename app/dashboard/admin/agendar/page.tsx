@@ -33,8 +33,8 @@ const inp =
 function StatusBadge({ status }: { status: Booking["status"] }) {
   const map = {
     confirmado: "bg-djon-accent/15 text-djon-accent",
-    pendente: "bg-yellow-400/15 text-yellow-400",
-    cancelado: "bg-djon-danger/15 text-djon-danger",
+    pendente: "bg-djon-light-purple/15 text-djon-light-purple",
+    cancelado: "bg-djon-warning-red/15 text-djon-warning-red",
   };
   return (
     <span
@@ -233,7 +233,7 @@ export default function AdminAgendarPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -250,7 +250,7 @@ export default function AdminAgendarPage() {
                 </h2>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="cursor-pointer text-djon-text/40 hover:text-djon-text"
+                  className="cursor-pointer text-djon-text/40 hover:brightness-110"
                 >
                   <X size={18} />
                 </button>
@@ -521,14 +521,14 @@ export default function AdminAgendarPage() {
                   <button
                     aria-label={`Editar agendamento ${b.title}`}
                     onClick={() => openEdit(b)}
-                    className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1"
+                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1"
                   >
                     <Edit2 size={13} />
                   </button>
                   <button
                     aria-label={`Cancelar agendamento ${b.title}`}
                     onClick={() => void handleDelete(b)}
-                    className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1"
+                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1"
                   >
                     <Trash2 size={13} />
                   </button>

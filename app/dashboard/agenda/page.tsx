@@ -85,15 +85,15 @@ const STATUS_META: Record<
     label: "Confirmado",
   },
   pendente: {
-    dot: "bg-djon-warning",
-    badge: "bg-djon-warning/10 border-djon-warning/20 text-djon-warning",
-    text: "text-djon-warning",
+    dot: "bg-djon-light-purple",
+    badge: "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
+    text: "text-djon-light-purple",
     label: "Pendente",
   },
   cancelado: {
-    dot: "bg-djon-danger",
-    badge: "bg-djon-danger/10 border-djon-danger/20 text-djon-danger",
-    text: "text-djon-danger",
+    dot: "bg-djon-warning-red",
+    badge: "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
+    text: "text-djon-warning-red",
     label: "Cancelado",
   },
 };
@@ -110,7 +110,7 @@ function bookingStudentName(booking: BookingWithUser) {
 }
 
 const inp =
-  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-text/30 transition-all";
+  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/60 transition-all";
 
 // ─── Custom Dropdown ──────────────────────────────────────────────────────────
 
@@ -150,7 +150,7 @@ function CustomDropdown({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="cursor-pointer flex min-w-[118px] items-center gap-2 rounded-lg border border-djon-text/10 bg-djon-text/5 px-3 py-1.5 text-xs font-bold text-djon-text transition-all hover:border-djon-text/20 sm:min-w-[130px]"
+        className="cursor-pointer flex min-w-[118px] items-center gap-2 rounded-lg border border-djon-text/10 bg-djon-text/5 px-3 py-1.5 text-xs font-bold text-djon-text transition-all hover:brightness-110 sm:min-w-[130px]"
       >
         {selected?.dot && (
           <span className={`w-2 h-2 rounded-full shrink-0 ${selected.dot}`} />
@@ -181,7 +181,7 @@ function CustomDropdown({
                   onChange(opt.value);
                   setOpen(false);
                 }}
-                className="cursor-pointer w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-djon-text/60 hover:text-djon-text hover:bg-djon-text/6 transition-all"
+                className="cursor-pointer w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-djon-text/60 hover:brightness-110 transition-all"
               >
                 {opt.dot && (
                   <span
@@ -214,7 +214,7 @@ function BookingPill({
   return (
     <button
       onClick={onClick}
-      className="cursor-pointer w-full text-left rounded-lg px-2 py-1 bg-djon-text/5 border border-djon-text/8 text-djon-label font-bold truncate text-djon-text/60 hover:bg-djon-text/10 hover:text-djon-text transition-all"
+      className="cursor-pointer w-full text-left rounded-lg px-2 py-1 bg-djon-text/5 border border-djon-text/8 text-djon-label font-bold truncate text-djon-text/60 hover:brightness-110 transition-all"
     >
       <span
         className={`inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle ${m.dot}`}
@@ -373,14 +373,14 @@ function BookingDetail({
   const statusOptions: DropdownOption[] = [
     { value: "confirmado", label: "Confirmado", dot: "bg-djon-success" },
     ...(bk.status === "pendente"
-      ? [{ value: "pendente", label: "Pendente", dot: "bg-djon-warning" }]
+      ? [{ value: "pendente", label: "Pendente", dot: "bg-djon-light-purple" }]
       : []),
-    { value: "cancelado", label: "Cancelado", dot: "bg-djon-danger" },
+    { value: "cancelado", label: "Cancelado", dot: "bg-djon-warning-red" },
   ];
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/60 p-4 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/60 p-4 backdrop-blur-sm sm:p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -406,7 +406,7 @@ function BookingDetail({
               <button
                 onClick={() => setEditing(true)}
                 aria-label="Editar agendamento"
-                className="cursor-pointer text-djon-text/30 hover:text-djon-accent transition-colors p-1"
+                className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors p-1"
               >
                 <Edit2 size={14} />
               </button>
@@ -415,7 +415,7 @@ function BookingDetail({
               <button
                 onClick={() => void handleRemove()}
                 aria-label="Remover agendamento"
-                className="cursor-pointer p-1 text-djon-text/30 transition-colors hover:text-djon-danger"
+                className="cursor-pointer p-1 text-djon-text/30 transition-colors hover:brightness-110"
               >
                 <Trash2 size={14} />
               </button>
@@ -423,7 +423,7 @@ function BookingDetail({
             <button
               onClick={onClose}
               aria-label="Fechar detalhes"
-              className="cursor-pointer text-djon-text/30 hover:text-djon-text transition-colors"
+              className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
             >
               <X size={16} />
             </button>
@@ -493,7 +493,7 @@ function BookingDetail({
                   type="button"
                   onClick={() => void handleReject()}
                   disabled={reviewing !== null}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-djon-danger/25 bg-djon-danger/10 py-2.5 text-xs font-black tracking-wide text-djon-danger transition-all hover:bg-djon-danger/15 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-djon-warning-red/25 bg-djon-warning-red/10 py-2.5 text-xs font-black tracking-wide text-djon-warning-red transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <X size={14} />
                   {reviewing === "reject" ? "RECUSANDO..." : "RECUSAR"}
@@ -682,7 +682,7 @@ function BookingDetail({
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => setEditing(false)}
-                className="cursor-pointer flex-1 py-2.5 rounded-xl bg-djon-text/5 border border-djon-text/10 text-djon-text/50 text-xs font-black transition-all hover:bg-djon-text/10"
+                className="cursor-pointer flex-1 py-2.5 rounded-xl bg-djon-text/5 border border-djon-text/10 text-djon-text/50 text-xs font-black transition-all hover:brightness-110"
               >
                 CANCELAR
               </button>
@@ -961,7 +961,7 @@ function MonthView({
                   {hiddenCount > 0 && (
                     <button
                       onClick={(e) => openMore(e, cellDate, cellBks)}
-                      className="cursor-pointer w-full h-[22px] rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-label text-djon-text/45 hover:text-djon-accent hover:border-djon-accent/30 font-black transition-all flex items-center justify-center"
+                      className="cursor-pointer w-full h-[22px] rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-label text-djon-text/45 hover:brightness-110 font-black transition-all flex items-center justify-center"
                       aria-label={`Ver mais ${hiddenCount} agendamentos de ${day}`}
                     >
                       +{hiddenCount}
@@ -1014,7 +1014,7 @@ function MonthView({
                   </div>
                   <button
                     onClick={() => setMoreDay(null)}
-                    className="cursor-pointer text-djon-text/30 hover:text-djon-text transition-colors"
+                    className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
                   >
                     <X size={14} />
                   </button>
@@ -1038,7 +1038,7 @@ function MonthView({
                             onSelect(b);
                             setMoreDay(null);
                           }}
-                          className="cursor-pointer w-full text-left flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:bg-djon-text/6 transition-colors"
+                          className="cursor-pointer w-full text-left flex items-center gap-2.5 rounded-lg px-2.5 py-2 hover:brightness-110 transition-colors"
                         >
                           <span
                             className={`w-1.5 h-1.5 rounded-full shrink-0 ${m.dot}`}
@@ -1117,7 +1117,7 @@ function ListView({
                   <motion.button
                     key={b.id}
                     onClick={() => onSelect(b)}
-                    className="cursor-pointer w-full text-left flex items-center gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 px-4 py-3.5 transition-all hover:bg-djon-text/5"
+                    className="cursor-pointer w-full text-left flex items-center gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 px-4 py-3.5 transition-all hover:brightness-110"
                     whileHover={{ x: 4 }}
                   >
                     <div
@@ -1356,8 +1356,8 @@ export default function AgendaPage() {
   const filterOptions: DropdownOption[] = [
     { value: "todos", label: "Todos" },
     { value: "confirmado", label: "Confirmados", dot: "bg-djon-success" },
-    { value: "pendente", label: "Pendentes", dot: "bg-djon-warning" },
-    { value: "cancelado", label: "Cancelados", dot: "bg-djon-danger" },
+    { value: "pendente", label: "Pendentes", dot: "bg-djon-light-purple" },
+    { value: "cancelado", label: "Cancelados", dot: "bg-djon-warning-red" },
   ];
 
   const handleSaved = (updated: BookingWithUser) => {
@@ -1431,7 +1431,7 @@ export default function AgendaPage() {
                 <>
                   <button
                     onClick={handlePrev}
-                    className="cursor-pointer text-djon-text/30 hover:text-djon-text p-1.5 rounded-lg hover:bg-djon-text/5 transition-all"
+                    className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1.5 rounded-lg hover:brightness-110 transition-all"
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -1443,7 +1443,7 @@ export default function AgendaPage() {
                         setPickerYear(currentDate.getFullYear());
                         setPickerOpen((v) => !v);
                       }}
-                      className="cursor-pointer flex min-w-0 max-w-full items-center justify-center gap-1.5 text-base font-black tracking-tight text-djon-text transition-colors hover:text-djon-accent sm:min-w-[200px] sm:text-lg"
+                      className="cursor-pointer flex min-w-0 max-w-full items-center justify-center gap-1.5 text-base font-black tracking-tight text-djon-text transition-colors hover:brightness-110 sm:min-w-[200px] sm:text-lg"
                     >
                       {view === "week" ? weekLabel : monthLabel}
                       {view === "month" && (
@@ -1467,7 +1467,7 @@ export default function AgendaPage() {
                           <div className="flex items-center justify-between px-5 py-3 border-b border-djon-text/8">
                             <button
                               onClick={() => setPickerYear((y) => y - 1)}
-                              className="cursor-pointer text-djon-text/30 hover:text-djon-text p-1 rounded-lg hover:bg-djon-text/5 transition-all"
+                              className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1 rounded-lg hover:brightness-110 transition-all"
                             >
                               <ChevronLeft size={16} />
                             </button>
@@ -1476,7 +1476,7 @@ export default function AgendaPage() {
                             </span>
                             <button
                               onClick={() => setPickerYear((y) => y + 1)}
-                              className="cursor-pointer text-djon-text/30 hover:text-djon-text p-1 rounded-lg hover:bg-djon-text/5 transition-all"
+                              className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1 rounded-lg hover:brightness-110 transition-all"
                             >
                               <ChevronRight size={16} />
                             </button>
@@ -1504,7 +1504,7 @@ export default function AgendaPage() {
                                       ? "bg-djon-accent text-djon-ink"
                                       : isCurrentMonth
                                         ? "bg-djon-text/8 text-djon-text border border-djon-text/15"
-                                        : "text-djon-text/40 hover:text-djon-text hover:bg-djon-text/6"
+                                        : "text-djon-text/40 hover:brightness-110"
                                   }`}
                                 >
                                   {name.slice(0, 3)}
@@ -1519,13 +1519,13 @@ export default function AgendaPage() {
 
                   <button
                     onClick={handleNext}
-                    className="cursor-pointer text-djon-text/30 hover:text-djon-text p-1.5 rounded-lg hover:bg-djon-text/5 transition-all"
+                    className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1.5 rounded-lg hover:brightness-110 transition-all"
                   >
                     <ChevronRight size={18} />
                   </button>
                   <button
                     onClick={goToday}
-                    className="cursor-pointer text-djon-text/40 hover:text-djon-text text-xs font-bold border border-djon-text/10 hover:border-djon-text/30 px-3 py-1.5 rounded-lg transition-all ml-1"
+                    className="cursor-pointer text-djon-text/40 hover:brightness-110 text-xs font-bold border border-djon-text/10 px-3 py-1.5 rounded-lg transition-all ml-1"
                   >
                     Hoje
                   </button>
@@ -1542,7 +1542,7 @@ export default function AgendaPage() {
               <span className="text-djon-label font-black px-2.5 py-1 rounded-full bg-djon-success/10 text-djon-success">
                 {stats.confirmado} confirmados
               </span>
-              <span className="text-djon-label font-black px-2.5 py-1 rounded-full bg-djon-warning/10 text-djon-warning">
+              <span className="text-djon-label font-black px-2.5 py-1 rounded-full bg-djon-light-purple/10 text-djon-light-purple">
                 {stats.pendente} pendentes
               </span>
             </div>
@@ -1575,7 +1575,7 @@ export default function AgendaPage() {
                     className={`cursor-pointer p-2 rounded-md transition-all ${
                       view === v
                         ? "bg-djon-accent text-djon-ink"
-                        : "text-djon-text/30 hover:text-djon-text"
+                        : "text-djon-text/30 hover:brightness-110"
                     }`}
                   >
                     <Icon size={14} />
@@ -1631,7 +1631,7 @@ export default function AgendaPage() {
       <AnimatePresence>
         {showNewForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1656,7 +1656,7 @@ export default function AgendaPage() {
                 </div>
                 <button
                   onClick={() => setShowNewForm(false)}
-                  className="cursor-pointer text-djon-text/40 hover:text-djon-text"
+                  className="cursor-pointer text-djon-text/40 hover:brightness-110"
                 >
                   <X size={18} />
                 </button>

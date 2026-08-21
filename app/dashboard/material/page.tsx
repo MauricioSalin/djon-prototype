@@ -155,8 +155,8 @@ export default function MaterialPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image src="/images/material-hero.png" alt="" fill className="object-cover opacity-25" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/85 to-djon-page/50" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/85 to-djon-black/50" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 sm:px-6 sm:py-28">
@@ -206,7 +206,7 @@ export default function MaterialPage() {
                     <button
                       type="button"
                       onClick={() => setCategoryModal({ mode: "edit", original: cat, value: cat })}
-                      className="cursor-pointer rounded-full p-0.5 text-djon-ink/70 hover:text-djon-ink hover:bg-djon-ink/10 transition-all"
+                      className="cursor-pointer rounded-full p-0.5 text-djon-ink/70 hover:brightness-110 transition-all"
                       aria-label={`Editar categoria ${cat}`}
                     >
                       <Edit2 size={12} />
@@ -214,7 +214,7 @@ export default function MaterialPage() {
                     <button
                       type="button"
                       onClick={() => openDeleteCategory(cat)}
-                      className="cursor-pointer rounded-full p-0.5 text-djon-ink/70 hover:text-djon-ink hover:bg-djon-ink/10 transition-all"
+                      className="cursor-pointer rounded-full p-0.5 text-djon-ink/70 hover:brightness-110 transition-all"
                       aria-label={`Excluir categoria ${cat}`}
                     >
                       <Trash2 size={12} />
@@ -230,7 +230,7 @@ export default function MaterialPage() {
                   className={`px-4 py-2 rounded-full text-xs font-black tracking-widest transition-all cursor-pointer ${
                     active
                       ? "bg-djon-accent text-djon-ink"
-                      : "bg-djon-text/6 text-djon-text/50 hover:text-djon-text border border-djon-text/10 hover:border-djon-text/20"
+                      : "bg-djon-text/6 text-djon-text/50 hover:brightness-110 border border-djon-text/10"
                   }`}
                 >
                   {cat.toUpperCase()}
@@ -241,7 +241,7 @@ export default function MaterialPage() {
               <button
                 type="button"
                 onClick={() => setCategoryModal({ mode: "create", value: "" })}
-                className="cursor-pointer px-2 py-2 text-xs font-black tracking-widest text-djon-text/35 hover:text-djon-accent transition-colors"
+                className="cursor-pointer px-2 py-2 text-xs font-black tracking-widest text-djon-text/35 hover:brightness-110 transition-colors"
               >
                 + NOVA CATEGORIA
               </button>
@@ -274,7 +274,7 @@ export default function MaterialPage() {
             {pagination.paginatedItems.map((mat, i) => (
               <motion.div
                 key={mat.id}
-                className="group bg-djon-text/4 border border-djon-text/8 rounded-2xl overflow-hidden hover:border-djon-text/16 transition-all cursor-pointer flex flex-col min-h-[322px]"
+                className="group bg-djon-text/4 border border-djon-text/8 rounded-2xl overflow-hidden hover:brightness-110 transition-all cursor-pointer flex flex-col min-h-[322px]"
                 {...fadeUp(i * 0.04)}
                 whileHover={{ y: -4 }}
                 onClick={() =>
@@ -336,9 +336,9 @@ export default function MaterialPage() {
                       <button
                         aria-label={`Excluir material ${mat.title}`}
                         onClick={(e) => { e.stopPropagation(); setDeleteId(mat.id) }}
-                        className="cursor-pointer opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-djon-danger/10 hover:bg-djon-danger/20 flex items-center justify-center transition-all"
+                        className="cursor-pointer opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-djon-warning-red/10 hover:brightness-110 flex items-center justify-center transition-all"
                       >
-                        <Trash2 size={12} className="text-djon-danger" />
+                        <Trash2 size={12} className="text-djon-warning-red" />
                       </button>
                     )}
                   </div>
@@ -363,7 +363,7 @@ export default function MaterialPage() {
       <AnimatePresence>
         {categoryModal && (
           <motion.div
-            className="fixed inset-0 z-50 bg-djon-page/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
+            className="fixed inset-0 z-50 bg-djon-black/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -384,7 +384,7 @@ export default function MaterialPage() {
                 </div>
                 <button
                   onClick={() => setCategoryModal(null)}
-                  className="cursor-pointer text-djon-text/30 hover:text-djon-text transition-colors"
+                  className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
                   type="button"
                 >
                   <X size={18} />
@@ -425,7 +425,7 @@ export default function MaterialPage() {
       <AnimatePresence>
         {categoryDelete && (
           <motion.div
-            className="fixed inset-0 z-50 bg-djon-page/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
+            className="fixed inset-0 z-50 bg-djon-black/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -439,12 +439,12 @@ export default function MaterialPage() {
             >
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <p className="text-djon-danger text-xs font-black tracking-widest uppercase mb-1">EXCLUIR</p>
+                  <p className="text-djon-warning-red text-xs font-black tracking-widest uppercase mb-1">EXCLUIR</p>
                   <h2 className="text-djon-text text-xl font-black tracking-tight">Categoria {categoryDelete}</h2>
                 </div>
                 <button
                   onClick={() => setCategoryDelete(null)}
-                  className="cursor-pointer text-djon-text/30 hover:text-djon-text transition-colors"
+                  className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
                   type="button"
                 >
                   <X size={18} />
@@ -468,7 +468,7 @@ export default function MaterialPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setCategoryDelete(null)}
-                    className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:text-djon-text text-xs font-black tracking-widest transition-colors"
+                    className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:brightness-110 text-xs font-black tracking-widest transition-colors"
                     type="button"
                   >
                     CANCELAR
@@ -476,7 +476,7 @@ export default function MaterialPage() {
                   <button
                     onClick={confirmDeleteCategory}
                     disabled={categoryDeleteCount > 0 && !transferCategory}
-                    className="cursor-pointer flex-1 py-3 rounded-full bg-djon-danger/80 hover:bg-djon-danger disabled:opacity-40 disabled:cursor-not-allowed text-djon-text text-xs font-black tracking-widest transition-colors"
+                    className="cursor-pointer flex-1 py-3 rounded-full bg-djon-warning-red/80 hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed text-djon-text text-xs font-black tracking-widest transition-colors"
                     type="button"
                   >
                     EXCLUIR
@@ -492,7 +492,7 @@ export default function MaterialPage() {
       <AnimatePresence>
         {deleteId && (
           <motion.div
-            className="fixed inset-0 z-50 bg-djon-page/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
+            className="fixed inset-0 z-50 bg-djon-black/80 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -508,13 +508,13 @@ export default function MaterialPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:text-djon-text text-xs font-black tracking-widest transition-colors"
+                  className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:brightness-110 text-xs font-black tracking-widest transition-colors"
                 >
                   CANCELAR
                 </button>
                 <button
                   onClick={() => handleDelete(deleteId)}
-                  className="cursor-pointer flex-1 py-3 rounded-full bg-djon-danger/80 hover:bg-djon-danger text-djon-text text-xs font-black tracking-widest transition-colors"
+                  className="cursor-pointer flex-1 py-3 rounded-full bg-djon-warning-red/80 hover:brightness-110 text-djon-text text-xs font-black tracking-widest transition-colors"
                 >
                   REMOVER
                 </button>

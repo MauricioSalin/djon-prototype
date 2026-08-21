@@ -81,7 +81,7 @@ export default function AdminEventosPage() {
         {(["djOn", "professor", "student"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-wide transition-all ${
-              tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:text-djon-text"
+              tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:brightness-110"
             }`}>
             {t === "djOn"
               ? <><Star size={11} /> EVENTOS DJ ON</>
@@ -95,13 +95,13 @@ export default function AdminEventosPage() {
       {/* Modal */}
       <AnimatePresence>
         {showForm && (
-          <motion.div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
+          <motion.div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div className="djon-scroll my-4 max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:my-6 sm:p-6"
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}>
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-black text-djon-text tracking-tighter">{editingId ? "Editar Evento" : "Novo Evento"}</h2>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:text-djon-text"><X size={18} /></button>
+                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:brightness-110"><X size={18} /></button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Type selector */}
@@ -111,7 +111,7 @@ export default function AdminEventosPage() {
                     {(["djOn", "professor", "student"] as const).map((t) => (
                       <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
                         className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
-                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:text-djon-text"
+                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:brightness-110"
                         }`}>
                         {t === "djOn" ? "DJ ON" : t === "professor" ? "PROFESSOR" : "ALUNO"}
                       </button>
@@ -180,8 +180,8 @@ export default function AdminEventosPage() {
                 </div>
               )}
               {ev.type === "student" && (
-                <div className="w-9 h-9 rounded-xl bg-djon-info/15 flex items-center justify-center shrink-0">
-                  <Music2 size={16} className="text-djon-info" />
+                <div className="w-9 h-9 rounded-xl bg-djon-light-purple/15 flex items-center justify-center shrink-0">
+                  <Music2 size={16} className="text-djon-light-purple" />
                 </div>
               )}
               {ev.type === "professor" && (
@@ -195,14 +195,14 @@ export default function AdminEventosPage() {
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
                   <span className="text-djon-text/30 text-xs flex items-center gap-1"><Clock size={10} /> {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR")} {ev.time}</span>
                   <span className="text-djon-text/30 text-xs flex items-center gap-1"><MapPin size={10} /> {ev.location}</span>
-                  {ev.instagram && <span className="text-djon-info text-xs flex items-center gap-1"><Instagram size={10} /> @{ev.instagram}</span>}
+                  {ev.instagram && <span className="text-djon-light-purple text-xs flex items-center gap-1"><Instagram size={10} /> @{ev.instagram}</span>}
                 </div>
               </div>
               <div className="col-span-2 flex w-full items-center justify-end gap-1 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
-                <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1.5">
+                <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5">
                   <Edit2 size={14} />
                 </button>
-                <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1.5">
+                <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5">
                   <Trash2 size={14} />
                 </button>
               </div>

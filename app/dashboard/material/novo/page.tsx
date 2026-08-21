@@ -356,15 +356,15 @@ export default function NovoMaterialPage() {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image src="/images/material-hero.png" alt="" fill className="object-cover opacity-25" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/88 to-djon-page/55" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/88 to-djon-black/55" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
           <motion.button
             type="button"
             onClick={() => requestExit("/dashboard/material")}
-            className="cursor-pointer inline-flex items-center gap-2 text-djon-text/40 hover:text-djon-text text-xs font-black tracking-widest transition-colors mb-10"
+            className="cursor-pointer inline-flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-black tracking-widest transition-colors mb-10"
             {...fadeUp(0)}
           >
             <ArrowLeft size={14} />
@@ -452,7 +452,7 @@ export default function NovoMaterialPage() {
                 <button
                   type="button"
                   onClick={() => coverRef.current?.click()}
-                  className="cursor-pointer w-full border-2 border-dashed border-djon-text/15 hover:border-djon-accent/40 rounded-xl overflow-hidden transition-colors"
+                  className="cursor-pointer w-full border-2 border-dashed border-djon-text/15 hover:brightness-110 rounded-xl overflow-hidden transition-colors"
                 >
                   {coverUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -473,7 +473,7 @@ export default function NovoMaterialPage() {
                     type="button"
                     onClick={() => void persistMaterial("draft")}
                     disabled={saving}
-                    className="cursor-pointer inline-flex w-full items-center justify-center gap-2 rounded-full border border-djon-text/15 bg-djon-text/5 py-3.5 text-sm font-black tracking-widest text-djon-text transition-colors hover:border-djon-accent/40 hover:text-djon-accent disabled:cursor-not-allowed disabled:opacity-40"
+                    className="cursor-pointer inline-flex w-full items-center justify-center gap-2 rounded-full border border-djon-text/15 bg-djon-text/5 py-3.5 text-sm font-black tracking-widest text-djon-text transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Save size={15} />
                     {saving ? "SALVANDO..." : "SALVAR RASCUNHO"}
@@ -503,9 +503,9 @@ export default function NovoMaterialPage() {
                   {attachments.map((attachment) => (
                     <div key={attachment.id} className="flex items-center gap-3 bg-djon-text/5 border border-djon-text/10 rounded-xl px-3 py-2.5">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        attachment.type === "pdf" ? "bg-djon-danger/15" : attachment.type === "image" ? "bg-djon-accent/12" : "bg-djon-text/8"
+                        attachment.type === "pdf" ? "bg-djon-warning-red/15" : attachment.type === "image" ? "bg-djon-accent/12" : "bg-djon-text/8"
                       }`}>
-                        {attachment.type === "pdf" ? <FileText size={14} className="text-djon-danger" />
+                        {attachment.type === "pdf" ? <FileText size={14} className="text-djon-warning-red" />
                           : attachment.type === "image" ? <ImageIcon size={14} className="text-djon-accent" />
                           : <FileIcon size={14} className="text-djon-text/60" />}
                       </div>
@@ -518,9 +518,9 @@ export default function NovoMaterialPage() {
                       <button
                         type="button"
                         onClick={() => void removeAttachment(attachment.id)}
-                        className="cursor-pointer w-7 h-7 rounded-full bg-djon-danger/10 hover:bg-djon-danger/20 flex items-center justify-center transition-colors shrink-0"
+                        className="cursor-pointer w-7 h-7 rounded-full bg-djon-warning-red/10 hover:brightness-110 flex items-center justify-center transition-colors shrink-0"
                       >
-                        <X size={13} className="text-djon-danger" />
+                        <X size={13} className="text-djon-warning-red" />
                       </button>
                     </div>
                   ))}
@@ -530,7 +530,7 @@ export default function NovoMaterialPage() {
               <button
                 type="button"
                 onClick={() => attachRef.current?.click()}
-                className="cursor-pointer w-full border-2 border-dashed border-djon-text/15 hover:border-djon-accent/40 rounded-xl py-5 flex flex-col items-center gap-2 transition-colors"
+                className="cursor-pointer w-full border-2 border-dashed border-djon-text/15 hover:brightness-110 rounded-xl py-5 flex flex-col items-center gap-2 transition-colors"
               >
                 <Paperclip size={20} className="text-djon-text/20" />
                 <span className="text-djon-text/30 text-xs font-bold">Adicionar anexos</span>
@@ -545,7 +545,7 @@ export default function NovoMaterialPage() {
       <AnimatePresence>
         {exitModalOpen && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-djon-black/75 p-4 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -573,7 +573,7 @@ export default function NovoMaterialPage() {
                   aria-label="Continuar editando"
                   onClick={() => setExitModalOpen(false)}
                   disabled={saving}
-                  className="cursor-pointer rounded-full p-2 text-djon-text/40 transition-colors hover:bg-djon-text/5 hover:text-djon-text disabled:cursor-not-allowed"
+                  className="cursor-pointer rounded-full p-2 text-djon-text/40 transition-colors hover:brightness-110 disabled:cursor-not-allowed"
                 >
                   <X size={18} />
                 </button>
@@ -598,7 +598,7 @@ export default function NovoMaterialPage() {
                   type="button"
                   onClick={() => setExitModalOpen(false)}
                   disabled={saving}
-                  className="cursor-pointer rounded-full border border-djon-text/15 px-4 py-3 text-xs font-black tracking-wider text-djon-text/70 transition-colors hover:border-djon-text/30 hover:text-djon-text disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer rounded-full border border-djon-text/15 px-4 py-3 text-xs font-black tracking-wider text-djon-text/70 transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   CONTINUAR
                 </button>
@@ -609,7 +609,7 @@ export default function NovoMaterialPage() {
                     navigateTo(pendingHrefRef.current)
                   }}
                   disabled={saving}
-                  className="cursor-pointer rounded-full border border-djon-danger/35 px-4 py-3 text-xs font-black tracking-wider text-djon-danger transition-colors hover:bg-djon-danger/10 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer rounded-full border border-djon-warning-red/35 px-4 py-3 text-xs font-black tracking-wider text-djon-warning-red transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   DESCARTAR
                 </button>

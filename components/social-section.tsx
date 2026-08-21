@@ -215,7 +215,7 @@ export function SocialSection() {
               </div>
 
               {/* Overlay info card pinned to bottom */}
-              <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 bg-djon-ink/90 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
+              <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 bg-djon-black/90 px-3 py-3 backdrop-blur-sm sm:gap-3 sm:px-4">
                 <div className="min-w-0">
                   <p className="text-djon-text text-xs font-bold leading-snug truncate">
                     {location.address}

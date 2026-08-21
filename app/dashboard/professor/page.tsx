@@ -65,7 +65,7 @@ export default function ProfessorHomePage() {
         {/* Background image + overlay */}
         <div className="absolute inset-0 z-0">
           <Image src="/images/djon-showcase.png" alt="" fill className="object-cover opacity-30" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 w-full sm:px-6 sm:py-24">
@@ -122,8 +122,8 @@ export default function ProfessorHomePage() {
               </Link>
               <Link href="/dashboard/professor/alunos" className="w-full sm:w-auto">
                 <motion.div
-                  className="flex items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-6 py-3 text-sm font-black tracking-widest text-djon-text"
-                  whileHover={{ scale: 1.03, borderColor: "var(--djon-color-accent)", color: "var(--djon-color-accent)" }}
+                  className="flex items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-6 py-3 text-sm font-black tracking-widest text-djon-text transition-[filter] hover:brightness-110"
+                  whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Users size={15} />
@@ -154,7 +154,7 @@ export default function ProfessorHomePage() {
             ].map((s, i) => (
               <motion.div
                 key={s.label}
-                className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-6 hover:border-djon-accent/20 transition-all"
+                className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-6 hover:brightness-110 transition-all"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0 }}
@@ -192,13 +192,13 @@ export default function ProfessorHomePage() {
               >
                 <Link
                   href={q.href}
-                  className="group flex flex-col gap-4 bg-djon-surface-2 border border-djon-text/8 hover:border-djon-accent/30 rounded-2xl p-6 transition-all"
+                  className="group flex flex-col gap-4 bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-djon-accent/10 flex items-center justify-center group-hover:bg-djon-accent/20 transition-colors">
+                  <div className="w-12 h-12 rounded-xl bg-djon-accent/10 flex items-center justify-center group-hover:brightness-110 transition-colors">
                     <q.icon size={20} className="text-djon-accent" />
                   </div>
                   <div>
-                    <p className="text-djon-text font-black text-base tracking-tight group-hover:text-djon-accent transition-colors">{q.label}</p>
+                    <p className="text-djon-text font-black text-base tracking-tight group-hover:brightness-110 transition-colors">{q.label}</p>
                     <p className="text-djon-text/30 text-xs mt-0.5">{q.desc}</p>
                   </div>
                 </Link>
@@ -247,7 +247,7 @@ export default function ProfessorHomePage() {
                 return (
                   <motion.div
                     key={b.id}
-                    className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:border-djon-text/20 transition-all group"
+                    className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:brightness-110 transition-all group"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0 }}
@@ -266,7 +266,7 @@ export default function ProfessorHomePage() {
                       </div>
                       {b.status === "confirmado"
                         ? <CheckCircle size={14} className="text-djon-accent" />
-                        : <AlertCircle size={14} className="text-yellow-400" />
+                        : <AlertCircle size={14} className="text-djon-light-purple" />
                       }
                     </div>
                     <h3 className="text-djon-text font-black text-base tracking-tight mb-3 leading-tight">{b.title}</h3>

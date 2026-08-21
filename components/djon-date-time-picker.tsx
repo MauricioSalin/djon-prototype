@@ -222,7 +222,7 @@ export function DjonDatePicker({
             ? "cursor-not-allowed border-djon-text/8 text-djon-text/18"
             : open
               ? "cursor-pointer border-djon-accent/60 bg-djon-text/8"
-              : "cursor-pointer border-djon-text/10 hover:border-djon-text/20"
+              : "cursor-pointer border-djon-text/10 hover:brightness-110"
         } ${value ? "text-djon-text" : "text-djon-text/30"}`}
       >
         <span>{formatSelectedDate(value) || placeholder}</span>
@@ -249,7 +249,7 @@ export function DjonDatePicker({
               <button
                 type="button"
                 onClick={() => goToMonth(-1)}
-                className="cursor-pointer w-9 h-9 rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-text/45 hover:text-djon-text hover:border-djon-text/20 transition-all flex items-center justify-center"
+                className="cursor-pointer w-9 h-9 rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-text/45 hover:brightness-110 transition-all flex items-center justify-center"
                 aria-label="Mês anterior"
               >
                 <ChevronLeft size={16} />
@@ -260,7 +260,7 @@ export function DjonDatePicker({
               <button
                 type="button"
                 onClick={() => goToMonth(1)}
-                className="cursor-pointer w-9 h-9 rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-text/45 hover:text-djon-text hover:border-djon-text/20 transition-all flex items-center justify-center"
+                className="cursor-pointer w-9 h-9 rounded-lg bg-djon-text/5 border border-djon-text/8 text-djon-text/45 hover:brightness-110 transition-all flex items-center justify-center"
                 aria-label="Próximo mês"
               >
                 <ChevronRight size={16} />
@@ -299,10 +299,10 @@ export function DjonDatePicker({
                         : disabled
                           ? "cursor-not-allowed text-djon-text/12 line-through"
                           : isToday
-                            ? "bg-djon-text/8 text-djon-accent hover:bg-djon-accent hover:text-djon-ink"
+                            ? "bg-djon-text/8 text-djon-accent hover:brightness-110"
                             : outside
-                              ? "text-djon-text/22 hover:bg-djon-text/6 hover:text-djon-text/70"
-                              : "text-djon-text/80 hover:bg-djon-text/8 hover:text-djon-accent"
+                              ? "text-djon-text/22 hover:brightness-110"
+                              : "text-djon-text/80 hover:brightness-110"
                     }`}
                     title={
                       disabled ? "Dia sem horários disponíveis" : undefined
@@ -357,7 +357,7 @@ export function DjonTimeSelect({
             ? "cursor-not-allowed border-djon-text/8 text-djon-text/18"
             : open
               ? "cursor-pointer border-djon-accent/60 bg-djon-text/8 text-djon-text"
-              : "cursor-pointer border-djon-text/10 hover:border-djon-text/20 text-djon-text"
+              : "cursor-pointer border-djon-text/10 hover:brightness-110 text-djon-text"
         } ${value ? "text-djon-text" : "text-djon-text/30"}`}
       >
         <span>{value || placeholder}</span>
@@ -394,7 +394,7 @@ export function DjonTimeSelect({
                 className={`cursor-pointer w-full rounded-xl px-3 py-2.5 text-left text-xs font-black transition-all ${
                   value === time
                     ? "bg-djon-accent text-djon-ink"
-                    : "text-djon-text/65 hover:bg-djon-text/8 hover:text-djon-text"
+                    : "text-djon-text/65 hover:brightness-110"
                 }`}
               >
                 {time}

@@ -98,17 +98,17 @@ export default function EquipmentsAdminPage() {
                   <p className="mt-1 text-xs text-djon-text/45">{equipment.unitLabel}</p>
                   {equipment.description && <p className="mt-2 text-xs leading-relaxed text-djon-text/35">{equipment.description}</p>}
                 </div>
-                <button onClick={() => edit(equipment)} aria-label={`Editar ${equipment.name}`} className="p-2 text-djon-text/40 hover:text-djon-text">
+                <button onClick={() => edit(equipment)} aria-label={`Editar ${equipment.name}`} className="p-2 text-djon-text/40 hover:brightness-110">
                   <Edit2 size={15} />
                 </button>
                 {equipment.active && (
-                  <button onClick={() => void deactivate(equipment)} aria-label={`Desativar ${equipment.name}`} className="p-2 text-djon-danger/60 hover:text-djon-danger">
+                  <button onClick={() => void deactivate(equipment)} aria-label={`Desativar ${equipment.name}`} className="p-2 text-djon-warning-red/60 hover:brightness-110">
                     <Trash2 size={15} />
                   </button>
                 )}
               </div>
               <footer className="mt-4 border-t border-djon-text/8 pt-4">
-                <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black tracking-wide ${equipment.active ? "border-djon-accent/20 bg-djon-accent/10 text-djon-accent" : "border-djon-danger/20 bg-djon-danger/10 text-djon-danger"}`}>
+                <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black tracking-wide ${equipment.active ? "border-djon-accent/20 bg-djon-accent/10 text-djon-accent" : "border-djon-warning-red/20 bg-djon-warning-red/10 text-djon-warning-red"}`}>
                   {equipment.active ? "ATIVO" : "INATIVO"}
                 </span>
               </footer>
@@ -121,7 +121,7 @@ export default function EquipmentsAdminPage() {
         totalPages={pagination.totalPages} onPageChange={pagination.setPage} onPageSizeChange={pagination.setPageSize} />
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm">
           <form onSubmit={submit} className="my-6 w-full max-w-lg space-y-4 rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6">
             <div className="flex items-center justify-between">
               <div>

@@ -173,7 +173,7 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => void markAllRead()}
-            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-accent/25 px-5 py-2.5 text-xs font-black tracking-wide text-djon-accent transition-colors hover:bg-djon-accent/8 sm:w-auto"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-accent/25 px-5 py-2.5 text-xs font-black tracking-wide text-djon-accent transition-colors hover:brightness-110 sm:w-auto"
           >
             <CheckCheck size={15} /> MARCAR TODAS COMO LIDAS
           </button>
@@ -198,7 +198,7 @@ export default function NotificationsPage() {
               className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-xs font-black tracking-wide transition-all ${
                 isActive
                   ? "border-djon-accent bg-djon-accent text-djon-ink"
-                  : "border-djon-text/10 bg-djon-text/5 text-djon-text/50 hover:text-djon-text"
+                  : "border-djon-text/10 bg-djon-text/5 text-djon-text/50 hover:brightness-110"
               }`}
             >
               <Icon size={12} /> {option.label}

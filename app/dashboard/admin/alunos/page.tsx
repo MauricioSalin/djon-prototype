@@ -183,7 +183,7 @@ export default function AlunosPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -200,7 +200,7 @@ export default function AlunosPage() {
                 </h2>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="cursor-pointer text-djon-text/40 hover:text-djon-text"
+                  className="cursor-pointer text-djon-text/40 hover:brightness-110"
                 >
                   <X size={18} />
                 </button>
@@ -457,7 +457,7 @@ export default function AlunosPage() {
                         href={`https://instagram.com/${u.socials.instagram}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-djon-text/30 hover:text-djon-text text-xs font-bold transition-colors"
+                        className="flex items-center gap-1.5 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
                       >
                         <Instagram size={16} /> @{u.socials.instagram}
                       </a>
@@ -467,7 +467,7 @@ export default function AlunosPage() {
                         href={`https://soundcloud.com/${u.socials.soundcloud}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-djon-text/30 hover:text-djon-text text-xs font-bold transition-colors"
+                        className="flex items-center gap-1.5 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
                       >
                         <SoundCloudIcon size={20} /> {u.socials.soundcloud}
                       </a>
@@ -481,7 +481,7 @@ export default function AlunosPage() {
                 {u.active !== false && (
                   <button
                     onClick={() => openEdit(u)}
-                    className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1.5"
+                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
                     type="button"
                     title="Editar"
                     aria-label={`Editar ${u.name}`}
@@ -491,7 +491,7 @@ export default function AlunosPage() {
                 )}
                 <Link
                   href={`/dashboard/perfil/${u.id}`}
-                  className="cursor-pointer text-djon-text/20 hover:text-djon-accent transition-colors p-1.5"
+                  className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
                   title="Perfil"
                   aria-label={`Abrir perfil de ${u.name}`}
                 >
@@ -500,7 +500,7 @@ export default function AlunosPage() {
                 {u.active !== false ? (
                   <button
                     onClick={() => void handleDelete(u)}
-                    className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1.5"
+                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
                     type="button"
                     title="Remover"
                     aria-label={`Remover ${u.name}`}

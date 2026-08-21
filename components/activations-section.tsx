@@ -19,14 +19,14 @@ const teamMembers = [
     role: "DJ, Adm e Professor",
     description: "Curso Formação DJ e Mentor de Marketing para DJs",
     image: "/images/djon-team-kampff.png",
-    accent: "var(--djon-color-cyan)",
+    accent: "var(--djon-color-light-purple)",
   },
   {
     name: "Xinddy",
     role: "DJ, Produtora Musical",
     description: "Professora Curso Formação DJ (Psytrance) e Designer",
     image: "/images/djon-team-xinddy.png",
-    accent: "var(--djon-color-orange)",
+    accent: "var(--djon-color-warning-red)",
   },
   {
     name: "Guilherme",
@@ -79,7 +79,7 @@ export function ActivationsSection() {
                 fill
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-djon-ink/80 via-djon-ink/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-djon-black/80 via-djon-black/20 to-transparent" />
               <div className="absolute bottom-6 left-6">
                 <span className="bg-djon-accent text-djon-ink px-4 py-1.5 rounded-full font-black text-xs tracking-widest">
                   EVENTO OFICIAL
@@ -282,7 +282,7 @@ export function ActivationsSection() {
                   />
                   <motion.div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: `linear-gradient(to top, ${member.accent}60, transparent)` }}
+                    style={{ background: `linear-gradient(to top, color-mix(in srgb, ${member.accent} 38%, transparent), transparent)` }}
                   />
                 </div>
                 <div className="p-4">
@@ -312,6 +312,7 @@ export function ActivationsSection() {
             <div className="absolute left-1/2 top-1/2 h-[380px] w-[720px] -translate-x-1/2 -translate-y-1/2 scale-[0.4] transform-gpu min-[360px]:scale-[0.44] min-[390px]:scale-[0.48] sm:scale-[0.62] md:static md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:scale-100">
               <SplineScene
                 scene="https://prod.spline.design/OduYuH7Y3CXDo9Ga/scene.splinecode"
+                globalEvents
                 lazyThreshold={0.01}
                 style={{ width: "100%", height: "100%" }}
               />

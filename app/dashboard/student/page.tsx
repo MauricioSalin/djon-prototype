@@ -70,7 +70,7 @@ export default function StudentPage() {
         {/* Background image + overlay */}
         <div className="absolute inset-0 z-0">
           <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-30" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 w-full sm:px-6 sm:py-24">
@@ -128,8 +128,8 @@ export default function StudentPage() {
               </Link>
               <Link href="/dashboard/student/evento" className="w-full sm:w-auto">
                 <motion.div
-                  className="flex items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-6 py-3 text-sm font-black tracking-widest text-djon-text"
-                  whileHover={{ scale: 1.03, borderColor: "var(--djon-color-accent)", color: "var(--djon-color-accent)" }}
+                  className="flex items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-6 py-3 text-sm font-black tracking-widest text-djon-text transition-[filter] hover:brightness-110"
+                  whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
                   <Music2 size={15} />
@@ -177,7 +177,7 @@ export default function StudentPage() {
               {upcoming.slice(0, 6).map((b, i) => (
                 <motion.div
                   key={b.id}
-                  className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:border-djon-text/20 transition-all group"
+                  className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:brightness-110 transition-all group"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0 }}
@@ -186,13 +186,13 @@ export default function StudentPage() {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className={`text-djon-label font-black tracking-widest px-2.5 py-1 rounded-full ${
-                      b.type === "aula" ? "bg-djon-accent/15 text-djon-accent" : "bg-blue-400/15 text-blue-400"
+                      b.type === "aula" ? "bg-djon-accent/15 text-djon-accent" : "bg-djon-light-purple/15 text-djon-light-purple"
                     }`}>
                       {b.type.toUpperCase()}
                     </span>
                     {b.status === "confirmado"
                       ? <CheckCircle size={14} className="text-djon-accent" />
-                      : <AlertCircle size={14} className="text-yellow-400" />
+                      : <AlertCircle size={14} className="text-djon-light-purple" />
                     }
                   </div>
                   <h3 className="text-djon-text font-black text-lg tracking-tight mb-3 leading-tight">{b.title}</h3>
@@ -329,7 +329,7 @@ export default function StudentPage() {
                 return (
                   <motion.div
                     key={ev.id}
-                    className={`bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:border-djon-text/20 transition-all ${isPast ? "opacity-50" : ""}`}
+                    className={`bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:brightness-110 transition-all ${isPast ? "opacity-50" : ""}`}
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: isPast ? 0.5 : 1, y: 0 }}
                     viewport={{ once: true, amount: 0 }}

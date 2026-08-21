@@ -103,7 +103,7 @@ export default function UnitsAdminPage() {
               <button
                 onClick={() => edit(unit)}
                 aria-label="Editar unidade"
-                className="p-2 text-djon-text/40 hover:text-djon-text"
+                className="p-2 text-djon-text/40 hover:brightness-110"
               >
                 <Edit2 size={15} />
               </button>
@@ -111,7 +111,7 @@ export default function UnitsAdminPage() {
                 <button
                   onClick={() => void deactivate(unit)}
                   aria-label="Desativar unidade"
-                  className="p-2 text-djon-danger/60 hover:text-djon-danger"
+                  className="p-2 text-djon-warning-red/60 hover:brightness-110"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -122,7 +122,7 @@ export default function UnitsAdminPage() {
                 className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black tracking-wide ${
                   unit.active
                     ? "border-djon-accent/20 bg-djon-accent/10 text-djon-accent"
-                    : "border-djon-danger/20 bg-djon-danger/10 text-djon-danger"
+                    : "border-djon-warning-red/20 bg-djon-warning-red/10 text-djon-warning-red"
                 }`}
               >
                 {unit.active ? "ATIVA" : "INATIVA"}
@@ -140,7 +140,7 @@ export default function UnitsAdminPage() {
         onPageSizeChange={pagination.setPageSize}
       />
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm">
           <form
             onSubmit={submit}
             className="my-6 w-full max-w-lg space-y-4 rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"

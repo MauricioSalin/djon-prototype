@@ -69,7 +69,7 @@ export function HeroSection() {
           className="object-cover opacity-30"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-djon-ink via-djon-ink/80 to-djon-ink/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
       </div>
 
 
@@ -153,8 +153,8 @@ export function HeroSection() {
                 </motion.svg>
               </motion.a>
               <motion.button
-                className="relative w-full cursor-pointer overflow-hidden rounded-full border-2 border-djon-text/30 px-7 py-3 text-sm font-black tracking-widest text-djon-text sm:w-auto"
-                whileHover={{ scale: 1.02, borderColor: "var(--djon-color-accent)", color: "var(--djon-color-accent)" }}
+                className="relative w-full cursor-pointer overflow-hidden rounded-full border-2 border-djon-text/30 px-7 py-3 text-sm font-black tracking-widest text-djon-text transition-[filter] hover:brightness-110 sm:w-auto"
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
                 onClick={() => {

@@ -5,42 +5,48 @@
 
 :root {
   /* DJ ON design tokens: altere a marca aqui */
-  --djon-font-sans: var(--font-inter, "Inter"), "Inter Fallback", system-ui, sans-serif;
-  --djon-font-mono: "Inter", "Inter Fallback", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --djon-font-sans: var(--font-raleway), "Raleway Fallback", system-ui, sans-serif;
+  --djon-font-mono: var(--font-raleway), "Raleway Fallback", ui-monospace, monospace;
+  --djon-font-display: var(--font-bowlby-one-sc), Impact, sans-serif;
+  --djon-font-titling: "Big Noodle Titling", var(--font-barlow-condensed), "Arial Narrow", sans-serif;
 
-  --djon-color-page: #0a0a0a;
-  --djon-color-ink: #121212;
-  --djon-color-surface: #141414;
-  --djon-color-surface-2: #161616;
-  --djon-color-surface-3: #1a1a1a;
-  --djon-color-surface-4: #1b1b1b;
-  --djon-color-surface-5: #232323;
-  --djon-color-surface-6: #171717;
-  --djon-color-surface-7: #151515;
-  --djon-color-surface-8: #191919;
-  --djon-color-surface-9: #202020;
-  --djon-color-input: #242424;
-  --djon-color-mobile-overlay: #050505;
-  --djon-color-light-surface: #f5f5f5;
-  --djon-color-popover: #181818;
-  --djon-color-muted-panel: #0f0f0f;
-  --djon-color-calendar-cell: #111111;
-  --djon-color-calendar-empty: #0d0d0d;
-  --djon-color-accent: #AFFF00;
-  --djon-color-cyan: #00D4FF;
-  --djon-color-orange: #FF6B35;
-  --djon-color-info: #38BDF8;
-  --djon-color-success: #34D399;
-  --djon-color-warning: #FBBF24;
-  --djon-color-danger: #F87171;
-  --djon-color-purple: #A78BFA;
-  --djon-color-soft-gray: #8A8A8A;
-  --djon-color-text: #ffffff;
-  --djon-color-text-inverse: var(--djon-color-ink);
-  --djon-color-line: #2A2A2A;
+  /* Paleta oficial: nenhum valor visual deve sair destes dez tokens. */
+  --djon-color-green: #8af23b;
+  --djon-color-white: #ffffff;
+  --djon-color-black: #000000;
+  --djon-color-black-stage: #121212;
+  --djon-color-panel-dark: #1a1a1a;
+  --djon-color-line-gray: #2a2a2a;
+  --djon-color-soft-gray: #8a8a8a;
+  --djon-color-light-purple: #c5b7f2;
+  --djon-color-warning-red: #f87171;
+  --djon-color-success: #34d399;
+
+  /* Papéis semânticos centralizados na paleta oficial. */
+  --djon-color-page: var(--djon-color-black-stage);
+  --djon-color-ink: var(--djon-color-black-stage);
+  --djon-color-surface: var(--djon-color-black-stage);
+  --djon-color-surface-2: var(--djon-color-panel-dark);
+  --djon-color-surface-3: var(--djon-color-panel-dark);
+  --djon-color-surface-4: var(--djon-color-panel-dark);
+  --djon-color-surface-5: var(--djon-color-panel-dark);
+  --djon-color-surface-6: var(--djon-color-panel-dark);
+  --djon-color-surface-7: var(--djon-color-panel-dark);
+  --djon-color-surface-8: var(--djon-color-panel-dark);
+  --djon-color-surface-9: var(--djon-color-panel-dark);
+  --djon-color-input: var(--djon-color-panel-dark);
+  --djon-color-mobile-overlay: var(--djon-color-black);
+  --djon-color-light-surface: var(--djon-color-white);
+  --djon-color-popover: var(--djon-color-panel-dark);
+  --djon-color-muted-panel: var(--djon-color-black-stage);
+  --djon-color-calendar-cell: var(--djon-color-panel-dark);
+  --djon-color-calendar-empty: var(--djon-color-black-stage);
+  --djon-color-accent: var(--djon-color-green);
+  --djon-color-text: var(--djon-color-white);
+  --djon-color-text-inverse: var(--djon-color-black-stage);
+  --djon-color-line: var(--djon-color-line-gray);
   --djon-color-scroll-track: var(--djon-color-page);
-  --djon-color-scroll-thumb: #8a8a8a;
-  --djon-color-scroll-thumb-hover: #a3a3a3;
+  --djon-color-scroll-thumb: var(--djon-color-soft-gray);
 
   --djon-radius-sm: 0.5rem;
   --djon-radius-md: 0.75rem;
@@ -85,92 +91,56 @@
   --djon-section-tablet: 3.25rem;
   --djon-section-desktop: 3.75rem;
 
-  --djon-shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.22);
-  --djon-shadow-popover: 0 22px 70px rgba(0, 0, 0, 0.5);
-  --djon-drop-shadow-soft: 0 8px 12px rgba(0, 0, 0, 0.35);
-  --djon-gradient-profile-admin: linear-gradient(135deg, #111111 0%, #0f1a0a 60%, #121212 100%);
-  --djon-gradient-profile-professor: linear-gradient(135deg, #0a0a12 0%, #0d0d1a 60%, #121212 100%);
-  --djon-gradient-profile-student: linear-gradient(135deg, #110a0a 0%, #1a0f0a 60%, #121212 100%);
-  --djon-gradient-config-banner: linear-gradient(135deg, #1a1a0a, #0a1a0a);
+  --djon-shadow-soft: 0 12px 40px rgb(0 0 0 / 0.22);
+  --djon-shadow-popover: 0 22px 70px rgb(0 0 0 / 0.5);
+  --djon-shadow-focus-soft: 0 0 0 1px color-mix(in srgb, var(--djon-color-green) 20%, transparent);
+  --djon-drop-shadow-soft: 0 8px 12px rgb(0 0 0 / 0.35);
+  --djon-gradient-profile-admin: linear-gradient(135deg, var(--djon-color-black-stage) 0%, var(--djon-color-green) 60%, var(--djon-color-panel-dark) 100%);
+  --djon-gradient-profile-professor: linear-gradient(135deg, var(--djon-color-black-stage) 0%, var(--djon-color-light-purple) 60%, var(--djon-color-panel-dark) 100%);
+  --djon-gradient-profile-student: linear-gradient(135deg, var(--djon-color-black-stage) 0%, var(--djon-color-warning-red) 60%, var(--djon-color-panel-dark) 100%);
+  --djon-gradient-config-banner: linear-gradient(135deg, var(--djon-color-green), var(--djon-color-light-purple));
 
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(0.98 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.145 0 0);
-  --primary-foreground: oklch(0.92 0.2 128);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.145 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.4 0 0);
-  --accent: oklch(0.92 0.2 128);
-  --accent-foreground: oklch(0.145 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --ring: oklch(0.92 0.2 128);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --background: var(--djon-color-black-stage);
+  --foreground: var(--djon-color-white);
+  --card: var(--djon-color-panel-dark);
+  --card-foreground: var(--djon-color-white);
+  --popover: var(--djon-color-panel-dark);
+  --popover-foreground: var(--djon-color-white);
+  --primary: var(--djon-color-green);
+  --primary-foreground: var(--djon-color-black-stage);
+  --secondary: var(--djon-color-panel-dark);
+  --secondary-foreground: var(--djon-color-white);
+  --muted: var(--djon-color-line-gray);
+  --muted-foreground: var(--djon-color-soft-gray);
+  --accent: var(--djon-color-light-purple);
+  --accent-foreground: var(--djon-color-black-stage);
+  --destructive: var(--djon-color-warning-red);
+  --destructive-foreground: var(--djon-color-black-stage);
+  --border: var(--djon-color-line-gray);
+  --input: var(--djon-color-panel-dark);
+  --ring: var(--djon-color-green);
+  --chart-1: var(--djon-color-green);
+  --chart-2: var(--djon-color-light-purple);
+  --chart-3: var(--djon-color-success);
+  --chart-4: var(--djon-color-warning-red);
+  --chart-5: var(--djon-color-soft-gray);
   --radius: 0.5rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: var(--djon-color-black-stage);
+  --sidebar-foreground: var(--djon-color-white);
+  --sidebar-primary: var(--djon-color-green);
+  --sidebar-primary-foreground: var(--djon-color-black-stage);
+  --sidebar-accent: var(--djon-color-panel-dark);
+  --sidebar-accent-foreground: var(--djon-color-white);
+  --sidebar-border: var(--djon-color-line-gray);
+  --sidebar-ring: var(--djon-color-green);
 
-  /* Custom GiGi colors */
-  --lime: oklch(0.92 0.2 128);
-  --charcoal: oklch(0.145 0 0);
-  --pineapple: oklch(0.9 0.15 90);
-  --coconut: oklch(0.95 0.03 90);
   --page-scrollbar-track: var(--djon-color-scroll-track);
   --page-scrollbar-thumb: var(--djon-color-scroll-thumb);
-  --page-scrollbar-thumb-hover: var(--djon-color-scroll-thumb-hover);
   --page-scrollbar-border: var(--djon-color-scroll-track);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -196,6 +166,16 @@
   --text-6xl: var(--djon-text-6xl);
   --text-7xl: var(--djon-text-7xl);
   --text-8xl: var(--djon-text-8xl);
+  --color-djon-green: var(--djon-color-green);
+  --color-djon-white: var(--djon-color-white);
+  --color-djon-black: var(--djon-color-black);
+  --color-djon-black-stage: var(--djon-color-black-stage);
+  --color-djon-panel-dark: var(--djon-color-panel-dark);
+  --color-djon-line-gray: var(--djon-color-line-gray);
+  --color-djon-soft-gray: var(--djon-color-soft-gray);
+  --color-djon-light-purple: var(--djon-color-light-purple);
+  --color-djon-warning-red: var(--djon-color-warning-red);
+  --color-djon-success: var(--djon-color-success);
   --color-djon-page: var(--djon-color-page);
   --color-djon-ink: var(--djon-color-ink);
   --color-djon-surface: var(--djon-color-surface);
@@ -215,14 +195,6 @@
   --color-djon-calendar-cell: var(--djon-color-calendar-cell);
   --color-djon-calendar-empty: var(--djon-color-calendar-empty);
   --color-djon-accent: var(--djon-color-accent);
-  --color-djon-cyan: var(--djon-color-cyan);
-  --color-djon-orange: var(--djon-color-orange);
-  --color-djon-info: var(--djon-color-info);
-  --color-djon-success: var(--djon-color-success);
-  --color-djon-warning: var(--djon-color-warning);
-  --color-djon-danger: var(--djon-color-danger);
-  --color-djon-purple: var(--djon-color-purple);
-  --color-djon-soft-gray: var(--djon-color-soft-gray);
   --color-djon-text: var(--djon-color-text);
   --color-djon-text-inverse: var(--djon-color-text-inverse);
   --color-djon-line: var(--djon-color-line);
@@ -263,11 +235,6 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Custom GiGi theme colors */
-  --color-lime: var(--lime);
-  --color-charcoal: var(--charcoal);
-  --color-pineapple: var(--pineapple);
-  --color-coconut: var(--coconut);
 }
 
 @layer base {
@@ -373,7 +340,8 @@
   html::-webkit-scrollbar-thumb:hover,
   body::-webkit-scrollbar-thumb:hover,
   *::-webkit-scrollbar-thumb:hover {
-    background-color: var(--page-scrollbar-thumb-hover) !important;
+    background-color: var(--page-scrollbar-thumb) !important;
+    filter: brightness(1.18);
   }
 
   :root::-webkit-scrollbar-corner,
@@ -424,9 +392,9 @@
   background: linear-gradient(
     100deg,
     transparent 15%,
-    rgb(255 255 255 / 0.08) 42%,
-    rgb(175 255 0 / 0.12) 50%,
-    rgb(255 255 255 / 0.08) 58%,
+    color-mix(in srgb, var(--djon-color-white) 8%, transparent) 42%,
+    color-mix(in srgb, var(--djon-color-green) 12%, transparent) 50%,
+    color-mix(in srgb, var(--djon-color-white) 8%, transparent) 58%,
     transparent 85%
   );
   animation: djon-skeleton-shimmer 1.55s ease-in-out infinite;
@@ -453,6 +421,17 @@
   overflow-wrap: normal;
   word-break: keep-all;
   hyphens: none;
+}
+
+.djon-hero-title,
+.djon-display-title {
+  font-family: var(--djon-font-display);
+  font-weight: 400;
+}
+
+.djon-section-title {
+  font-family: var(--djon-font-titling);
+  font-weight: 800;
 }
 
 .djon-hero-title {
@@ -713,12 +692,13 @@
 }
 
 .djon-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--page-scrollbar-thumb-hover);
+  background: var(--page-scrollbar-thumb);
+  filter: brightness(1.18);
 }
 
 .material-prose,
 .material-editor {
-  color: rgba(255, 255, 255, 0.75);
+  color: color-mix(in srgb, var(--djon-color-white) 75%, transparent);
   line-height: 1.75;
 }
 .material-prose::after,
@@ -794,7 +774,7 @@
   border-left: 3px solid var(--djon-color-accent);
   padding: 0.25rem 0 0.25rem 1rem;
   margin: 1.25rem 0;
-  color: rgba(255, 255, 255, 0.6);
+  color: color-mix(in srgb, var(--djon-color-white) 60%, transparent);
   font-style: italic;
 }
 .material-prose img,
@@ -872,8 +852,7 @@
   transition: background-color 150ms ease, box-shadow 150ms ease;
 }
 .material-editor [data-image-text]:hover {
-  background: color-mix(in srgb, var(--djon-color-text) 3%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--djon-color-accent) 18%, transparent);
+  filter: brightness(1.08);
 }
 .material-editor [data-image-text]:focus,
 .material-editor [data-image-text]:focus-within {
@@ -901,9 +880,8 @@
   transition: outline-color 150ms ease, opacity 150ms ease;
 }
 .material-editor img:hover {
+  filter: brightness(1.08);
   opacity: 0.92;
-  outline: 1px solid color-mix(in srgb, var(--djon-color-accent) 45%, transparent);
-  outline-offset: 3px;
 }
 .material-editor img[data-editor-selected="true"] {
   outline: 2px solid var(--djon-color-accent);

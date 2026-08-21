@@ -15,7 +15,7 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 })
 
-const inputCls = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:bg-djon-text/8 transition-all"
+const inputCls = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:brightness-110 transition-all"
 
 type FormState = { title: string; date: string; time: string; location: string; instagram: string; description: string }
 const emptyForm: FormState = { title: "", date: "", time: "", location: "", instagram: "", description: "" }
@@ -86,8 +86,8 @@ export default function StudentEventPage() {
       <section className="relative overflow-hidden py-20 sm:py-28 md:py-32">
         <div className="absolute inset-0 z-0">
           <Image src="/images/mural-hero.png" alt="" fill className="object-cover opacity-30" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
           <div>
@@ -117,7 +117,7 @@ export default function StudentEventPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/80 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -139,7 +139,7 @@ export default function StudentEventPage() {
                     {editingId ? "Editar Evento" : "Cadastrar Evento"}
                   </h2>
                 </div>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:text-djon-text hover:bg-djon-text/15 transition-all">
+                <button onClick={() => setShowForm(false)} className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:brightness-110 transition-all">
                   <X size={16} />
                 </button>
               </div>
@@ -232,7 +232,7 @@ export default function StudentEventPage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {upcomingPagination.paginatedItems.map((ev, i) => (
                 <motion.div key={ev.id}
-                  className="bg-djon-surface-2 border border-djon-text/8 hover:border-djon-accent/30 rounded-2xl p-6 transition-all group"
+                  className="bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all group"
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0 }}
@@ -244,10 +244,10 @@ export default function StudentEventPage() {
                       <Music2 size={18} className="text-djon-accent" />
                     </div>
                     <div className="flex items-center gap-1">
-                      <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:text-djon-text hover:bg-djon-text/10 transition-all">
+                      <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:brightness-110 transition-all">
                         <Edit2 size={13} />
                       </button>
-                      <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:text-djon-danger hover:bg-djon-danger/10 transition-all">
+                      <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:brightness-110 transition-all">
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -317,7 +317,7 @@ export default function StudentEventPage() {
                   <div className="shrink-0 text-djon-text/20 text-xs font-bold">
                     {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                   </div>
-                  <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/10 hover:text-djon-danger/50 transition-colors">
+                  <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/10 hover:brightness-110 transition-colors">
                     <Trash2 size={13} />
                   </button>
                 </motion.div>

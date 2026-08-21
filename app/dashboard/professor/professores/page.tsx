@@ -55,7 +55,7 @@ export default function ProfessorProfessoresPage() {
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/perfil/${u.id}`}
-                    className="block text-djon-text hover:text-djon-accent font-black text-base truncate transition-colors"
+                    className="block text-djon-text hover:brightness-110 font-black text-base truncate transition-colors"
                   >
                     {u.name}
                   </Link>
@@ -69,7 +69,7 @@ export default function ProfessorProfessoresPage() {
                     href={`https://instagram.com/${u.socials.instagram}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/30 hover:text-djon-text text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
                   >
                     <Instagram size={16} /> @{u.socials.instagram}
                   </a>
@@ -79,7 +79,7 @@ export default function ProfessorProfessoresPage() {
                     href={`https://soundcloud.com/${u.socials.soundcloud}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/30 hover:text-djon-text text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
                   >
                     <SoundCloudIcon size={20} /> {u.socials.soundcloud}
                   </a>

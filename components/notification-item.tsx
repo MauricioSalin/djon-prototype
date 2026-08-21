@@ -33,9 +33,9 @@ type TrainingRequestActionsProps = {
 };
 
 const kindClasses = {
-  notification: "bg-djon-info/10 text-djon-info",
+  notification: "bg-djon-light-purple/10 text-djon-light-purple",
   update: "bg-djon-accent/10 text-djon-accent",
-  request: "bg-djon-warning/10 text-djon-warning",
+  request: "bg-djon-light-purple/10 text-djon-light-purple",
 };
 
 function formatNotificationDate(value: string) {
@@ -193,7 +193,7 @@ export function TrainingRequestActions({
         <button
           type="button"
           onClick={onReject}
-          className="cursor-pointer flex-1 rounded-lg border border-djon-danger/20 py-2 text-center text-djon-label font-black tracking-widest text-djon-danger/70 transition-colors hover:bg-djon-danger/10 hover:text-djon-danger"
+          className="cursor-pointer flex-1 rounded-lg border border-djon-warning-red/20 py-2 text-center text-djon-label font-black tracking-widest text-djon-warning-red/70 transition-colors hover:brightness-110"
         >
           RECUSAR
         </button>

@@ -123,7 +123,7 @@ export default function ProfessoresAdminPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -138,7 +138,7 @@ export default function ProfessoresAdminPage() {
                 <h2 className="text-xl font-black text-djon-text tracking-tighter">
                   {editingId ? "Editar Professor" : "Cadastrar Professor"}
                 </h2>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:text-djon-text">
+                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:brightness-110">
                   <X size={18} />
                 </button>
               </div>
@@ -246,7 +246,7 @@ export default function ProfessoresAdminPage() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/dashboard/perfil/${u.id}`}
-                  className="block text-djon-text hover:text-djon-accent font-bold text-sm truncate mb-1.5 transition-colors underline-offset-4 hover:underline"
+                  className="block text-djon-text hover:brightness-110 font-bold text-sm truncate mb-1.5 transition-colors underline-offset-4 hover:underline"
                 >
                   {u.name}
                 </Link>
@@ -268,7 +268,7 @@ export default function ProfessoresAdminPage() {
               <div className="col-span-2 flex w-full items-center justify-end gap-2 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
                 {u.active !== false && <button
                   onClick={() => openEdit(u)}
-                  className="cursor-pointer text-djon-text/30 hover:text-djon-accent transition-colors p-1.5"
+                  className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors p-1.5"
                   type="button"
                   title="Editar"
                   aria-label={`Editar ${u.name}`}
@@ -277,7 +277,7 @@ export default function ProfessoresAdminPage() {
                 </button>}
                 {u.active !== false ? <button
                   onClick={() => void handleDelete(u)}
-                  className="cursor-pointer text-djon-text/20 hover:text-djon-danger transition-colors p-1.5"
+                  className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
                   type="button"
                 >
                   <Trash2 size={14} />

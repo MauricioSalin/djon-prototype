@@ -18,14 +18,14 @@ const features = [
     title: "+1000",
     subtitle: "Alunos Formados",
     description: "DJs e produtores prontos para o mercado",
-    accent: "var(--djon-color-cyan)",
+    accent: "var(--djon-color-light-purple)",
   },
   {
     icon: Trophy,
     title: "2018",
     subtitle: "Fundada em",
     description: "8 anos de experiência formando talentos",
-    accent: "var(--djon-color-orange)",
+    accent: "var(--djon-color-warning-red)",
   },
 ]
 
@@ -71,7 +71,7 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
       <motion.div
         className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
-          background: `linear-gradient(135deg, ${feature.accent}40, transparent, ${feature.accent}40)`,
+          background: `linear-gradient(135deg, color-mix(in srgb, ${feature.accent} 25%, transparent), transparent, color-mix(in srgb, ${feature.accent} 25%, transparent))`,
           filter: "blur(8px)",
         }}
       />
@@ -83,8 +83,8 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
             isHovered
               ? {
                   background: [
-                    "linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.03) 25%, transparent 30%)",
-                    "linear-gradient(105deg, transparent 70%, rgba(255,255,255,0.03) 75%, transparent 80%)",
+                    "linear-gradient(105deg, transparent 20%, color-mix(in srgb, var(--djon-color-white) 3%, transparent) 25%, transparent 30%)",
+                    "linear-gradient(105deg, transparent 70%, color-mix(in srgb, var(--djon-color-white) 3%, transparent) 75%, transparent 80%)",
                   ],
                 }
               : {}
@@ -94,7 +94,7 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
         <div className="relative z-10 flex flex-col h-full min-h-[140px]">
           <motion.div
             className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 relative"
-            style={{ backgroundColor: `${feature.accent}20` }}
+            style={{ backgroundColor: `color-mix(in srgb, ${feature.accent} 12%, transparent)` }}
             whileHover={{ scale: 1.1 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
           >

@@ -32,8 +32,8 @@ const courses = [
     tagline: "Do Beat à Track Final",
     description: "O curso de produção musical vai elevar suas habilidades criativas e transformar sua paixão pela música em resultados extraordinários. Explore técnicas incríveis e domine as ferramentas indispensáveis.",
     image: "/images/djon-course-producao.png",
-    bgColor: "from-djon-cyan/15 via-djon-cyan/5 to-transparent",
-    accentColor: "var(--djon-color-cyan)",
+    bgColor: "from-djon-light-purple/15 via-djon-light-purple/5 to-transparent",
+    accentColor: "var(--djon-color-light-purple)",
     items: [
       "Software Ableton Live 11",
       "Construção da sua primeira track do zero",
@@ -50,8 +50,8 @@ const courses = [
     tagline: "Construa sua Carreira",
     description: "A mentoria de marketing especializada para DJs vai impulsionar sua carreira e expandir sua presença no mercado da música eletrônica. Aprenda a promover sua imagem e conquistar novas oportunidades.",
     image: "/images/djon-course-marketing.png",
-    bgColor: "from-djon-orange/15 via-djon-orange/5 to-transparent",
-    accentColor: "var(--djon-color-orange)",
+    bgColor: "from-djon-warning-red/15 via-djon-warning-red/5 to-transparent",
+    accentColor: "var(--djon-color-warning-red)",
     items: [
       "Mindset de artista",
       "Dominar as redes sociais",
@@ -176,7 +176,7 @@ export function FlavorCarousel() {
           <div className="flex items-center justify-center gap-6">
             <motion.button
               onClick={() => paginate(-1)}
-              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:border-djon-accent hover:text-djon-accent text-djon-text transition-colors"
+              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:brightness-110 text-djon-text transition-colors"
               whileHover={{ scale: 1.1, rotate: -5 }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -213,7 +213,7 @@ export function FlavorCarousel() {
                         fill
                         className="object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-djon-ink/60 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-djon-black/60 to-transparent" />
                     </motion.div>
 
                     <div className="space-y-4">
@@ -299,7 +299,7 @@ export function FlavorCarousel() {
 
             <motion.button
               onClick={() => paginate(1)}
-              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:border-djon-accent hover:text-djon-accent text-djon-text transition-colors"
+              className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:brightness-110 text-djon-text transition-colors"
               whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.9 }}
               transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -335,7 +335,7 @@ export function FlavorCarousel() {
                   setPage([index, newDirection])
                 }}
                 className="cursor-pointer h-2 rounded-full transition-all"
-                style={{ backgroundColor: index === currentIndex ? course.accentColor : "rgba(255,255,255,0.2)" }}
+                style={{ backgroundColor: index === currentIndex ? course.accentColor : "color-mix(in srgb, var(--djon-color-white) 20%, transparent)" }}
                 animate={{ width: index === currentIndex ? 28 : 10 }}
                 whileHover={{ scale: 1.2 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 25 }}

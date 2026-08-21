@@ -149,7 +149,7 @@ export function Footer() {
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 <Phone className="w-4 h-4 text-djon-accent shrink-0" />
-                <a href="tel:+5551997007846" className="text-djon-text/60 text-sm hover:text-djon-accent transition-colors">
+                <a href="tel:+5551997007846" className="text-djon-text/60 text-sm hover:brightness-110 transition-colors">
                   (51) 99700-7846
                 </a>
               </motion.div>
@@ -159,7 +159,7 @@ export function Footer() {
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 <Mail className="w-4 h-4 text-djon-accent shrink-0" />
-                <a href="mailto:contato@djonacademy.com" className="text-djon-text/60 text-sm hover:text-djon-accent transition-colors">
+                <a href="mailto:contato@djonacademy.com" className="text-djon-text/60 text-sm hover:brightness-110 transition-colors">
                   contato@djonacademy.com
                 </a>
               </motion.div>
@@ -170,7 +170,7 @@ export function Footer() {
                 href="https://www.instagram.com/djonacademy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-djon-text/10 flex items-center justify-center text-djon-text hover:bg-djon-accent hover:text-djon-ink transition-colors"
+                className="w-10 h-10 rounded-full bg-djon-text/10 flex items-center justify-center text-djon-text hover:brightness-110 transition-colors"
                 whileHover={{ scale: 1.1, rotate: 5 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -180,7 +180,7 @@ export function Footer() {
                 href="https://www.facebook.com/djonacademy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 rounded-full bg-djon-text/10 flex items-center justify-center text-djon-text hover:bg-djon-accent hover:text-djon-ink transition-colors"
+                className="w-10 h-10 rounded-full bg-djon-text/10 flex items-center justify-center text-djon-text hover:brightness-110 transition-colors"
                 whileHover={{ scale: 1.1, rotate: -5 }}
                 whileTap={{ scale: 0.9 }}
               >
@@ -303,8 +303,8 @@ export function Footer() {
           </p>
 
           <div className="flex gap-4">
-            <a href="https://www.instagram.com/djonacademy" target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:text-djon-accent text-xs transition-colors">Instagram</a>
-            <a href="https://www.facebook.com/djonacademy" target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:text-djon-accent text-xs transition-colors">Facebook</a>
+            <a href="https://www.instagram.com/djonacademy" target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:brightness-110 text-xs transition-colors">Instagram</a>
+            <a href="https://www.facebook.com/djonacademy" target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:brightness-110 text-xs transition-colors">Facebook</a>
           </div>
         </motion.div>
       </div>

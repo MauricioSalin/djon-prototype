@@ -704,7 +704,7 @@ export default function DashboardLayout({
           </Link>
 
           <button
-            className="cursor-pointer md:hidden text-djon-text/60 hover:text-djon-text p-2"
+            className="cursor-pointer md:hidden text-djon-text/60 hover:brightness-110 p-2"
             onClick={toggleMobileMenu}
             aria-expanded={mobileMenuOpen}
             aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
@@ -720,7 +720,7 @@ export default function DashboardLayout({
                 onClick={() => moveDesktopNavigation(-1)}
                 disabled={!desktopNavState.canScrollLeft}
                 aria-label="Ver itens anteriores do menu"
-                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-djon-text/5 text-djon-accent transition-colors hover:bg-djon-accent/10 disabled:cursor-default disabled:bg-transparent disabled:text-djon-text/15 disabled:hover:bg-transparent"
+                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-djon-text/5 text-djon-accent transition-colors hover:brightness-110 disabled:cursor-default disabled:bg-transparent disabled:text-djon-text/15 disabled:hover:brightness-110"
               >
                 <ChevronLeft size={15} />
               </button>
@@ -754,7 +754,7 @@ export default function DashboardLayout({
                     className={`flex shrink-0 items-center justify-center gap-2 whitespace-nowrap px-4 py-2 text-center rounded-full text-xs font-bold tracking-wide transition-all ${
                       active
                         ? "bg-djon-accent text-djon-ink"
-                        : "text-djon-text/50 hover:text-djon-text hover:bg-djon-text/8"
+                        : "text-djon-text/50 hover:brightness-110"
                     }`}
                   >
                     <item.icon size={13} />
@@ -770,7 +770,7 @@ export default function DashboardLayout({
                 onClick={() => moveDesktopNavigation(1)}
                 disabled={!desktopNavState.canScrollRight}
                 aria-label="Ver próximos itens do menu"
-                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-djon-text/5 text-djon-accent transition-colors hover:bg-djon-accent/10 disabled:cursor-default disabled:bg-transparent disabled:text-djon-text/15 disabled:hover:bg-transparent"
+                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-djon-text/5 text-djon-accent transition-colors hover:brightness-110 disabled:cursor-default disabled:bg-transparent disabled:text-djon-text/15 disabled:hover:brightness-110"
               >
                 <ChevronRight size={15} />
               </button>
@@ -796,7 +796,7 @@ export default function DashboardLayout({
                       .catch(() => undefined);
                     if (canReviewRequests) void loadPendingRequests();
                   }}
-                  className={`cursor-pointer relative p-2 rounded-full transition-all ${notificationsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:text-djon-text hover:bg-djon-text/8"}`}
+                  className={`cursor-pointer relative p-2 rounded-full transition-all ${notificationsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:brightness-110"}`}
                   aria-label="Notificações"
                 >
                   <Bell size={16} />
@@ -938,7 +938,7 @@ export default function DashboardLayout({
                         <Link
                           href="/dashboard/notificacoes"
                           onClick={() => setNotificationsOpen(false)}
-                          className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-djon-label font-black tracking-widest text-djon-accent transition-colors hover:bg-djon-accent/8"
+                          className="flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-djon-label font-black tracking-widest text-djon-accent transition-colors hover:brightness-110"
                         >
                           VER TODAS <ArrowRight size={13} />
                         </Link>
@@ -952,7 +952,7 @@ export default function DashboardLayout({
             <button
               ref={searchButtonRef}
               onClick={searchBarOpen ? closeSearch : openSearch}
-              className={`cursor-pointer p-2 rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:text-djon-text hover:bg-djon-text/8"}`}
+              className={`cursor-pointer p-2 rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:brightness-110"}`}
               aria-label="Buscar"
             >
               {searchBarOpen ? <X size={16} /> : <Search size={16} />}
@@ -965,7 +965,7 @@ export default function DashboardLayout({
                   ref={searchPanelRef}
                   className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(480px,calc(100vw-1rem))] rounded-2xl overflow-hidden max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:w-auto"
                   style={{
-                    background: "rgba(12,12,12,0.85)",
+                    background: "rgb(0 0 0 / 0.85)",
                     backdropFilter: "blur(20px)",
                     WebkitBackdropFilter: "blur(20px)",
                   }}
@@ -996,7 +996,7 @@ export default function DashboardLayout({
                             setSearchResults([]);
                             searchInputRef.current?.focus();
                           }}
-                          className="cursor-pointer text-djon-text/25 hover:text-djon-text transition-colors"
+                          className="cursor-pointer text-djon-text/25 hover:brightness-110 transition-colors"
                         >
                           <X size={13} />
                         </button>
@@ -1034,7 +1034,7 @@ export default function DashboardLayout({
                                 key={i}
                                 href={href}
                                 onClick={closeSearch}
-                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-djon-text/6 transition-colors"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:brightness-110 transition-colors"
                               >
                                 <div className="w-7 h-7 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0 overflow-hidden">
                                   {u.avatar ? (
@@ -1067,7 +1067,7 @@ export default function DashboardLayout({
                                 key={i}
                                 href={`/dashboard/material/${r.item.id}`}
                                 onClick={closeSearch}
-                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-djon-text/6 transition-colors"
+                                className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:brightness-110 transition-colors"
                               >
                                 <div className="w-7 h-7 rounded-full bg-djon-accent/10 flex items-center justify-center shrink-0">
                                   <BookOpen
@@ -1092,7 +1092,7 @@ export default function DashboardLayout({
                               key={i}
                               href="/dashboard/mural"
                               onClick={closeSearch}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-djon-text/6 transition-colors"
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:brightness-110 transition-colors"
                             >
                               <div className="w-7 h-7 rounded-full bg-djon-text/8 flex items-center justify-center shrink-0">
                                 <Music2
@@ -1138,7 +1138,7 @@ export default function DashboardLayout({
                     setMobileMenuOpen(false);
                     setDropdownOpen((v) => !v);
                   }}
-                  className="cursor-pointer flex items-center gap-2 bg-djon-text/6 hover:bg-djon-text/10 border border-djon-text/10 rounded-full pl-1 pr-2 py-1 transition-all sm:gap-2.5 sm:pr-3"
+                  className="cursor-pointer flex items-center gap-2 bg-djon-text/6 hover:brightness-110 border border-djon-text/10 rounded-full pl-1 pr-2 py-1 transition-all sm:gap-2.5 sm:pr-3"
                   whileTap={{ scale: 0.97 }}
                 >
                   <div className="w-8 h-8 rounded-full bg-djon-accent/20 border border-djon-accent/40 flex items-center justify-center overflow-hidden shrink-0">
@@ -1189,14 +1189,14 @@ export default function DashboardLayout({
                       <Link
                         href={perfilHref}
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-djon-text/60 hover:text-djon-text hover:bg-djon-text/6 text-xs font-bold tracking-wide transition-all"
+                        className="flex items-center gap-3 px-4 py-2.5 text-djon-text/60 hover:brightness-110 text-xs font-bold tracking-wide transition-all"
                       >
                         <User size={13} />
                         Editar Perfil
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="cursor-pointer w-full flex items-center gap-3 px-4 py-2.5 text-djon-danger/70 hover:text-djon-danger hover:bg-djon-danger/10 text-xs font-bold tracking-wide transition-all"
+                        className="cursor-pointer w-full flex items-center gap-3 px-4 py-2.5 text-djon-warning-red/70 hover:brightness-110 text-xs font-bold tracking-wide transition-all"
                       >
                         <LogOut size={13} />
                         Sair
@@ -1245,7 +1245,7 @@ export default function DashboardLayout({
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-wide transition-all ${
                           active
                             ? "bg-djon-accent text-djon-ink"
-                            : "text-djon-text/50 hover:text-djon-text hover:bg-djon-text/5"
+                            : "text-djon-text/50 hover:brightness-110"
                         }`}
                       >
                         <item.icon size={14} />

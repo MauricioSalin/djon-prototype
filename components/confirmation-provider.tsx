@@ -53,7 +53,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
       <AnimatePresence>
         {options && (
           <motion.div
-            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-djon-page/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -71,11 +71,11 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
             >
               <div className="mb-5 flex items-start justify-between gap-4">
                 <div className="flex min-w-0 items-start gap-3">
-                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-djon-danger/10 text-djon-danger">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-djon-warning-red/10 text-djon-warning-red">
                     <AlertTriangle size={18} />
                   </span>
                   <div>
-                    <p className="mb-1 text-xs font-black uppercase tracking-widest text-djon-danger">
+                    <p className="mb-1 text-xs font-black uppercase tracking-widest text-djon-warning-red">
                       {options.eyebrow ?? "CONFIRMAR AÇÃO"}
                     </p>
                     <h2 id="confirmation-title" className="text-xl font-black tracking-tighter text-djon-text">
@@ -87,7 +87,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
                   type="button"
                   aria-label="Fechar confirmação"
                   onClick={() => close(false)}
-                  className="cursor-pointer text-djon-text/40 transition-colors hover:text-djon-text"
+                  className="cursor-pointer text-djon-text/40 transition-colors hover:brightness-110"
                 >
                   <X size={18} />
                 </button>
@@ -101,7 +101,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={() => close(false)}
-                  className="cursor-pointer flex-1 rounded-full border border-djon-text/15 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-colors hover:text-djon-text"
+                  className="cursor-pointer flex-1 rounded-full border border-djon-text/15 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-colors hover:brightness-110"
                 >
                   CANCELAR
                 </button>
@@ -111,8 +111,8 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
                   onClick={() => close(true)}
                   className={`cursor-pointer flex-1 rounded-full border py-3 text-xs font-black tracking-widest transition-colors ${
                     options.confirmVariant === "outline"
-                      ? "border-djon-danger/20 text-djon-danger/70 hover:bg-djon-danger/10 hover:text-djon-danger"
-                      : "border-transparent bg-djon-danger/80 text-djon-text hover:bg-djon-danger"
+                      ? "border-djon-warning-red/20 text-djon-warning-red/70 hover:brightness-110"
+                      : "border-transparent bg-djon-warning-red/80 text-djon-text hover:brightness-110"
                   }`}
                 >
                   {options.confirmLabel ?? "CONFIRMAR"}

@@ -34,7 +34,7 @@ function PDFViewer({ att, onClose }: { att: MaterialAttachment; onClose: () => v
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] bg-djon-page/90 backdrop-blur-sm flex flex-col"
+      className="fixed inset-0 z-[100] bg-djon-black/90 backdrop-blur-sm flex flex-col"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -54,7 +54,7 @@ function PDFViewer({ att, onClose }: { att: MaterialAttachment; onClose: () => v
           </button>
           <button
             onClick={onClose}
-            className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:bg-djon-text/15 flex items-center justify-center transition-colors"
+            className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:brightness-110 flex items-center justify-center transition-colors"
           >
             <X size={16} className="text-djon-text" />
           </button>
@@ -80,7 +80,7 @@ function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () 
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-djon-page/92 p-4 backdrop-blur-sm sm:p-6"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-djon-black/92 p-4 backdrop-blur-sm sm:p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -96,7 +96,7 @@ function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () 
         </button>
         <button
           onClick={onClose}
-          className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:bg-djon-text/15 flex items-center justify-center transition-colors"
+          className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:brightness-110 flex items-center justify-center transition-colors"
         >
           <X size={16} className="text-djon-text" />
         </button>
@@ -196,13 +196,13 @@ export default function MaterialDetailPage() {
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-djon-surface to-djon-page" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-djon-page/70 to-djon-page/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-djon-black/70 to-djon-black/30" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-14 w-full sm:px-6 sm:py-16">
           <motion.div {...fadeUp(0)}>
             <div className="mb-8 flex flex-wrap items-center gap-4">
-              <Link href="/dashboard/material" className="inline-flex items-center gap-2 text-djon-text/50 hover:text-djon-accent text-xs font-black tracking-widest uppercase transition-colors">
+              <Link href="/dashboard/material" className="inline-flex items-center gap-2 text-djon-text/50 hover:brightness-110 text-xs font-black tracking-widest uppercase transition-colors">
                 <ArrowLeft size={14} /> VOLTAR AO MATERIAL
               </Link>
             </div>
@@ -286,13 +286,13 @@ export default function MaterialDetailPage() {
               {attachments.map((att) => (
                 <div
                   key={att.id}
-                  className="group flex flex-col gap-4 rounded-2xl border border-djon-text/8 bg-djon-text/4 p-4 transition-all hover:border-djon-text/16 sm:flex-row sm:items-center"
+                  className="group flex flex-col gap-4 rounded-2xl border border-djon-text/8 bg-djon-text/4 p-4 transition-all hover:brightness-110 sm:flex-row sm:items-center"
                 >
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    att.type === "pdf" ? "bg-djon-danger/15" : att.type === "image" ? "bg-djon-accent/12" : "bg-djon-text/8"
+                    att.type === "pdf" ? "bg-djon-warning-red/15" : att.type === "image" ? "bg-djon-accent/12" : "bg-djon-text/8"
                   }`}>
                     {att.type === "pdf" ? (
-                      <FileText size={20} className="text-djon-danger" />
+                      <FileText size={20} className="text-djon-warning-red" />
                     ) : att.type === "image" ? (
                       <ImageIcon size={20} className="text-djon-accent" />
                     ) : (
@@ -311,7 +311,7 @@ export default function MaterialDetailPage() {
                     {(att.type === "pdf" || att.type === "image") && (
                       <button
                         onClick={() => handleAttachmentClick(att)}
-                        className="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-djon-text/8 px-3 py-2 text-xs font-black tracking-widest text-djon-text transition-colors hover:bg-djon-text/15 sm:flex-none"
+                        className="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-djon-text/8 px-3 py-2 text-xs font-black tracking-widest text-djon-text transition-colors hover:brightness-110 sm:flex-none"
                       >
                         <Eye size={13} /> VER
                       </button>

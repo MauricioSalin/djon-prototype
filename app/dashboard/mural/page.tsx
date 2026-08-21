@@ -69,7 +69,7 @@ function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
               ) : ev.createdByName.charAt(0)}
             </div>
             <div>
-              <p className="text-djon-text text-xs font-black group-hover/author:text-djon-accent transition-colors">{ev.createdByName}</p>
+              <p className="text-djon-text text-xs font-black group-hover/author:brightness-110 transition-[color,filter]">{ev.createdByName}</p>
               <p className={`text-djon-caption font-black tracking-widest uppercase ${isDJOn ? "text-djon-accent" : ev.type === "professor" ? "text-djon-text/50" : "text-djon-text/30"}`}>
                 {isDJOn ? "DJ ON Academy" : ev.type === "professor" ? "Professor" : "Aluno"}
               </p>
@@ -156,7 +156,7 @@ export default function MuralPage() {
             alt=""
             className="w-full h-full object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-page via-djon-page/80 to-djon-page/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 w-full sm:px-6 sm:py-24">
@@ -190,7 +190,7 @@ export default function MuralPage() {
                 className={`px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all ${
                   filter === f
                     ? "bg-djon-accent text-djon-ink"
-                    : "bg-djon-text/6 text-djon-text/50 hover:text-djon-text border border-djon-text/10 hover:border-djon-text/20 cursor-pointer"
+                    : "bg-djon-text/6 text-djon-text/50 hover:brightness-110 border border-djon-text/10 cursor-pointer"
                 }`}
               >
                 {f === "todos" ? "TODOS" : f === "djOn" ? "DJ ON" : f === "professores" ? "PROFESSORES" : "ALUNOS"}

@@ -81,7 +81,7 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
       <motion.button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className={`group flex items-center justify-between gap-3 rounded-full border border-djon-text/15 bg-djon-surface-4/90 px-5 py-2.5 text-left font-black text-djon-text shadow-djon-soft outline-none backdrop-blur-md transition-colors hover:border-djon-text/30 hover:bg-djon-surface-5 ${
+        className={`group flex items-center justify-between gap-3 rounded-full border border-djon-text/15 bg-djon-surface-4/90 px-5 py-2.5 text-left font-black text-djon-text shadow-djon-soft outline-none backdrop-blur-md transition-colors hover:brightness-110 ${
           mobile ? "w-full" : "min-w-[188px]"
         }`}
         whileHover={{ scale: mobile ? 1 : 1.03 }}
@@ -96,7 +96,7 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
         </span>
         <ChevronDown
           size={15}
-          className={`shrink-0 text-djon-text/55 transition-transform group-hover:text-djon-text ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-djon-text/55 transition-transform group-hover:brightness-110 ${open ? "rotate-180" : ""}`}
         />
       </motion.button>
 
@@ -123,7 +123,7 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
                   type="button"
                   onClick={() => selectLocation(key)}
                   className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
-                    selected ? "bg-djon-text/10 text-djon-text" : "text-djon-text/70 hover:bg-djon-text/8 hover:text-djon-text"
+                    selected ? "bg-djon-text/10 text-djon-text" : "text-djon-text/70 hover:brightness-110"
                   }`}
                   role="option"
                   aria-selected={selected}

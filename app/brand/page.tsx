@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Bell, CalendarDays, Check, ChevronDown, Clock, Download, Edit3, LogIn, Mail, Search, Smartphone, Sparkles, Trash2, User, X } from "lucide-react"
 import { SplineScene } from "@/components/spline-scene"
+import brandStyles from "./brand.module.css"
 
 export const metadata: Metadata = {
   title: "Brand System x Salin",
@@ -36,14 +37,16 @@ export const metadata: Metadata = {
 }
 
 const colors = [
-  { name: "Acid Green", hex: "var(--djon-color-accent)", usage: "CTA, foco, highlights e estados ativos" },
-  { name: "White Noise", hex: "var(--djon-color-text)", usage: "Títulos, logo em negativo e superfícies claras de contraste" },
-  { name: "Black Stage", hex: "var(--djon-color-ink)", usage: "Base escura, headers e fundos principais" },
-  { name: "Panel Dark", hex: "var(--djon-color-surface-3)", usage: "Cards, modais, inputs e superfícies" },
-  { name: "Line Gray", hex: "var(--djon-color-line)", usage: "Bordas, divisórias e contornos sutis" },
-  { name: "Soft Gray", hex: "var(--djon-color-soft-gray)", usage: "Texto secundário e metadados" },
-  { name: "Electric Cyan", hex: "var(--djon-color-cyan)", usage: "Acento de variação para professores e dados" },
-  { name: "Warm Signal", hex: "var(--djon-color-orange)", usage: "Acento de energia para eventos e alertas" },
+  { name: "DJ ON Green", hex: "#8AF23B", token: "var(--djon-color-green)", usage: "CTA, foco, highlights e estados ativos" },
+  { name: "White Noise", hex: "#FFFFFF", token: "var(--djon-color-white)", usage: "Títulos, logo em negativo e superfícies claras de contraste" },
+  { name: "Black", hex: "#000000", token: "var(--djon-color-black)", usage: "Base única para overlays, variando somente a opacidade" },
+  { name: "Black Stage", hex: "#121212", token: "var(--djon-color-black-stage)", usage: "Base escura, headers e fundos principais" },
+  { name: "Panel Dark", hex: "#1A1A1A", token: "var(--djon-color-panel-dark)", usage: "Cards, modais, inputs e superfícies" },
+  { name: "Line Gray", hex: "#2A2A2A", token: "var(--djon-color-line-gray)", usage: "Bordas, divisórias e contornos sutis" },
+  { name: "Soft Gray", hex: "#8A8A8A", token: "var(--djon-color-soft-gray)", usage: "Texto secundário e metadados" },
+  { name: "Light Purple", hex: "#C5B7F2", token: "var(--djon-color-light-purple)", usage: "Acento de variação e estados antes exibidos em azul, ciano ou amarelo" },
+  { name: "Warning Red", hex: "#F87171", token: "var(--djon-color-warning-red)", usage: "Recusas, alertas e ações destrutivas no lugar dos vermelhos e do Warm Signal" },
+  { name: "Success", hex: "#34D399", token: "var(--djon-color-success)", usage: "Estados concluídos e confirmações; mantido onde já é usado" },
 ]
 
 const titleSamples = [
@@ -87,12 +90,15 @@ const fontExamples = [
   },
   {
     label: "Token / Mono",
-    text: "--djon-font-sans: Inter, system-ui, sans-serif;",
+    text: "--djon-font-sans: Raleway, system-ui, sans-serif;",
     className: "font-mono text-sm text-djon-ink/58",
   },
 ]
 
 const fontWeights = [
+  { label: "Thin", value: "100", className: "font-thin" },
+  { label: "ExtraLight", value: "200", className: "font-extralight" },
+  { label: "Light", value: "300", className: "font-light" },
   { label: "Regular", value: "400", className: "font-normal" },
   { label: "Medium", value: "500", className: "font-medium" },
   { label: "Semibold", value: "600", className: "font-semibold" },
@@ -133,7 +139,7 @@ export default function BrandPage() {
     <main className="min-h-screen bg-djon-page text-djon-text">
       <section className="relative min-h-screen overflow-hidden">
         <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-35" priority />
-        <div className="absolute inset-0 bg-gradient-to-r from-djon-ink via-djon-ink/90 to-djon-ink/35" />
+        <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/90 to-djon-black/35" />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-djon-page to-transparent" />
 
         <div className="relative z-10 mx-auto grid min-h-[100svh] max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-16 lg:grid-cols-[1.05fr_0.95fr]">
@@ -156,7 +162,7 @@ export default function BrandPage() {
               <a href="#logo" className="w-full rounded-full bg-djon-accent px-7 py-3 text-center text-sm font-black tracking-widest text-djon-ink sm:w-auto">
                 VER SISTEMA
               </a>
-              <a href="#ui" className="w-full rounded-full border-2 border-djon-text/25 px-7 py-3 text-center text-sm font-black tracking-widest text-djon-text transition-colors hover:border-djon-accent hover:text-djon-accent sm:w-auto">
+              <a href="#ui" className="w-full rounded-full border-2 border-djon-text/25 px-7 py-3 text-center text-sm font-black tracking-widest text-djon-text transition-colors hover:brightness-110 sm:w-auto">
                 COMPONENTES
               </a>
             </div>
@@ -165,6 +171,7 @@ export default function BrandPage() {
           <div className="relative hidden min-h-[430px] lg:block">
             <SplineScene
               scene="https://prod.spline.design/OduYuH7Y3CXDo9Ga/scene.splinecode"
+              globalEvents
               style={{ width: "100%", height: "430px" }}
               lazyThreshold={0.01}
             />
@@ -180,8 +187,8 @@ export default function BrandPage() {
           className="object-cover object-[55%_center]"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-djon-ink via-djon-ink/78 to-djon-ink/25" />
-        <div className="absolute inset-0 bg-gradient-to-t from-djon-page via-transparent to-djon-ink/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/78 to-djon-black/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-djon-black/40" />
 
         <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl items-center px-4 py-14 sm:px-6 sm:py-16">
           <div className="max-w-3xl">
@@ -236,15 +243,15 @@ export default function BrandPage() {
 
       <section id="font" className="bg-djon-text py-20 text-djon-ink">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <SectionTitle eyebrow="Tipografia" title="Inter / Font System" description="A fonte principal é Inter. O sistema usa peso alto para impacto, corpo legível para instrução e labels em caixa alta para navegação e metadados." light />
+          <SectionTitle eyebrow="Tipografia" title="Font System DJ ON" description="A hierarquia global combina Bowlby One SC para máximo impacto, Raleway para interface e leitura, e Big Noodle Titling para títulos condensados. A terceira função usa uma substituta visual aberta até a entrega do webfont licenciado." light />
 
           <div className="mt-10 grid items-stretch gap-4 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="flex h-full flex-col rounded-2xl border border-djon-ink/10 bg-djon-light-surface p-6 md:p-8">
               <div>
-                <p className="text-xs font-black tracking-[0.25em] text-djon-ink/45">FONTE</p>
-                <h3 className="mt-4 text-5xl font-black leading-none tracking-tight md:text-7xl">Inter</h3>
+                <p className="text-xs font-black tracking-[0.25em] text-djon-ink/45">FONTE PRINCIPAL</p>
+                <h3 className={`${brandStyles.raleway} mt-4 text-5xl font-black leading-none tracking-tight md:text-7xl`}>Raleway</h3>
                 <p className="mt-5 max-w-md text-sm leading-relaxed text-djon-ink/58">
-                  Uma tipografia neutra, tecnológica e extremamente legível. Ela sustenta títulos agressivos sem perder clareza nos formulários, cards e dashboards.
+                  A família completa de 100 a 900, com estilos normal e itálico, substitui a Inter em toda a interface.
                 </p>
               </div>
               <div className="mt-7 flex-1 rounded-2xl border border-djon-ink/10 bg-djon-text p-5">
@@ -252,7 +259,7 @@ export default function BrandPage() {
                 <div className="mt-4 grid gap-2">
                   {fontWeights.map((weight) => (
                     <div key={weight.value} className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-xl bg-djon-ink/[0.035] px-4 py-3 text-djon-ink">
-                      <span className={`text-lg leading-none ${weight.className}`}>Inter {weight.label}</span>
+                      <span className={`text-lg leading-none ${weight.className}`}>Raleway {weight.label}</span>
                       <span className="font-mono text-xs text-djon-ink/38">{weight.value}</span>
                     </div>
                   ))}
@@ -261,6 +268,18 @@ export default function BrandPage() {
             </div>
 
             <div className="grid gap-4">
+              <div className="rounded-2xl border border-djon-ink/10 bg-djon-light-surface p-5 md:p-6">
+                <p className="mb-3 text-xs font-black tracking-[0.25em] text-djon-ink/38">DISPLAY / BOWLBY ONE SC</p>
+                <p className={`${brandStyles.bowlby} text-4xl leading-tight md:text-6xl`}>SEU SONHO COMEÇA AQUI</p>
+              </div>
+              <div className="rounded-2xl border border-djon-ink/10 bg-djon-light-surface p-5 md:p-6">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-black tracking-[0.25em] text-djon-ink/38">TITLING / BIG NOODLE TITLING</p>
+                  <span className="rounded-full bg-djon-light-purple/25 px-3 py-1 text-[10px] font-black tracking-wider text-djon-ink/65">WEBFONT LICENCIADO PENDENTE</span>
+                </div>
+                <p className={`${brandStyles.bigNoodle} text-5xl font-black uppercase leading-none tracking-wide md:text-7xl`}>A fronteira entre o sonho e a realização</p>
+                <p className="mt-3 text-xs leading-relaxed text-djon-ink/50">Prévia com Barlow Condensed, substituta aberta de proporção semelhante.</p>
+              </div>
               {fontExamples.map((sample) => (
                 <div key={sample.label} className="rounded-2xl border border-djon-ink/10 bg-djon-light-surface p-5 md:p-6">
                   <p className="mb-3 text-xs font-black tracking-[0.25em] text-djon-ink/38">{sample.label.toUpperCase()}</p>
@@ -291,12 +310,12 @@ export default function BrandPage() {
 
       <section id="cores" className="bg-djon-page py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <SectionTitle eyebrow="Paleta" title="Cores" description="A base é preta, branca e grafite, com verde ácido como energia principal. Ciano e laranja entram apenas como variações de informação." />
+          <SectionTitle eyebrow="Paleta" title="Cores" description="Esta paleta está centralizada em todo o projeto: lilás substitui azul, ciano e amarelo; Warning Red substitui os demais vermelhos e o antigo Warm Signal." />
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {colors.map((color) => (
               <div key={color.hex} className="overflow-hidden rounded-2xl border border-djon-text/10 bg-djon-surface-7">
-                <div className="h-32 border-b border-djon-text/10" style={{ backgroundColor: color.hex }} />
+                <div className="h-32 border-b border-djon-text/10" style={{ backgroundColor: color.token }} />
                 <div className="p-5">
                   <p className="font-black tracking-tight text-djon-text">{color.name}</p>
                   <p className="mt-1 font-mono text-xs text-djon-text/40">{color.hex}</p>
@@ -414,7 +433,7 @@ export default function BrandPage() {
                   <label className="block">
                     <span className="mb-2 block text-[10px] font-black tracking-widest text-djon-text/38">OBSERVAÇÕES</span>
                     <textarea
-                      className="min-h-20 w-full resize-none rounded-xl border border-djon-text/12 bg-djon-input px-4 py-3 text-xs font-bold leading-relaxed text-djon-text outline-none transition-colors placeholder:text-djon-text/25 hover:border-djon-text/24 focus:border-djon-accent/50"
+                      className="min-h-20 w-full resize-none rounded-xl border border-djon-text/12 bg-djon-input px-4 py-3 text-xs font-bold leading-relaxed text-djon-text outline-none transition-colors placeholder:text-djon-text/25 hover:brightness-110 focus:border-djon-accent/50"
                       placeholder="O que você quer trabalhar nesse treino?"
                       defaultValue="Quero revisar transições e preparar repertório para meu primeiro set."
                     />
@@ -446,6 +465,8 @@ export default function BrandPage() {
           <div className="relative min-h-[460px] sm:min-h-[560px]">
             <SplineScene
               scene="https://prod.spline.design/mZzZrAV9qXxQ452n/scene.splinecode"
+              preloadOnIdle
+              rotationObject="realistic_headphone"
               style={{ width: "100%", height: "min(640px, 82svh)" }}
             />
           </div>
@@ -470,7 +491,7 @@ export default function BrandPage() {
                 return (
                   <div
                     key={item.title}
-                    className="djon-reveal-up flex gap-4 rounded-2xl border border-djon-text/10 bg-djon-text/5 p-4 transition-colors duration-300 hover:border-djon-accent/35 hover:bg-djon-text/8"
+                    className="djon-reveal-up flex gap-4 rounded-2xl border border-djon-text/10 bg-djon-text/5 p-4 transition-colors duration-300 hover:brightness-110"
                     style={{ animationDelay: `${160 + index * 110}ms` }}
                   >
                     <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-djon-accent/12 text-djon-accent">
@@ -574,7 +595,7 @@ function PortalButton({
     dark: "bg-djon-text text-djon-ink",
     outline: "border border-djon-text/20 bg-transparent text-djon-text/82",
     ghost: "bg-djon-text/8 text-djon-text",
-    danger: "border border-djon-danger/30 bg-transparent text-djon-danger",
+    danger: "border border-djon-warning-red/30 bg-transparent text-djon-warning-red",
   }
 
   return (
@@ -604,7 +625,7 @@ function PortalIconButton({
       title={label}
       className={`flex size-12 items-center justify-center rounded-xl border transition-transform duration-200 hover:scale-[1.02] active:scale-[0.97] ${
         variant === "danger"
-          ? "border-djon-danger/24 bg-transparent text-djon-danger"
+          ? "border-djon-warning-red/24 bg-transparent text-djon-warning-red"
           : "border-djon-text/12 bg-djon-text/5 text-djon-text/62"
       }`}
     >
@@ -626,7 +647,7 @@ function PortalField({
     <label className="block">
       <span className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">{label}</span>
       <input
-        className="h-12 w-full rounded-xl border border-djon-text/12 bg-djon-input px-4 text-sm font-bold text-djon-text outline-none transition-colors placeholder:text-djon-text/25 hover:border-djon-text/24 focus:border-djon-accent/50"
+        className="h-12 w-full rounded-xl border border-djon-text/12 bg-djon-input px-4 text-sm font-bold text-djon-text outline-none transition-colors placeholder:text-djon-text/25 hover:brightness-110 focus:border-djon-accent/50"
         placeholder={placeholder}
         defaultValue={defaultValue}
       />
@@ -648,7 +669,7 @@ function PortalSelect({
       <span className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">{label}</span>
       <button
         type="button"
-        className="flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-djon-text/12 bg-djon-input px-4 text-left text-sm font-bold text-djon-text transition-colors hover:border-djon-text/24 focus:border-djon-accent/50 focus:outline-none"
+        className="flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-djon-text/12 bg-djon-input px-4 text-left text-sm font-bold text-djon-text transition-colors hover:brightness-110 focus:border-djon-accent/50 focus:outline-none"
       >
         <span className="truncate">{value}</span>
         <span className="shrink-0 text-djon-text/40">{icon ?? <ChevronDown size={15} />}</span>
@@ -670,7 +691,7 @@ function PortalBadge({
       : label === "Info"
         ? "bg-djon-accent/15 text-djon-accent"
         : label === "Warning"
-          ? "bg-djon-warning/15 text-djon-warning"
+          ? "bg-djon-light-purple/15 text-djon-light-purple"
           : "border border-djon-text/12 bg-djon-text/5 text-djon-text/62"
 
   return (

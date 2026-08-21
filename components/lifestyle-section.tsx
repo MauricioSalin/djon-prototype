@@ -47,7 +47,7 @@ export function LifestyleSection() {
                 className="relative aspect-square rounded-2xl overflow-hidden"
               >
                 <Image src={item.src} alt={`${item.alt} — DJ ON Academy`} fill className="object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-djon-ink/80 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-djon-black/80 to-transparent" />
                 <div className="absolute bottom-3 left-3">
                   <span className="text-djon-text font-black text-xs tracking-wide">{item.label}</span>
                 </div>

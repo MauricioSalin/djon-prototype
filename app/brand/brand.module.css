@@ -1,0 +1,12 @@
+.bowlby {
+  font-family: var(--djon-font-display);
+  font-weight: 400;
+}
+
+.bigNoodle {
+  font-family: var(--djon-font-titling);
+}
+
+.raleway {
+  font-family: var(--djon-font-sans);
+}
