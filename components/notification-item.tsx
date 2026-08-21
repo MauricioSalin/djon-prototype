@@ -128,7 +128,7 @@ export function NotificationItem({
           onClick={() => {
             if (!dragged.current) onOpen();
           }}
-          className="block w-full cursor-pointer text-left"
+          className="block w-full cursor-pointer text-left transition-opacity hover:opacity-80"
         >
           <div className="flex items-start justify-between gap-3">
             <span
@@ -186,14 +186,14 @@ export function TrainingRequestActions({
         <button
           type="button"
           onClick={onApprove}
-          className="cursor-pointer flex-1 rounded-lg bg-djon-accent py-2 text-djon-label font-black tracking-widest text-djon-ink"
+          className="cursor-pointer flex-1 rounded-lg bg-djon-accent py-2 text-djon-label font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
         >
           APROVAR
         </button>
         <button
           type="button"
           onClick={onReject}
-          className="cursor-pointer flex-1 rounded-lg border border-djon-warning-red/20 py-2 text-center text-djon-label font-black tracking-widest text-djon-warning-red/70 transition-colors hover:brightness-110"
+          className="cursor-pointer flex-1 rounded-lg border border-djon-warning-red/20 py-2 text-center text-djon-label font-black tracking-widest text-djon-warning-red/70 transition-opacity hover:opacity-70"
         >
           RECUSAR
         </button>

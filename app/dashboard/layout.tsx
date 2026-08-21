@@ -359,21 +359,37 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!user || user.role === "student") return;
+    syncPendingRequests();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadPendingRequests();
+    };
     void loadPendingRequests();
-    const interval = window.setInterval(() => void loadPendingRequests(), 5000);
-    return () => window.clearInterval(interval);
-  }, [user, loadPendingRequests]);
+    const interval = window.setInterval(refreshWhenVisible, 15000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [user, loadPendingRequests, syncPendingRequests]);
 
   useEffect(() => {
     if (!user) return;
+    setNotifications(store.getNotifications());
     const load = () =>
       store
         .refreshNotifications()
         .then(setNotifications)
         .catch(() => undefined);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
     void load();
-    const interval = window.setInterval(() => void load(), 30000);
-    return () => window.clearInterval(interval);
+    const interval = window.setInterval(refreshWhenVisible, 30000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [user]);
 
   useEffect(() => {
@@ -689,7 +705,7 @@ export default function DashboardLayout({
           {/* Logo */}
           <Link
             href={portalHomeHref}
-            className="flex items-center gap-2 shrink-0 sm:mr-2"
+            className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-70 sm:mr-2"
           >
             <Image
               src="/images/djon-verde.png"
@@ -704,7 +720,7 @@ export default function DashboardLayout({
           </Link>
 
           <button
-            className="cursor-pointer md:hidden text-djon-text/60 hover:brightness-110 p-2"
+          className="cursor-pointer p-2 text-djon-text opacity-60 transition-opacity hover:opacity-100 md:hidden"
             onClick={toggleMobileMenu}
             aria-expanded={mobileMenuOpen}
             aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
@@ -751,10 +767,10 @@ export default function DashboardLayout({
                     href={item.href}
                     draggable={false}
                     aria-current={active ? "page" : undefined}
-                    className={`flex shrink-0 items-center justify-center gap-2 whitespace-nowrap px-4 py-2 text-center rounded-full text-xs font-bold tracking-wide transition-all ${
+                    className={`flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap px-4 py-2 text-center rounded-full text-xs font-bold tracking-wide transition-all ${
                       active
                         ? "bg-djon-accent text-djon-ink"
-                        : "text-djon-text/50 hover:brightness-110"
+                        : "text-djon-text opacity-50 hover:opacity-100"
                     }`}
                   >
                     <item.icon size={13} />
@@ -796,7 +812,7 @@ export default function DashboardLayout({
                       .catch(() => undefined);
                     if (canReviewRequests) void loadPendingRequests();
                   }}
-                  className={`cursor-pointer relative p-2 rounded-full transition-all ${notificationsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:brightness-110"}`}
+                  className={`cursor-pointer relative p-2 rounded-full transition-all ${notificationsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
                   aria-label="Notificações"
                 >
                   <Bell size={16} />
@@ -836,7 +852,7 @@ export default function DashboardLayout({
                                 )
                                 .catch(() => undefined)
                             }
-                            className="cursor-pointer text-djon-accent text-djon-label font-black"
+                            className="cursor-pointer text-djon-accent text-djon-label font-black transition-[filter] hover:brightness-110"
                           >
                             LER TODAS
                           </button>
@@ -845,7 +861,7 @@ export default function DashboardLayout({
                       {pushState !== "hidden" && pushState !== "enabled" && (
                         <button
                           onClick={() => void enablePush()}
-                          className="mx-3 mt-3 w-[calc(100%-1.5rem)] rounded-xl border border-djon-accent/20 bg-djon-accent/5 px-3 py-2 text-xs font-black text-djon-accent"
+                          className="mx-3 mt-3 w-[calc(100%-1.5rem)] rounded-xl border border-djon-accent/20 bg-djon-accent/5 px-3 py-2 text-xs font-black text-djon-accent transition-[filter] hover:brightness-110"
                         >
                           {pushState === "error"
                             ? "TENTAR ATIVAR ALERTAS NOVAMENTE"
@@ -952,7 +968,7 @@ export default function DashboardLayout({
             <button
               ref={searchButtonRef}
               onClick={searchBarOpen ? closeSearch : openSearch}
-              className={`cursor-pointer p-2 rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text/40 hover:brightness-110"}`}
+              className={`cursor-pointer p-2 rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
               aria-label="Buscar"
             >
               {searchBarOpen ? <X size={16} /> : <Search size={16} />}
@@ -1189,14 +1205,14 @@ export default function DashboardLayout({
                       <Link
                         href={perfilHref}
                         onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-djon-text/60 hover:brightness-110 text-xs font-bold tracking-wide transition-all"
+                        className="flex items-center gap-3 px-4 py-2.5 text-djon-text opacity-60 text-xs font-bold tracking-wide transition-opacity hover:opacity-100"
                       >
                         <User size={13} />
                         Editar Perfil
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="cursor-pointer w-full flex items-center gap-3 px-4 py-2.5 text-djon-warning-red/70 hover:brightness-110 text-xs font-bold tracking-wide transition-all"
+                        className="cursor-pointer w-full flex items-center gap-3 px-4 py-2.5 text-djon-warning-red opacity-70 text-xs font-bold tracking-wide transition-opacity hover:opacity-100"
                       >
                         <LogOut size={13} />
                         Sair
@@ -1245,7 +1261,7 @@ export default function DashboardLayout({
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-wide transition-all ${
                           active
                             ? "bg-djon-accent text-djon-ink"
-                            : "text-djon-text/50 hover:brightness-110"
+                            : "text-djon-text opacity-50 hover:opacity-100"
                         }`}
                       >
                         <item.icon size={14} />

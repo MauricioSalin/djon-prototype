@@ -200,7 +200,7 @@ export default function AlunosPage() {
                 </h2>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="cursor-pointer text-djon-text/40 hover:brightness-110"
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />
                 </button>
@@ -432,9 +432,12 @@ export default function AlunosPage() {
 
               {/* Info */}
               <div className="w-full min-w-0 flex-1">
-                <p className="text-djon-text font-bold text-sm truncate mb-1.5">
+                <Link
+                  href={`/dashboard/perfil/${u.id}`}
+                  className="mb-1.5 block truncate text-sm font-bold text-djon-text transition-colors hover:text-djon-accent"
+                >
                   {u.name}
-                </p>
+                </Link>
                 <p className="text-djon-text/40 text-xs truncate flex items-center gap-1.5">
                   <Mail size={10} className="shrink-0" />
                   <span className="truncate">{u.email}</span>
@@ -457,7 +460,7 @@ export default function AlunosPage() {
                         href={`https://instagram.com/${u.socials.instagram}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
+                        className="flex items-center gap-1.5 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
                       >
                         <Instagram size={16} /> @{u.socials.instagram}
                       </a>
@@ -467,7 +470,7 @@ export default function AlunosPage() {
                         href={`https://soundcloud.com/${u.socials.soundcloud}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
+                        className="flex items-center gap-1.5 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
                       >
                         <SoundCloudIcon size={20} /> {u.socials.soundcloud}
                       </a>
@@ -481,7 +484,7 @@ export default function AlunosPage() {
                 {u.active !== false && (
                   <button
                     onClick={() => openEdit(u)}
-                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
+                    className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                     type="button"
                     title="Editar"
                     aria-label={`Editar ${u.name}`}
@@ -491,7 +494,7 @@ export default function AlunosPage() {
                 )}
                 <Link
                   href={`/dashboard/perfil/${u.id}`}
-                  className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
+                  className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                   title="Perfil"
                   aria-label={`Abrir perfil de ${u.name}`}
                 >
@@ -500,7 +503,7 @@ export default function AlunosPage() {
                 {u.active !== false ? (
                   <button
                     onClick={() => void handleDelete(u)}
-                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
+                    className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                     type="button"
                     title="Remover"
                     aria-label={`Remover ${u.name}`}
@@ -513,7 +516,7 @@ export default function AlunosPage() {
                     type="button"
                     title="Restaurar"
                     aria-label={`Restaurar ${u.name}`}
-                    className="cursor-pointer p-1.5 text-djon-accent"
+                    className="cursor-pointer p-1.5 text-djon-accent transition-[filter] hover:brightness-110"
                   >
                     <RotateCcw size={14} />
                   </button>

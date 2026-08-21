@@ -311,14 +311,14 @@ export function FlavorCarousel() {
           <div className="flex md:hidden justify-center gap-4 mt-6">
             <motion.button
               onClick={() => paginate(-1)}
-              className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text"
+              className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text transition-opacity hover:opacity-70"
               whileTap={{ scale: 0.9 }}
             >
               <ChevronLeft className="w-4 h-4" />
             </motion.button>
             <motion.button
               onClick={() => paginate(1)}
-              className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text"
+              className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text transition-opacity hover:opacity-70"
               whileTap={{ scale: 0.9 }}
             >
               <ChevronRight className="w-4 h-4" />

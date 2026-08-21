@@ -463,10 +463,10 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
 
   const isEmpty = !value || value === "<br>" || value === "<div><br></div>"
 
-  const btn = (active = false) => `cursor-pointer w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+  const btn = (active = false) => `cursor-pointer w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
     active
       ? "bg-djon-accent text-djon-ink shadow-[var(--djon-shadow-focus-soft)]"
-      : "text-djon-text/50 hover:brightness-110"
+      : "text-djon-text opacity-50 hover:opacity-100"
   }`
   const preserveSelection = (event: React.MouseEvent<HTMLButtonElement>) => {
     rememberSelection()

@@ -509,7 +509,7 @@ export default function AgendarPage() {
               </p>
               <button
                 onClick={() => openRequest()}
-                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest"
+                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest transition-[filter] hover:brightness-90"
               >
                 <Plus size={14} /> SOLICITAR TREINO
               </button>
@@ -650,7 +650,7 @@ export default function AgendarPage() {
                   {b.status !== "cancelado" && (
                     <button
                       onClick={() => void handleCancel(b)}
-                      className="cursor-pointer text-djon-text/10 hover:brightness-110 transition-colors"
+                      className="cursor-pointer text-djon-text opacity-10 transition-opacity hover:opacity-100"
                     >
                       <Trash2 size={13} />
                     </button>

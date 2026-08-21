@@ -8,6 +8,7 @@ import {
   MapPin, Clock, ArrowRight, Edit3, Music, Mail, Phone,
 } from "lucide-react"
 import { SoundCloudIcon } from "@/components/social-icons"
+import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { store, type User, type DJEvent } from "@/lib/store"
 import { formatPhone } from "@/lib/phone"
 
@@ -99,6 +100,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
 
   const upcomingEvents = events.filter((e) => new Date(e.date + "T00:00:00") >= new Date())
   const pastEvents = events.filter((e) => new Date(e.date + "T00:00:00") < new Date()).reverse()
+  const historyPagination = useListPagination(pastEvents, user.id)
 
   const fmt = (date: string) =>
     new Date(date + "T00:00:00").toLocaleDateString("pt-BR", {
@@ -214,7 +216,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             {isOwner && (
               <motion.button
                 onClick={() => setEditing((v) => !v)}
-                className="cursor-pointer hidden md:flex items-center gap-2 shrink-0 mb-2 border border-djon-text/15 text-djon-text/50 hover:brightness-110 px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all"
+                className="cursor-pointer hidden md:flex items-center gap-2 shrink-0 mb-2 border border-djon-text/15 text-djon-text/50 px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-opacity hover:opacity-70"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -228,7 +230,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             {isOwner && (
               <motion.button
                 onClick={() => setEditing((v) => !v)}
-                className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-all hover:brightness-110 md:hidden"
+                className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70 md:hidden"
                 whileTap={{ scale: 0.97 }}
               >
                 <Edit3 size={13} /> EDITAR PERFIL
@@ -259,7 +261,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://instagram.com/${user.socials.instagram}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold transition-opacity hover:opacity-100"
                   >
                     <Instagram size={18} /> @{user.socials.instagram}
                   </a>
@@ -269,7 +271,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://soundcloud.com/${user.socials.soundcloud}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold transition-opacity hover:opacity-100"
                   >
                     <SoundCloudIcon size={22} /> {user.socials.soundcloud}
                   </a>
@@ -279,7 +281,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                     href={`https://youtube.com/@${user.socials.youtube}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-bold transition-colors"
+                    className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold transition-opacity hover:opacity-100"
                   >
                     <Youtube size={18} /> {user.socials.youtube}
                   </a>
@@ -422,7 +424,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text/60 tracking-tighter mb-2" {...fadeUp(0.1)}>Eventos Passados</motion.h2>
             <motion.div className="h-[3px] w-10 bg-djon-text/20 rounded-full mb-10" {...fadeUp(0.15)} />
             <div className="space-y-3">
-              {pastEvents.map((ev, i) => (
+              {historyPagination.paginatedItems.map((ev, i) => (
                 <motion.div
                   key={ev.id}
                   className="flex flex-col gap-3 rounded-2xl border border-djon-text/6 bg-djon-surface px-4 py-4 sm:flex-row sm:items-center sm:gap-5 sm:px-6"
@@ -442,6 +444,14 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 </motion.div>
               ))}
             </div>
+            <ListPagination
+              totalItems={pastEvents.length}
+              page={historyPagination.page}
+              pageSize={historyPagination.pageSize}
+              totalPages={historyPagination.totalPages}
+              onPageChange={historyPagination.setPage}
+              onPageSizeChange={historyPagination.setPageSize}
+            />
           </div>
         </section>
       )}
@@ -464,7 +474,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             <motion.div className="flex flex-wrap items-center justify-center gap-3" {...fadeUp(0.2)}>
               <Link
                 href="/dashboard/student/agendar"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-8 py-3.5 text-sm font-black tracking-widest text-djon-ink sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-8 py-3.5 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:w-auto"
               >
                 AGENDAR AULA <ArrowRight size={14} />
               </Link>
@@ -512,7 +522,7 @@ function EventCard({ ev, i }: { ev: DJEvent; i: number }) {
           href={`https://instagram.com/${ev.instagram}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-djon-accent text-xs font-bold hover:underline"
+          className="inline-flex items-center gap-1.5 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
         >
           <Instagram size={11} /> @{ev.instagram}
         </a>

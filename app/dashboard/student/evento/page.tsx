@@ -224,7 +224,7 @@ export default function StudentEventPage() {
               <Music2 size={48} className="text-djon-text/12 mx-auto mb-4" />
               <p className="text-djon-text/25 text-sm font-bold mb-6">Nenhum evento cadastrado</p>
               <button onClick={openNew}
-                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest">
+                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest transition-[filter] hover:brightness-90">
                 <Plus size={14} /> CADASTRAR EVENTO
               </button>
             </motion.div>
@@ -262,7 +262,7 @@ export default function StudentEventPage() {
                     </div>
                     {ev.instagram && (
                       <a href={`https://instagram.com/${ev.instagram}`} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-djon-accent text-xs font-bold hover:underline">
+                        className="flex items-center gap-2 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text">
                         <Instagram size={11} />@{ev.instagram}
                       </a>
                     )}
@@ -317,7 +317,7 @@ export default function StudentEventPage() {
                   <div className="shrink-0 text-djon-text/20 text-xs font-bold">
                     {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                   </div>
-                  <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/10 hover:brightness-110 transition-colors">
+                  <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text opacity-10 transition-opacity hover:opacity-100">
                     <Trash2 size={13} />
                   </button>
                 </motion.div>

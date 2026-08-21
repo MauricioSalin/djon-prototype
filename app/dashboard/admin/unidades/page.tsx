@@ -80,7 +80,7 @@ export default function UnitsAdminPage() {
             setEditingId(null);
             setOpen(true);
           }}
-          className="flex items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink"
+          className="flex items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink transition-[filter] hover:brightness-90"
         >
           <Plus size={14} />
           NOVA UNIDADE
@@ -103,7 +103,7 @@ export default function UnitsAdminPage() {
               <button
                 onClick={() => edit(unit)}
                 aria-label="Editar unidade"
-                className="p-2 text-djon-text/40 hover:brightness-110"
+                className="p-2 text-djon-text opacity-40 transition-opacity hover:opacity-100"
               >
                 <Edit2 size={15} />
               </button>
@@ -111,7 +111,7 @@ export default function UnitsAdminPage() {
                 <button
                   onClick={() => void deactivate(unit)}
                   aria-label="Desativar unidade"
-                  className="p-2 text-djon-warning-red/60 hover:brightness-110"
+                  className="p-2 text-djon-warning-red opacity-60 transition-opacity hover:opacity-100"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -152,7 +152,7 @@ export default function UnitsAdminPage() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-djon-text/40"
+                className="text-djon-text opacity-40 transition-opacity hover:opacity-100"
               >
                 <X size={18} />
               </button>
@@ -218,7 +218,7 @@ export default function UnitsAdminPage() {
             </label>
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-djon-accent py-3 text-xs font-black text-djon-ink"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-djon-accent py-3 text-xs font-black text-djon-ink transition-[filter] hover:brightness-90"
             >
               <Save size={14} />
               SALVAR UNIDADE

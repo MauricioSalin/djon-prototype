@@ -41,13 +41,12 @@ function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
 
   return (
     <motion.article
-      className={`relative rounded-2xl overflow-hidden border transition-all group ${
+      className={`relative rounded-2xl overflow-hidden border transition-colors hover:border-djon-accent group ${
         isDJOn ? "border-djon-accent/40 bg-djon-accent/5" : "border-djon-text/8 bg-djon-surface-2"
       } ${isPast ? "opacity-40" : ""}`}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: isPast ? 0.4 : 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const }}
-      whileHover={!isPast ? { y: -6 } : {}}
     >
       {isDJOn && (
         <div className="bg-djon-accent px-5 py-2 flex items-center gap-2">
@@ -69,7 +68,7 @@ function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
               ) : ev.createdByName.charAt(0)}
             </div>
             <div>
-              <p className="text-djon-text text-xs font-black group-hover/author:brightness-110 transition-[color,filter]">{ev.createdByName}</p>
+              <p className="text-djon-text text-xs font-black transition-colors group-hover/author:text-djon-accent">{ev.createdByName}</p>
               <p className={`text-djon-caption font-black tracking-widest uppercase ${isDJOn ? "text-djon-accent" : ev.type === "professor" ? "text-djon-text/50" : "text-djon-text/30"}`}>
                 {isDJOn ? "DJ ON Academy" : ev.type === "professor" ? "Professor" : "Aluno"}
               </p>
@@ -100,7 +99,7 @@ function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
               href={`https://instagram.com/${ev.instagram}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-djon-accent text-xs font-bold hover:underline"
+              className="flex items-center gap-2 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
             >
               <Instagram size={12} />
               @{ev.instagram}
@@ -187,10 +186,10 @@ export default function MuralPage() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all ${
+                className={`px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-all hover:opacity-80 ${
                   filter === f
                     ? "bg-djon-accent text-djon-ink"
-                    : "bg-djon-text/6 text-djon-text/50 hover:brightness-110 border border-djon-text/10 cursor-pointer"
+                    : "bg-djon-text/6 text-djon-text/50 border border-djon-text/10 cursor-pointer"
                 }`}
               >
                 {f === "todos" ? "TODOS" : f === "djOn" ? "DJ ON" : f === "professores" ? "PROFESSORES" : "ALUNOS"}

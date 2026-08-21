@@ -193,7 +193,7 @@ export default function ProfessorAlunosPage() {
                 </div>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="cursor-pointer text-djon-text/40 hover:brightness-110 transition-colors"
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                   type="button"
                 >
                   <X size={18} />
@@ -413,9 +413,12 @@ export default function ProfessorAlunosPage() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-djon-text font-bold text-sm truncate mb-1.5">
+                <Link
+                  href={`/dashboard/perfil/${u.id}`}
+                  className="mb-1.5 block truncate text-sm font-bold text-djon-text transition-colors hover:text-djon-accent"
+                >
                   {u.name}
-                </p>
+                </Link>
                 <p className="text-djon-text/40 text-xs truncate flex items-center gap-1.5">
                   <Mail size={10} className="shrink-0" />
                   <span className="truncate">{u.email}</span>
@@ -438,7 +441,7 @@ export default function ProfessorAlunosPage() {
                         href={`https://instagram.com/${u.socials.instagram}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
+                        className="flex items-center gap-2 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
                       >
                         <Instagram size={16} /> @{u.socials.instagram}
                       </a>
@@ -448,7 +451,7 @@ export default function ProfessorAlunosPage() {
                         href={`https://soundcloud.com/${u.socials.soundcloud}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-djon-text/30 hover:brightness-110 text-xs font-bold transition-colors"
+                        className="flex items-center gap-2 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
                       >
                         <SoundCloudIcon size={20} /> {u.socials.soundcloud}
                       </a>
@@ -459,7 +462,7 @@ export default function ProfessorAlunosPage() {
               <div className="col-span-2 flex w-full items-center justify-end gap-2 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-1">
                 <button
                   onClick={() => openEdit(u)}
-                  className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
+                  className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                   type="button"
                   title="Editar"
                   aria-label={`Editar ${u.name}`}
@@ -468,7 +471,7 @@ export default function ProfessorAlunosPage() {
                 </button>
                 <Link
                   href={`/dashboard/perfil/${u.id}`}
-                  className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
+                  className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                   title="Perfil"
                   aria-label={`Abrir perfil de ${u.name}`}
                 >

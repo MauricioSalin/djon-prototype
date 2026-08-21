@@ -157,7 +157,7 @@ export default function StudentPage() {
             <motion.div {...fadeUp(0.1)}>
               <Link
                 href="/dashboard/student/agendar"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:w-auto"
               >
                 <CalendarPlus size={15} /> SOLICITAR TREINO
               </Link>
@@ -305,7 +305,7 @@ export default function StudentPage() {
               <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.2)} />
             </div>
             <motion.div {...fadeUp(0.1)}>
-              <Link href="/dashboard/student/evento" className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink sm:w-auto">
+              <Link href="/dashboard/student/evento" className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:w-auto">
                 <Music2 size={13} /> + NOVO EVENTO
               </Link>
             </motion.div>
@@ -317,7 +317,7 @@ export default function StudentPage() {
               <p className="text-djon-text/30 text-sm font-bold mb-4">Nenhum evento cadastrado</p>
               <Link
                 href="/dashboard/student/evento"
-                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-6 py-2.5 rounded-full font-black text-xs tracking-widest"
+                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-6 py-2.5 rounded-full font-black text-xs tracking-widest transition-[filter] hover:brightness-90"
               >
                 <Music2 size={13} /> CADASTRAR EVENTO
               </Link>

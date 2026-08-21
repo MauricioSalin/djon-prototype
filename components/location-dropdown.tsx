@@ -122,8 +122,8 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
                   key={key}
                   type="button"
                   onClick={() => selectLocation(key)}
-                  className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
-                    selected ? "bg-djon-text/10 text-djon-text" : "text-djon-text/70 hover:brightness-110"
+                  className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-opacity hover:opacity-80 ${
+                    selected ? "bg-djon-text/10 text-djon-text" : "text-djon-text/70"
                   }`}
                   role="option"
                   aria-selected={selected}

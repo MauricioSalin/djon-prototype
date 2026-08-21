@@ -369,6 +369,18 @@
   }
 }
 
+@layer components {
+  button.bg-djon-accent:not([class*="transition-"]),
+  a.bg-djon-accent:not([class*="transition-"]) {
+    transition: filter 150ms ease;
+  }
+
+  button.bg-djon-accent:not(:disabled):hover,
+  a.bg-djon-accent:hover {
+    filter: brightness(0.9);
+  }
+}
+
 @media (max-width: 600px) {
   [data-sonner-toaster].app-toaster {
     width: auto;

@@ -45,7 +45,7 @@ export default function PublicPerfilPage() {
         <div className="max-w-7xl mx-auto px-4 h-12 flex items-center sm:px-6">
           <Link
             href="/dashboard/mural"
-            className="flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-bold tracking-wide transition-colors"
+            className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold tracking-wide transition-opacity hover:opacity-100"
           >
             <ArrowLeft size={13} /> Voltar ao Mural
           </Link>

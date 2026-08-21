@@ -87,7 +87,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
                   type="button"
                   aria-label="Fechar confirmação"
                   onClick={() => close(false)}
-                  className="cursor-pointer text-djon-text/40 transition-colors hover:brightness-110"
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />
                 </button>
@@ -101,7 +101,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={() => close(false)}
-                  className="cursor-pointer flex-1 rounded-full border border-djon-text/15 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-colors hover:brightness-110"
+                  className="cursor-pointer flex-1 rounded-full border border-djon-text/15 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70"
                 >
                   CANCELAR
                 </button>

@@ -91,14 +91,14 @@ export function ListPagination({
   const firstItem = (page - 1) * pageSize + 1;
   const lastItem = Math.min(page * pageSize, totalItems);
   const buttonClass =
-    "flex size-9 cursor-pointer items-center justify-center rounded-xl border text-xs font-black transition-colors disabled:cursor-not-allowed disabled:opacity-25";
+    "flex size-9 cursor-pointer items-center justify-center rounded-xl border text-xs font-black transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:opacity-25";
 
   return (
     <nav
       aria-label="Paginação da lista"
       className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-stretch"
     >
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-4 sm:justify-start">
+      <div className="flex items-center justify-between gap-3 sm:justify-start">
         <span className="whitespace-nowrap text-djon-micro font-black uppercase tracking-wider text-djon-text/30">
           Por página
         </span>
@@ -114,7 +114,7 @@ export function ListPagination({
         />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-bold text-djon-text/40">
           Mostrando{" "}
           <span className="text-djon-text/70">
@@ -129,7 +129,7 @@ export function ListPagination({
             aria-label="Página anterior"
             disabled={page === 1}
             onClick={() => onPageChange(page - 1)}
-            className={`${buttonClass} border-djon-text/10 text-djon-text/50 hover:brightness-110`}
+            className={`${buttonClass} border-djon-text/10 text-djon-text/50`}
           >
             <ChevronLeft size={15} />
           </button>
@@ -150,7 +150,7 @@ export function ListPagination({
                   className={`${buttonClass} ${
                     item === page
                       ? "border-djon-accent bg-djon-accent text-djon-ink"
-                      : "border-djon-text/10 text-djon-text/50 hover:brightness-110"
+                      : "border-djon-text/10 text-djon-text/50"
                   }`}
                 >
                   {item}
@@ -172,7 +172,7 @@ export function ListPagination({
             aria-label="Próxima página"
             disabled={page === totalPages}
             onClick={() => onPageChange(page + 1)}
-            className={`${buttonClass} border-djon-text/10 text-djon-text/50 hover:brightness-110`}
+            className={`${buttonClass} border-djon-text/10 text-djon-text/50`}
           >
             <ChevronRight size={15} />
           </button>

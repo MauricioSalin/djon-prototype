@@ -66,7 +66,7 @@ export default function LeadsAdminPage() {
                 options={statuses.map((status) => ({ value: status, label: status }))}
                 ariaLabel={`Status do contato de ${lead.firstName || lead.email}`} />
               <textarea value={lead.internalNotes ?? ""} onChange={(e) => updateLocal(lead.id, { internalNotes: e.target.value })} rows={3} placeholder="Notas internas" className={field} />
-              <div className="flex gap-2"><button onClick={() => void save(lead)} className="cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-xl bg-djon-accent py-2.5 text-xs font-black text-djon-ink"><Save size={13} />SALVAR</button><button onClick={() => void remove(lead)} aria-label="Excluir contato" className="cursor-pointer rounded-xl border border-djon-warning-red/20 px-3 text-djon-warning-red"><Trash2 size={14} /></button></div>
+              <div className="flex gap-2"><button onClick={() => void save(lead)} className="cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-xl bg-djon-accent py-2.5 text-xs font-black text-djon-ink transition-[filter] hover:brightness-90"><Save size={13} />SALVAR</button><button onClick={() => void remove(lead)} aria-label="Excluir contato" className="cursor-pointer rounded-xl border border-djon-warning-red/20 px-3 text-djon-warning-red transition-[filter] hover:brightness-110"><Trash2 size={14} /></button></div>
             </div>
           </div>
         </article>

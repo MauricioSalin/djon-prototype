@@ -48,7 +48,7 @@ function PDFViewer({ att, onClose }: { att: MaterialAttachment; onClose: () => v
           <button
             onClick={() => triggerDownload(att.url, att.name)}
             disabled={!hasUrl}
-            className="cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-full bg-djon-accent px-4 py-2 text-xs font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:flex-none"
+            className="cursor-pointer flex flex-1 items-center justify-center gap-2 rounded-full bg-djon-accent px-4 py-2 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:flex-none"
           >
             <Download size={13} /> BAIXAR
           </button>
@@ -90,7 +90,7 @@ function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () 
         <button
           onClick={(e) => { e.stopPropagation(); triggerDownload(att.url, att.name) }}
           disabled={!att.url}
-          className="cursor-pointer flex items-center gap-2 bg-djon-accent text-djon-ink px-4 py-2 rounded-full text-xs font-black tracking-widest hover:opacity-90 transition-opacity"
+          className="cursor-pointer flex items-center gap-2 bg-djon-accent text-djon-ink px-4 py-2 rounded-full text-xs font-black tracking-widest transition-[filter] hover:brightness-90"
         >
           <Download size={13} /> BAIXAR
         </button>
@@ -158,7 +158,7 @@ export default function MaterialDetailPage() {
         <p className="text-djon-text/40 font-bold text-lg mb-6">Material não encontrado</p>
         <Link
           href="/dashboard/material"
-          className="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90"
+          className="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
         >
           <ArrowLeft size={15} /> VOLTAR AO MATERIAL
         </Link>
@@ -202,7 +202,7 @@ export default function MaterialDetailPage() {
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-14 w-full sm:px-6 sm:py-16">
           <motion.div {...fadeUp(0)}>
             <div className="mb-8 flex flex-wrap items-center gap-4">
-              <Link href="/dashboard/material" className="inline-flex items-center gap-2 text-djon-text/50 hover:brightness-110 text-xs font-black tracking-widest uppercase transition-colors">
+              <Link href="/dashboard/material" className="inline-flex items-center gap-2 text-djon-text opacity-50 text-xs font-black tracking-widest uppercase transition-opacity hover:opacity-100">
                 <ArrowLeft size={14} /> VOLTAR AO MATERIAL
               </Link>
             </div>
@@ -243,7 +243,7 @@ export default function MaterialDetailPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/dashboard/material/novo?edit=${material.id}`)}
-                className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90"
+                className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
               >
                 <Edit2 size={13} /> EDITAR
               </button>
@@ -318,7 +318,7 @@ export default function MaterialDetailPage() {
                     )}
                     <button
                       onClick={() => triggerDownload(att.url, att.name)}
-                      className="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-djon-accent px-3 py-2 text-xs font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:flex-none"
+                      className="cursor-pointer flex flex-1 items-center justify-center gap-1.5 rounded-full bg-djon-accent px-3 py-2 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:flex-none"
                     >
                       <Download size={13} /> BAIXAR
                     </button>

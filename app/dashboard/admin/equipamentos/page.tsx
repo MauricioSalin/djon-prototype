@@ -78,7 +78,7 @@ export default function EquipmentsAdminPage() {
           <p className="text-xs font-bold text-djon-accent">Administração</p>
           <h1 className="text-3xl font-black tracking-tighter text-djon-text">Equipamentos</h1>
         </div>
-        <button onClick={openNew} className="flex items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink">
+        <button onClick={openNew} className="flex items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink transition-[filter] hover:brightness-90">
           <Plus size={14} /> NOVO EQUIPAMENTO
         </button>
       </div>
@@ -98,11 +98,11 @@ export default function EquipmentsAdminPage() {
                   <p className="mt-1 text-xs text-djon-text/45">{equipment.unitLabel}</p>
                   {equipment.description && <p className="mt-2 text-xs leading-relaxed text-djon-text/35">{equipment.description}</p>}
                 </div>
-                <button onClick={() => edit(equipment)} aria-label={`Editar ${equipment.name}`} className="p-2 text-djon-text/40 hover:brightness-110">
+                <button onClick={() => edit(equipment)} aria-label={`Editar ${equipment.name}`} className="p-2 text-djon-text opacity-40 transition-opacity hover:opacity-100">
                   <Edit2 size={15} />
                 </button>
                 {equipment.active && (
-                  <button onClick={() => void deactivate(equipment)} aria-label={`Desativar ${equipment.name}`} className="p-2 text-djon-warning-red/60 hover:brightness-110">
+                  <button onClick={() => void deactivate(equipment)} aria-label={`Desativar ${equipment.name}`} className="p-2 text-djon-warning-red opacity-60 transition-opacity hover:opacity-100">
                     <Trash2 size={15} />
                   </button>
                 )}
@@ -128,7 +128,7 @@ export default function EquipmentsAdminPage() {
                 <p className="text-xs font-black text-djon-accent">{editingId ? "EDITAR" : "NOVO"}</p>
                 <h2 className="text-xl font-black text-djon-text">Equipamento</h2>
               </div>
-              <button type="button" onClick={() => setOpen(false)} className="text-djon-text/40"><X size={18} /></button>
+              <button type="button" onClick={() => setOpen(false)} className="text-djon-text opacity-40 transition-opacity hover:opacity-100"><X size={18} /></button>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-black text-djon-text/40">NOME</label>
@@ -152,7 +152,7 @@ export default function EquipmentsAdminPage() {
                 Equipamento ativo
               </label>
             )}
-            <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl bg-djon-accent py-3 text-xs font-black text-djon-ink">
+            <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl bg-djon-accent py-3 text-xs font-black text-djon-ink transition-[filter] hover:brightness-90">
               <Save size={14} /> SALVAR EQUIPAMENTO
             </button>
           </form>

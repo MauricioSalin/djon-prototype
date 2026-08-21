@@ -364,7 +364,7 @@ export default function NovoMaterialPage() {
           <motion.button
             type="button"
             onClick={() => requestExit("/dashboard/material")}
-            className="cursor-pointer inline-flex items-center gap-2 text-djon-text/40 hover:brightness-110 text-xs font-black tracking-widest transition-colors mb-10"
+            className="cursor-pointer mb-10 inline-flex items-center gap-2 text-djon-text opacity-40 text-xs font-black tracking-widest transition-opacity hover:opacity-100"
             {...fadeUp(0)}
           >
             <ArrowLeft size={14} />
@@ -483,7 +483,7 @@ export default function NovoMaterialPage() {
                   type="button"
                   onClick={() => void persistMaterial(primaryStatus)}
                   disabled={saving || (primaryStatus === "published" && (!title.trim() || !category))}
-                  className="cursor-pointer w-full bg-djon-accent disabled:opacity-40 disabled:cursor-not-allowed text-djon-ink font-black text-sm tracking-widest py-3.5 rounded-full transition-opacity hover:opacity-90"
+                  className="cursor-pointer w-full bg-djon-accent disabled:opacity-40 disabled:cursor-not-allowed text-djon-ink font-black text-sm tracking-widest py-3.5 rounded-full transition-[filter] hover:brightness-90"
                 >
                   {saving
                     ? "SALVANDO..."
@@ -573,7 +573,7 @@ export default function NovoMaterialPage() {
                   aria-label="Continuar editando"
                   onClick={() => setExitModalOpen(false)}
                   disabled={saving}
-                  className="cursor-pointer rounded-full p-2 text-djon-text/40 transition-colors hover:brightness-110 disabled:cursor-not-allowed"
+                  className="cursor-pointer rounded-full p-2 text-djon-text opacity-40 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
                 >
                   <X size={18} />
                 </button>
@@ -598,7 +598,7 @@ export default function NovoMaterialPage() {
                   type="button"
                   onClick={() => setExitModalOpen(false)}
                   disabled={saving}
-                  className="cursor-pointer rounded-full border border-djon-text/15 px-4 py-3 text-xs font-black tracking-wider text-djon-text/70 transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer rounded-full border border-djon-text/15 px-4 py-3 text-xs font-black tracking-wider text-djon-text/70 transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   CONTINUAR
                 </button>
@@ -622,7 +622,7 @@ export default function NovoMaterialPage() {
                     )
                   }
                   disabled={saving || (editingStatus === "published" && Boolean(editingId) && (!title.trim() || !category))}
-                  className="cursor-pointer rounded-full bg-djon-accent px-4 py-3 text-xs font-black tracking-wider text-djon-ink transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer rounded-full bg-djon-accent px-4 py-3 text-xs font-black tracking-wider text-djon-ink transition-[filter] hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {saving
                     ? "SALVANDO..."

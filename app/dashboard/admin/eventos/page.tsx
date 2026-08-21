@@ -80,8 +80,8 @@ export default function AdminEventosPage() {
       <div className="flex flex-wrap gap-2">
         {(["djOn", "professor", "student"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-wide transition-all ${
-              tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:brightness-110"
+            className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-wide transition-colors ${
+              tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:border-djon-accent"
             }`}>
             {t === "djOn"
               ? <><Star size={11} /> EVENTOS DJ ON</>
@@ -101,7 +101,7 @@ export default function AdminEventosPage() {
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}>
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-black text-djon-text tracking-tighter">{editingId ? "Editar Evento" : "Novo Evento"}</h2>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:brightness-110"><X size={18} /></button>
+                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"><X size={18} /></button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Type selector */}
@@ -110,8 +110,8 @@ export default function AdminEventosPage() {
                   <div className="flex gap-2">
                     {(["djOn", "professor", "student"] as const).map((t) => (
                       <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
-                        className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
-                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:brightness-110"
+                        className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:opacity-80 ${
+                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10"
                         }`}>
                         {t === "djOn" ? "DJ ON" : t === "professor" ? "PROFESSOR" : "ALUNO"}
                       </button>
@@ -195,14 +195,23 @@ export default function AdminEventosPage() {
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
                   <span className="text-djon-text/30 text-xs flex items-center gap-1"><Clock size={10} /> {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR")} {ev.time}</span>
                   <span className="text-djon-text/30 text-xs flex items-center gap-1"><MapPin size={10} /> {ev.location}</span>
-                  {ev.instagram && <span className="text-djon-light-purple text-xs flex items-center gap-1"><Instagram size={10} /> @{ev.instagram}</span>}
+                  {ev.instagram && (
+                    <a
+                      href={`https://instagram.com/${ev.instagram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
+                    >
+                      <Instagram size={10} /> @{ev.instagram}
+                    </a>
+                  )}
                 </div>
               </div>
               <div className="col-span-2 flex w-full items-center justify-end gap-1 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
-                <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5">
+                <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100">
                   <Edit2 size={14} />
                 </button>
-                <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5">
+                <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100">
                   <Trash2 size={14} />
                 </button>
               </div>

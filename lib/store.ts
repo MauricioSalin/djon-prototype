@@ -182,7 +182,28 @@ type ApiRecord = Record<string, unknown>;
 type ApiPage = { items: ApiRecord[]; total: number };
 type CategoryRecord = { id: string; name: string };
 
+type PortalCacheSnapshot = {
+  version: number;
+  savedAt: number;
+  userId: string;
+  role: Role;
+  users: User[];
+  events: DJEvent[];
+  bookings: Booking[];
+  materials: Material[];
+  categories: CategoryRecord[];
+  notifications: Notification[];
+  units: Unit[];
+  equipments: Equipment[];
+  leads: Lead[];
+};
+
 const TOKEN_KEY = "djon_access_token";
+const PORTAL_CACHE_KEY = "djon_portal_cache_v1";
+const PORTAL_CACHE_VERSION = 1;
+const PORTAL_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
+const NOTIFICATIONS_STALE_MS = 10 * 1000;
+const BOOKINGS_STALE_MS = 4 * 1000;
 export const SESSION_EXPIRED_EVENT = "djon:session-expired";
 let sessionExpirationAnnounced = false;
 const userNameCollator = new Intl.Collator("pt-BR", {
@@ -205,6 +226,16 @@ function apiBase() {
   if (typeof window !== "undefined")
     return `http://${window.location.hostname}:3333/api/v1`;
   return "http://localhost:3333/api/v1";
+}
+
+function clearPortalCache() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(PORTAL_CACHE_KEY);
+  } catch {
+    // O cache de sessão é apenas uma otimização; armazenamento indisponível
+    // não pode interromper autenticação nem requisições da aplicação.
+  }
 }
 
 function assetUrl(value?: string) {
@@ -437,6 +468,9 @@ async function request<T>(
     if (showError) notifyRequestError(error);
     throw error;
   }
+  if ((options.method ?? "GET").toUpperCase() !== "GET") {
+    clearPortalCache();
+  }
   return payload as T;
 }
 
@@ -468,6 +502,15 @@ class ApiStore {
   private bootstrapPromise: Promise<User | null> | null = null;
   private restoreSessionPromise: Promise<User | null> | null = null;
   private publicUnitsPromise: Promise<Unit[]> | null = null;
+  private adminUsersPromise: Promise<User[]> | null = null;
+  private notificationsPromise: Promise<Notification[]> | null = null;
+  private bookingsPromise: Promise<Booking[]> | null = null;
+  private hasBootstrapData = false;
+  private bootstrapLoadedAt = 0;
+  private notificationsLoadedAt = 0;
+  private bookingsLoadedAt = 0;
+  private publicUnitsLoadedAt = 0;
+  private adminUsersLoadedAt = 0;
 
   hasSession() {
     return (
@@ -495,11 +538,32 @@ class ApiStore {
 
   async bootstrap(force = false): Promise<User | null> {
     if (!this.hasSession()) return null;
-    if (!force && this.bootstrapPromise) return this.bootstrapPromise;
-    this.bootstrapPromise = this.loadAll().finally(() => {
+
+    if (!force && this.currentUser && this.hasBootstrapData) {
+      if (
+        Date.now() - this.bootstrapLoadedAt > PORTAL_CACHE_MAX_AGE_MS &&
+        !this.bootstrapPromise
+      ) {
+        this.bootstrapPromise = this.loadAll(this.currentUser).finally(() => {
+          this.bootstrapPromise = null;
+        });
+        void this.bootstrapPromise.catch(() => undefined);
+      }
+      return this.currentUser;
+    }
+
+    if (this.bootstrapPromise) return this.bootstrapPromise;
+    this.bootstrapPromise = this.bootstrapPortal(force).finally(() => {
       this.bootstrapPromise = null;
     });
     return this.bootstrapPromise;
+  }
+
+  private async bootstrapPortal(force: boolean) {
+    const me = await this.restoreSession();
+    if (!me) return null;
+    if (!force && this.hydratePortalCache(me)) return me;
+    return this.loadAll(me);
   }
 
   async restoreSession(): Promise<User | null> {
@@ -528,8 +592,9 @@ class ApiStore {
     return this.restoreSessionPromise;
   }
 
-  private async loadAll() {
-    const me = normalizeUser(await request<ApiRecord>("/users/me"));
+  private async loadAll(authenticatedUser?: User) {
+    const me = authenticatedUser ?? (await this.restoreSession());
+    if (!me) return null;
     this.currentUser = me;
     const usersPath =
       me.role === "student" ? "/users?role=professor" : "/users";
@@ -542,6 +607,7 @@ class ApiStore {
       notifications,
       units,
       equipments,
+      leads,
     ] = await Promise.all([
       this.fetchAllPages(usersPath),
       this.fetchAllPages("/events"),
@@ -551,6 +617,9 @@ class ApiStore {
       request<ApiRecord[]>("/notifications"),
       request<ApiRecord[]>("/units"),
       request<ApiRecord[]>("/equipments"),
+      me.role === "admin"
+        ? request<ApiRecord[]>("/leads")
+        : Promise.resolve<ApiRecord[]>([]),
     ]);
     this.users = this.uniqueUsers([me, ...userItems.map(normalizeUser)]);
     this.events = eventItems.map(normalizeEvent);
@@ -565,8 +634,14 @@ class ApiStore {
     );
     this.units = units.map(normalizeUnit);
     this.equipments = equipments.map(normalizeEquipment);
-    if (me.role === "admin")
-      this.leads = (await request<ApiRecord[]>("/leads")).map(normalizeLead);
+    this.leads = leads.map(normalizeLead);
+    const loadedAt = Date.now();
+    this.hasBootstrapData = true;
+    this.bootstrapLoadedAt = loadedAt;
+    this.notificationsLoadedAt = loadedAt;
+    this.bookingsLoadedAt = loadedAt;
+    this.publicUnitsLoadedAt = loadedAt;
+    this.persistPortalCache();
     return me;
   }
 
@@ -618,12 +693,27 @@ class ApiStore {
     return material;
   }
 
-  async refreshNotifications() {
-    const notifications = await request<ApiRecord[]>("/notifications");
-    this.notifications = notifications.map((item) =>
-      this.normalizeNotification(item),
-    );
-    return this.getNotifications();
+  async refreshNotifications(force = false) {
+    if (
+      !force &&
+      this.notificationsLoadedAt > 0 &&
+      Date.now() - this.notificationsLoadedAt < NOTIFICATIONS_STALE_MS
+    ) {
+      return this.getNotifications();
+    }
+    if (this.notificationsPromise) return this.notificationsPromise;
+    this.notificationsPromise = request<ApiRecord[]>("/notifications")
+      .then((notifications) => {
+        this.notifications = notifications.map((item) =>
+          this.normalizeNotification(item),
+        );
+        this.notificationsLoadedAt = Date.now();
+        return this.getNotifications();
+      })
+      .finally(() => {
+        this.notificationsPromise = null;
+      });
+    return this.notificationsPromise;
   }
 
   async markNotificationRead(id: string) {
@@ -650,11 +740,25 @@ class ApiStore {
     );
   }
 
-  async refreshBookings() {
-    this.bookings = (await this.fetchAllPages("/bookings")).map(
-      normalizeBooking,
-    );
-    return this.getBookings();
+  async refreshBookings(force = false) {
+    if (
+      !force &&
+      this.bookingsLoadedAt > 0 &&
+      Date.now() - this.bookingsLoadedAt < BOOKINGS_STALE_MS
+    ) {
+      return this.getBookings();
+    }
+    if (this.bookingsPromise) return this.bookingsPromise;
+    this.bookingsPromise = this.fetchAllPages("/bookings")
+      .then((bookings) => {
+        this.bookings = bookings.map(normalizeBooking);
+        this.bookingsLoadedAt = Date.now();
+        return this.getBookings();
+      })
+      .finally(() => {
+        this.bookingsPromise = null;
+      });
+    return this.bookingsPromise;
   }
 
   async getAvailability(
@@ -743,14 +847,31 @@ class ApiStore {
   }
 
   async listAdminUsers(includeInactive = false) {
-    const items = await this.fetchAllPages(
+    if (
+      includeInactive &&
+      this.adminUsersLoadedAt > 0 &&
+      Date.now() - this.adminUsersLoadedAt < PORTAL_CACHE_MAX_AGE_MS
+    ) {
+      return this.getUsers();
+    }
+    if (includeInactive && this.adminUsersPromise) {
+      return this.adminUsersPromise;
+    }
+    const load = this.fetchAllPages(
       `/users${includeInactive ? "?includeInactive=true" : ""}`,
-    );
-    this.users = this.uniqueUsers([
-      ...(this.currentUser ? [this.currentUser] : []),
-      ...items.map(normalizeUser),
-    ]);
-    return this.getUsers();
+    ).then((items) => {
+      this.users = this.uniqueUsers([
+        ...(this.currentUser ? [this.currentUser] : []),
+        ...items.map(normalizeUser),
+      ]);
+      if (includeInactive) this.adminUsersLoadedAt = Date.now();
+      return this.getUsers();
+    });
+    if (!includeInactive) return load;
+    this.adminUsersPromise = load.finally(() => {
+      this.adminUsersPromise = null;
+    });
+    return this.adminUsersPromise;
   }
 
   async changePassword(currentPassword: string, newPassword: string) {
@@ -1281,10 +1402,17 @@ class ApiStore {
   }
 
   async getPublicUnits() {
+    if (
+      this.publicUnitsLoadedAt > 0 &&
+      Date.now() - this.publicUnitsLoadedAt < PORTAL_CACHE_MAX_AGE_MS
+    ) {
+      return this.getUnits();
+    }
     if (!this.publicUnitsPromise) {
       this.publicUnitsPromise = request<ApiRecord[]>("/units")
         .then((items) => {
           this.units = items.map(normalizeUnit);
+          this.publicUnitsLoadedAt = Date.now();
           return this.getUnits();
         })
         .finally(() => {
@@ -1295,6 +1423,7 @@ class ApiStore {
   }
 
   async listAdminUnits() {
+    this.publicUnitsLoadedAt = 0;
     this.units = (await request<ApiRecord[]>("/units/admin/all")).map(
       normalizeUnit,
     );
@@ -1543,7 +1672,86 @@ class ApiStore {
     };
   }
 
+  private hydratePortalCache(me: User) {
+    if (typeof window === "undefined") return false;
+    try {
+      const raw = sessionStorage.getItem(PORTAL_CACHE_KEY);
+      if (!raw) return false;
+      const snapshot = JSON.parse(raw) as Partial<PortalCacheSnapshot>;
+      const arrays = [
+        snapshot.users,
+        snapshot.events,
+        snapshot.bookings,
+        snapshot.materials,
+        snapshot.categories,
+        snapshot.notifications,
+        snapshot.units,
+        snapshot.equipments,
+        snapshot.leads,
+      ];
+      if (
+        snapshot.version !== PORTAL_CACHE_VERSION ||
+        snapshot.userId !== me.id ||
+        snapshot.role !== me.role ||
+        typeof snapshot.savedAt !== "number" ||
+        Date.now() - snapshot.savedAt > PORTAL_CACHE_MAX_AGE_MS ||
+        arrays.some((items) => !Array.isArray(items))
+      ) {
+        clearPortalCache();
+        return false;
+      }
+
+      this.currentUser = me;
+      this.users = this.uniqueUsers([
+        me,
+        ...(snapshot.users as User[]).filter((user) => user.id !== me.id),
+      ]);
+      this.events = snapshot.events as DJEvent[];
+      this.bookings = snapshot.bookings as Booking[];
+      this.materials = snapshot.materials as Material[];
+      this.categories = snapshot.categories as CategoryRecord[];
+      this.notifications = snapshot.notifications as Notification[];
+      this.units = snapshot.units as Unit[];
+      this.equipments = snapshot.equipments as Equipment[];
+      this.leads = snapshot.leads as Lead[];
+      this.hasBootstrapData = true;
+      this.bootstrapLoadedAt = snapshot.savedAt;
+      this.notificationsLoadedAt = snapshot.savedAt;
+      this.bookingsLoadedAt = snapshot.savedAt;
+      this.publicUnitsLoadedAt = snapshot.savedAt;
+      return true;
+    } catch {
+      clearPortalCache();
+      return false;
+    }
+  }
+
+  private persistPortalCache() {
+    if (typeof window === "undefined" || !this.currentUser) return;
+    const snapshot: PortalCacheSnapshot = {
+      version: PORTAL_CACHE_VERSION,
+      savedAt: this.bootstrapLoadedAt,
+      userId: this.currentUser.id,
+      role: this.currentUser.role,
+      users: this.users,
+      events: this.events,
+      bookings: this.bookings,
+      materials: this.materials,
+      categories: this.categories,
+      notifications: this.notifications,
+      units: this.units,
+      equipments: this.equipments,
+      leads: this.leads,
+    };
+    try {
+      sessionStorage.setItem(PORTAL_CACHE_KEY, JSON.stringify(snapshot));
+    } catch {
+      clearPortalCache();
+    }
+  }
+
   private reset() {
+    clearPortalCache();
     this.currentUser = null;
     this.users = [];
     this.events = [];
@@ -1554,8 +1762,18 @@ class ApiStore {
     this.units = [];
     this.equipments = [];
     this.leads = [];
+    this.hasBootstrapData = false;
+    this.bootstrapLoadedAt = 0;
+    this.notificationsLoadedAt = 0;
+    this.bookingsLoadedAt = 0;
+    this.publicUnitsLoadedAt = 0;
+    this.adminUsersLoadedAt = 0;
+    this.bootstrapPromise = null;
     this.restoreSessionPromise = null;
     this.publicUnitsPromise = null;
+    this.adminUsersPromise = null;
+    this.notificationsPromise = null;
+    this.bookingsPromise = null;
   }
 }
 

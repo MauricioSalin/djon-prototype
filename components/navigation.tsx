@@ -153,7 +153,7 @@ export function Navigation() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between sm:px-6">
-        <button onClick={() => scrollToSection("#hero")} className="cursor-pointer">
+        <button onClick={() => scrollToSection("#hero")} className="cursor-pointer transition-opacity hover:opacity-80">
           <motion.div
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -242,7 +242,7 @@ export function Navigation() {
                     <Link
                       href={portalHomeForRole(user.role)}
                       onClick={() => setAccountOpen(false)}
-                      className="flex items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-text/65 transition-colors hover:brightness-110"
+                      className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-text opacity-[0.65] transition-opacity hover:opacity-100"
                     >
                       <LayoutDashboard size={14} />
                       Acessar portal
@@ -250,7 +250,7 @@ export function Navigation() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="cursor-pointer flex w-full items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-warning-red/75 transition-colors hover:brightness-110"
+                      className="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-warning-red opacity-75 transition-opacity hover:opacity-100"
                     >
                       <LogOut size={14} />
                       Sair
@@ -275,7 +275,7 @@ export function Navigation() {
         </div>
 
         <motion.button
-          className="cursor-pointer md:hidden p-2"
+          className="cursor-pointer p-2 transition-opacity hover:opacity-70 md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           whileTap={{ scale: 0.9 }}
         >
@@ -331,7 +331,7 @@ export function Navigation() {
               <LocationDropdown align="left" mobile />
               <motion.button
                 onClick={() => scrollToSection("#contato")}
-                className="cursor-pointer w-full bg-djon-accent text-djon-ink px-6 py-3 rounded-full font-black text-xs tracking-widest mt-4"
+                className="cursor-pointer w-full bg-djon-accent text-djon-ink px-6 py-3 rounded-full font-black text-xs tracking-widest mt-4 transition-[filter] hover:brightness-90"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -354,7 +354,7 @@ export function Navigation() {
                     <Link
                       href={portalHomeForRole(user.role)}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-xs font-black tracking-widest text-djon-ink"
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
                     >
                       <LayoutDashboard size={14} />
                       ACESSAR PORTAL
@@ -362,7 +362,7 @@ export function Navigation() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-djon-warning-red/25 px-6 py-3 text-xs font-black tracking-widest text-djon-warning-red"
+                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-djon-warning-red/25 px-6 py-3 text-xs font-black tracking-widest text-djon-warning-red transition-[filter] hover:brightness-110"
                     >
                       <LogOut size={14} />
                       SAIR

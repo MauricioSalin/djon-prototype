@@ -41,7 +41,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-djon-black/75" />
       </div>
 
-      <Link href="/" className="absolute top-6 left-6 flex items-center gap-2 text-djon-text/50 hover:brightness-110 text-xs font-bold tracking-wide transition-colors z-10">
+      <Link href="/" className="absolute top-6 left-6 z-10 flex items-center gap-2 text-djon-text opacity-50 text-xs font-bold tracking-wide transition-opacity hover:opacity-100">
         <ArrowLeft size={14} />
         VOLTAR
       </Link>

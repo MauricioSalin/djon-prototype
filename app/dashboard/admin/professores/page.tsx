@@ -138,7 +138,7 @@ export default function ProfessoresAdminPage() {
                 <h2 className="text-xl font-black text-djon-text tracking-tighter">
                   {editingId ? "Editar Professor" : "Cadastrar Professor"}
                 </h2>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text/40 hover:brightness-110">
+                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100">
                   <X size={18} />
                 </button>
               </div>
@@ -246,7 +246,7 @@ export default function ProfessoresAdminPage() {
               <div className="min-w-0 flex-1">
                 <Link
                   href={`/dashboard/perfil/${u.id}`}
-                  className="block text-djon-text hover:brightness-110 font-bold text-sm truncate mb-1.5 transition-colors underline-offset-4 hover:underline"
+                  className="mb-1.5 block truncate text-sm font-bold text-djon-text transition-colors hover:text-djon-accent"
                 >
                   {u.name}
                 </Link>
@@ -268,7 +268,7 @@ export default function ProfessoresAdminPage() {
               <div className="col-span-2 flex w-full items-center justify-end gap-2 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
                 {u.active !== false && <button
                   onClick={() => openEdit(u)}
-                  className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors p-1.5"
+                  className="cursor-pointer p-1.5 text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   type="button"
                   title="Editar"
                   aria-label={`Editar ${u.name}`}
@@ -277,11 +277,11 @@ export default function ProfessoresAdminPage() {
                 </button>}
                 {u.active !== false ? <button
                   onClick={() => void handleDelete(u)}
-                  className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1.5"
+                  className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                   type="button"
                 >
                   <Trash2 size={14} />
-                </button> : <button onClick={() => void handleRestore(u.id)} type="button" title="Restaurar" aria-label={`Restaurar ${u.name}`} className="cursor-pointer p-1.5 text-djon-accent"><RotateCcw size={14} /></button>}
+                </button> : <button onClick={() => void handleRestore(u.id)} type="button" title="Restaurar" aria-label={`Restaurar ${u.name}`} className="cursor-pointer p-1.5 text-djon-accent transition-[filter] hover:brightness-110"><RotateCcw size={14} /></button>}
               </div>
             </motion.div>
           ))}

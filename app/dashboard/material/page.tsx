@@ -198,7 +198,7 @@ export default function MaterialPage() {
                   >
                     <button
                       onClick={() => setActiveCategory(cat)}
-                      className="cursor-pointer text-xs font-black tracking-widest"
+                      className="cursor-pointer text-xs font-black tracking-widest transition-opacity hover:opacity-70"
                     >
                       {cat.toUpperCase()}
                     </button>
@@ -227,10 +227,10 @@ export default function MaterialPage() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-xs font-black tracking-widest transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-full text-xs font-black tracking-widest transition-all cursor-pointer hover:opacity-80 ${
                     active
                       ? "bg-djon-accent text-djon-ink"
-                      : "bg-djon-text/6 text-djon-text/50 hover:brightness-110 border border-djon-text/10"
+                    : "bg-djon-text/6 text-djon-text/50 border border-djon-text/10"
                   }`}
                 >
                   {cat.toUpperCase()}
@@ -251,7 +251,7 @@ export default function MaterialPage() {
           {isProfessor && (
             <motion.button
               onClick={() => router.push("/dashboard/material/novo")}
-              className="cursor-pointer flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:w-auto"
+              className="cursor-pointer flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:w-auto"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               {...fadeUp(0.15)}
@@ -384,7 +384,7 @@ export default function MaterialPage() {
                 </div>
                 <button
                   onClick={() => setCategoryModal(null)}
-                  className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
+                  className="cursor-pointer text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   type="button"
                 >
                   <X size={18} />
@@ -411,7 +411,7 @@ export default function MaterialPage() {
                 <button
                   type="submit"
                   disabled={!categoryModal.value.trim()}
-                  className="cursor-pointer w-full bg-djon-accent disabled:opacity-40 disabled:cursor-not-allowed text-djon-ink font-black text-sm tracking-widest py-3 rounded-full transition-opacity hover:opacity-90"
+                  className="cursor-pointer w-full bg-djon-accent disabled:opacity-40 disabled:cursor-not-allowed text-djon-ink font-black text-sm tracking-widest py-3 rounded-full transition-[filter] hover:brightness-90"
                 >
                   {categoryModal.mode === "create" ? "CRIAR CATEGORIA" : "SALVAR CATEGORIA"}
                 </button>
@@ -444,7 +444,7 @@ export default function MaterialPage() {
                 </div>
                 <button
                   onClick={() => setCategoryDelete(null)}
-                  className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
+                  className="cursor-pointer text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   type="button"
                 >
                   <X size={18} />
@@ -468,7 +468,7 @@ export default function MaterialPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setCategoryDelete(null)}
-                    className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:brightness-110 text-xs font-black tracking-widest transition-colors"
+                    className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 text-xs font-black tracking-widest transition-opacity hover:opacity-70"
                     type="button"
                   >
                     CANCELAR
@@ -508,7 +508,7 @@ export default function MaterialPage() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setDeleteId(null)}
-                  className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 hover:brightness-110 text-xs font-black tracking-widest transition-colors"
+                  className="cursor-pointer flex-1 py-3 rounded-full border border-djon-text/15 text-djon-text/60 text-xs font-black tracking-widest transition-opacity hover:opacity-70"
                 >
                   CANCELAR
                 </button>

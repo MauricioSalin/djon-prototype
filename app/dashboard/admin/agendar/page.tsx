@@ -123,6 +123,17 @@ export default function AdminAgendarPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!showForm) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [showForm]);
+
   const openNew = () => {
     setForm({
       ...emptyForm,
@@ -233,13 +244,16 @@ export default function AdminAgendarPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="djon-scroll my-4 max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:my-6 sm:p-6"
+              className="djon-scroll max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:p-6"
+              data-lenis-prevent="true"
+              data-lenis-prevent-wheel="true"
+              data-lenis-prevent-touch="true"
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
@@ -250,7 +264,7 @@ export default function AdminAgendarPage() {
                 </h2>
                 <button
                   onClick={() => setShowForm(false)}
-                  className="cursor-pointer text-djon-text/40 hover:brightness-110"
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />
                 </button>
@@ -274,7 +288,7 @@ export default function AdminAgendarPage() {
                             time: "",
                           })
                         }
-                        className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
+                        className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:opacity-80 ${
                           form.type === type
                             ? "bg-djon-accent text-djon-ink"
                             : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10"
@@ -420,7 +434,7 @@ export default function AdminAgendarPage() {
                           key={s}
                           type="button"
                           onClick={() => setForm({ ...form, status: s })}
-                          className={`cursor-pointer flex-1 py-2 rounded-xl text-djon-label font-black tracking-wide transition-all ${
+                          className={`cursor-pointer flex-1 py-2 rounded-xl text-djon-label font-black tracking-wide transition-all hover:opacity-80 ${
                             form.status === s
                               ? "bg-djon-accent text-djon-ink"
                               : "bg-djon-text/5 text-djon-text/40 border border-djon-text/10"
@@ -521,14 +535,14 @@ export default function AdminAgendarPage() {
                   <button
                     aria-label={`Editar agendamento ${b.title}`}
                     onClick={() => openEdit(b)}
-                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1"
+                    className="cursor-pointer p-1 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                   >
                     <Edit2 size={13} />
                   </button>
                   <button
                     aria-label={`Cancelar agendamento ${b.title}`}
                     onClick={() => void handleDelete(b)}
-                    className="cursor-pointer text-djon-text/20 hover:brightness-110 transition-colors p-1"
+                    className="cursor-pointer p-1 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                   >
                     <Trash2 size={13} />
                   </button>

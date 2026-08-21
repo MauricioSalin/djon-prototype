@@ -23,6 +23,8 @@ import {
   Save,
   Trash2,
   Plus,
+  MapPin,
+  Headphones,
 } from "lucide-react";
 import {
   store,
@@ -181,7 +183,7 @@ function CustomDropdown({
                   onChange(opt.value);
                   setOpen(false);
                 }}
-                className="cursor-pointer w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-djon-text/60 hover:brightness-110 transition-all"
+                className="cursor-pointer w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-djon-text opacity-60 transition-opacity hover:opacity-100"
               >
                 {opt.dot && (
                   <span
@@ -406,7 +408,7 @@ function BookingDetail({
               <button
                 onClick={() => setEditing(true)}
                 aria-label="Editar agendamento"
-                className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors p-1"
+                className="cursor-pointer p-1 text-djon-text opacity-30 transition-opacity hover:opacity-100"
               >
                 <Edit2 size={14} />
               </button>
@@ -415,7 +417,7 @@ function BookingDetail({
               <button
                 onClick={() => void handleRemove()}
                 aria-label="Remover agendamento"
-                className="cursor-pointer p-1 text-djon-text/30 transition-colors hover:brightness-110"
+                className="cursor-pointer p-1 text-djon-text opacity-30 transition-opacity hover:opacity-100"
               >
                 <Trash2 size={14} />
               </button>
@@ -423,7 +425,7 @@ function BookingDetail({
             <button
               onClick={onClose}
               aria-label="Fechar detalhes"
-              className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
+              className="cursor-pointer text-djon-text opacity-30 transition-opacity hover:opacity-100"
             >
               <X size={16} />
             </button>
@@ -451,7 +453,7 @@ function BookingDetail({
               </div>
               {bk.unitLabel && (
                 <div className="flex items-center gap-3 text-djon-text/50 text-xs">
-                  <span className="w-3.5 text-center">•</span>
+                  <MapPin size={14} className="shrink-0" />
                   {bk.unitLabel}
                 </div>
               )}
@@ -463,7 +465,8 @@ function BookingDetail({
               )}
               {bk.equipmentName && (
                 <div className="flex items-center gap-3 text-djon-text/50 text-xs">
-                  <span className="w-3.5 text-center">•</span>Equipamento:{" "}
+                  <Headphones size={14} className="shrink-0" />
+                  Equipamento:{" "}
                   {bk.equipmentName}
                 </div>
               )}
@@ -502,7 +505,7 @@ function BookingDetail({
                   type="button"
                   onClick={() => void handleAccept()}
                   disabled={reviewing !== null}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-djon-accent py-2.5 text-xs font-black tracking-wide text-djon-ink transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-djon-accent py-2.5 text-xs font-black tracking-wide text-djon-ink transition-[filter] hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Check size={14} />
                   {reviewing === "accept" ? "ACEITANDO..." : "ACEITAR"}
@@ -531,7 +534,7 @@ function BookingDetail({
                         time: "",
                       })
                     }
-                    className={`cursor-pointer flex-1 py-2 rounded-xl text-xs font-black tracking-wide transition-all ${
+                    className={`cursor-pointer flex-1 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:opacity-80 ${
                       form.type === type
                         ? "bg-djon-accent text-djon-ink"
                         : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10"
@@ -652,7 +655,7 @@ function BookingDetail({
                     onClick={() =>
                       setForm({ ...form, status: s.value as Booking["status"] })
                     }
-                    className={`cursor-pointer flex-1 py-2 rounded-xl text-djon-label font-black tracking-wide transition-all flex items-center justify-center gap-1.5 ${
+                    className={`cursor-pointer flex-1 py-2 rounded-xl text-djon-label font-black tracking-wide transition-all flex items-center justify-center gap-1.5 hover:opacity-80 ${
                       form.status === s.value
                         ? "bg-djon-accent text-djon-ink"
                         : "bg-djon-text/5 text-djon-text/40 border border-djon-text/10"
@@ -696,7 +699,7 @@ function BookingDetail({
                   !form.date ||
                   !form.time
                 }
-                className="cursor-pointer flex-1 py-2.5 rounded-xl bg-djon-accent text-djon-ink text-xs font-black flex items-center justify-center gap-1.5 hover:brightness-110 transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                className="cursor-pointer flex-1 py-2.5 rounded-xl bg-djon-accent text-djon-ink text-xs font-black flex items-center justify-center gap-1.5 transition-[filter] hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Save size={12} /> SALVAR
               </button>
@@ -1014,7 +1017,7 @@ function MonthView({
                   </div>
                   <button
                     onClick={() => setMoreDay(null)}
-                    className="cursor-pointer text-djon-text/30 hover:brightness-110 transition-colors"
+                    className="cursor-pointer text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   >
                     <X size={14} />
                   </button>
@@ -1431,7 +1434,7 @@ export default function AgendaPage() {
                 <>
                   <button
                     onClick={handlePrev}
-                    className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1.5 rounded-lg hover:brightness-110 transition-all"
+                    className="cursor-pointer rounded-lg p-1.5 text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -1467,7 +1470,7 @@ export default function AgendaPage() {
                           <div className="flex items-center justify-between px-5 py-3 border-b border-djon-text/8">
                             <button
                               onClick={() => setPickerYear((y) => y - 1)}
-                              className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1 rounded-lg hover:brightness-110 transition-all"
+                              className="cursor-pointer rounded-lg p-1 text-djon-text opacity-30 transition-opacity hover:opacity-100"
                             >
                               <ChevronLeft size={16} />
                             </button>
@@ -1476,7 +1479,7 @@ export default function AgendaPage() {
                             </span>
                             <button
                               onClick={() => setPickerYear((y) => y + 1)}
-                              className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1 rounded-lg hover:brightness-110 transition-all"
+                              className="cursor-pointer rounded-lg p-1 text-djon-text opacity-30 transition-opacity hover:opacity-100"
                             >
                               <ChevronRight size={16} />
                             </button>
@@ -1499,12 +1502,12 @@ export default function AgendaPage() {
                                     );
                                     setPickerOpen(false);
                                   }}
-                                  className={`cursor-pointer py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
+                                  className={`cursor-pointer py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:opacity-80 ${
                                     isSelected
                                       ? "bg-djon-accent text-djon-ink"
                                       : isCurrentMonth
                                         ? "bg-djon-text/8 text-djon-text border border-djon-text/15"
-                                        : "text-djon-text/40 hover:brightness-110"
+                                        : "text-djon-text/40"
                                   }`}
                                 >
                                   {name.slice(0, 3)}
@@ -1519,13 +1522,13 @@ export default function AgendaPage() {
 
                   <button
                     onClick={handleNext}
-                    className="cursor-pointer text-djon-text/30 hover:brightness-110 p-1.5 rounded-lg hover:brightness-110 transition-all"
+                    className="cursor-pointer rounded-lg p-1.5 text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   >
                     <ChevronRight size={18} />
                   </button>
                   <button
                     onClick={goToday}
-                    className="cursor-pointer text-djon-text/40 hover:brightness-110 text-xs font-bold border border-djon-text/10 px-3 py-1.5 rounded-lg transition-all ml-1"
+                    className="cursor-pointer ml-1 rounded-lg border border-djon-text/10 px-3 py-1.5 text-xs font-bold text-djon-text/40 transition-opacity hover:opacity-70"
                   >
                     Hoje
                   </button>
@@ -1572,10 +1575,10 @@ export default function AgendaPage() {
                     key={v}
                     onClick={() => setView(v)}
                     title={v}
-                    className={`cursor-pointer p-2 rounded-md transition-all ${
+                  className={`cursor-pointer p-2 rounded-md transition-all hover:opacity-80 ${
                       view === v
                         ? "bg-djon-accent text-djon-ink"
-                        : "text-djon-text/30 hover:brightness-110"
+                        : "text-djon-text/30"
                     }`}
                   >
                     <Icon size={14} />
@@ -1586,7 +1589,7 @@ export default function AgendaPage() {
               {canEdit && (
                 <button
                   onClick={openNewBooking}
-                  className="cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-djon-accent px-4 py-2 text-xs font-black tracking-widest text-djon-ink transition-all hover:brightness-110"
+                  className="cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-djon-accent px-4 py-2 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
                 >
                   <Plus size={14} />
                   NOVO
@@ -1656,7 +1659,7 @@ export default function AgendaPage() {
                 </div>
                 <button
                   onClick={() => setShowNewForm(false)}
-                  className="cursor-pointer text-djon-text/40 hover:brightness-110"
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />
                 </button>
@@ -1686,7 +1689,7 @@ export default function AgendaPage() {
                             time: "",
                           })
                         }
-                        className={`cursor-pointer flex-1 py-2 rounded-xl text-xs font-black tracking-wide transition-all ${
+                        className={`cursor-pointer flex-1 py-2 rounded-xl text-xs font-black tracking-wide transition-all hover:opacity-80 ${
                           newForm.type === type
                             ? "bg-djon-accent text-djon-ink"
                             : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10"
@@ -1860,7 +1863,7 @@ export default function AgendaPage() {
                     !newForm.date ||
                     !newForm.time
                   }
-                  className="cursor-pointer w-full bg-djon-accent text-djon-ink rounded-xl py-3 text-sm font-black tracking-widest disabled:cursor-not-allowed disabled:opacity-40"
+                  className="cursor-pointer w-full bg-djon-accent text-djon-ink rounded-xl py-3 text-sm font-black tracking-widest transition-[filter] hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   AGENDAR
                 </button>

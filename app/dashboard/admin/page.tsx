@@ -194,7 +194,7 @@ export default function AdminPage() {
             <motion.div {...fadeUp(0.1)}>
               <Link
                 href="/dashboard/agenda"
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-opacity hover:opacity-90 sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:w-auto"
               >
                 <Calendar size={15} /> VER AGENDA COMPLETA
               </Link>
