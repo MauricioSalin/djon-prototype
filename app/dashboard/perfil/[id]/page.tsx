@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { store, type User } from "@/lib/store"
 import { ProfileView } from "@/components/portal/profile-view"
@@ -31,24 +30,18 @@ export default function PublicPerfilPage() {
 
   const isOwner = currentUser.id === viewedUser.id
 
-  const backHref =
-    currentUser.role === "admin"
-      ? "/dashboard/admin"
-      : currentUser.role === "professor"
-      ? "/dashboard/professor"
-      : "/dashboard/student"
-
   return (
     <div>
       {/* Back bar */}
       <div className="border-b border-djon-text/8 bg-djon-page">
         <div className="max-w-7xl mx-auto px-4 h-12 flex items-center sm:px-6">
-          <Link
-            href="/dashboard/mural"
+          <button
+            type="button"
+            onClick={() => router.back()}
             className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold tracking-wide transition-opacity hover:opacity-100"
           >
-            <ArrowLeft size={13} /> Voltar ao Mural
-          </Link>
+            <ArrowLeft size={13} /> Voltar
+          </button>
         </div>
       </div>
       <ProfileView

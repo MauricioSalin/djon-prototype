@@ -1052,7 +1052,7 @@ export default function DashboardLayout({
                                 onClick={closeSearch}
                                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:brightness-110 transition-colors"
                               >
-                                <div className="w-7 h-7 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0 overflow-hidden">
+                                <div className="djon-avatar-fallback w-7 h-7 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
                                   {u.avatar ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
@@ -1061,7 +1061,7 @@ export default function DashboardLayout({
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
-                                    <span className="text-djon-accent text-djon-meta font-black">
+                                    <span className="text-djon-text text-djon-meta font-black">
                                       {u.name.charAt(0)}
                                     </span>
                                   )}
@@ -1157,7 +1157,7 @@ export default function DashboardLayout({
                   className="cursor-pointer flex items-center gap-2 bg-djon-text/6 hover:brightness-110 border border-djon-text/10 rounded-full pl-1 pr-2 py-1 transition-all sm:gap-2.5 sm:pr-3"
                   whileTap={{ scale: 0.97 }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-djon-accent/20 border border-djon-accent/40 flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="djon-avatar-fallback w-8 h-8 rounded-full border border-djon-accent flex items-center justify-center overflow-hidden shrink-0">
                     {user.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -1166,7 +1166,7 @@ export default function DashboardLayout({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-djon-accent text-xs font-black">
+                      <span className="text-djon-text text-xs font-black">
                         {user.name.charAt(0)}
                       </span>
                     )}

@@ -415,7 +415,7 @@ export default function AlunosPage() {
               transition={{ delay: i * 0.04 }}
             >
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0 overflow-hidden">
+              <div className="djon-avatar-fallback w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
                 {u.avatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -424,7 +424,7 @@ export default function AlunosPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-djon-accent font-black text-sm">
+                  <span className="text-djon-text font-black text-sm">
                     {u.name.charAt(0)}
                   </span>
                 )}

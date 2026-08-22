@@ -24,12 +24,12 @@ function roleLabelFor(role: User["role"]) {
 function UserIdentity({ user }: { user: User }) {
   return (
     <>
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-djon-accent/40 bg-djon-accent/20">
+      <div className="djon-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-djon-accent">
         {user.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatar} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="text-xs font-black text-djon-accent">
+          <span className="text-xs font-black text-djon-text">
             {user.name.charAt(0)}
           </span>
         )}
@@ -137,6 +137,7 @@ export function Navigation() {
     { label: "CURSOS", href: "#cursos" },
     { label: "NOSSO TIME", href: "#time" },
     { label: "HISTÓRIA", href: "#historia" },
+    { label: "CONTATO", href: "#contato" },
   ]
 
   return (
@@ -194,20 +195,6 @@ export function Navigation() {
 
         <div className="hidden md:flex items-center gap-3">
           <LocationDropdown />
-          <motion.button
-            onClick={() => scrollToSection("#contato")}
-            className="cursor-pointer bg-djon-accent text-djon-ink px-6 py-2.5 rounded-full font-black text-xs tracking-widest relative overflow-hidden"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-djon-text/30 to-transparent -translate-x-full"
-              animate={{ x: ["-100%", "200%"] }}
-              transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, repeatDelay: 3 }}
-            />
-            <span className="relative z-10">CONTATO</span>
-          </motion.button>
           {sessionLoading ? (
             <div
               aria-hidden="true"
@@ -329,15 +316,6 @@ export function Navigation() {
                 </motion.button>
               ))}
               <LocationDropdown align="left" mobile />
-              <motion.button
-                onClick={() => scrollToSection("#contato")}
-                className="cursor-pointer w-full bg-djon-accent text-djon-ink px-6 py-3 rounded-full font-black text-xs tracking-widest mt-4 transition-[filter] hover:brightness-90"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                CONTATO
-              </motion.button>
               {sessionLoading ? (
                 <div className="mt-2 h-12 w-full animate-pulse rounded-full border border-djon-text/10 bg-djon-text/5" />
               ) : user ? (

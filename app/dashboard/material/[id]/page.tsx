@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
-import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   ArrowLeft, FileText, ImageIcon, Download, Eye, X, Paperclip, File as FileIcon, Edit2,
@@ -156,12 +155,13 @@ export default function MaterialDetailPage() {
       <div className="bg-djon-page min-h-screen flex flex-col items-center justify-center px-4 text-center sm:px-6">
         <FileText size={40} className="text-djon-text/10 mb-4" />
         <p className="text-djon-text/40 font-bold text-lg mb-6">Material não encontrado</p>
-        <Link
-          href="/dashboard/material"
+        <button
+          type="button"
+          onClick={() => router.back()}
           className="flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
         >
-          <ArrowLeft size={15} /> VOLTAR AO MATERIAL
-        </Link>
+          <ArrowLeft size={15} /> VOLTAR
+        </button>
       </div>
     )
   }
@@ -202,9 +202,9 @@ export default function MaterialDetailPage() {
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-14 w-full sm:px-6 sm:py-16">
           <motion.div {...fadeUp(0)}>
             <div className="mb-8 flex flex-wrap items-center gap-4">
-              <Link href="/dashboard/material" className="inline-flex items-center gap-2 text-djon-text opacity-50 text-xs font-black tracking-widest uppercase transition-opacity hover:opacity-100">
-                <ArrowLeft size={14} /> VOLTAR AO MATERIAL
-              </Link>
+              <button type="button" onClick={() => router.back()} className="inline-flex items-center gap-2 text-djon-text opacity-50 text-xs font-black tracking-widest uppercase transition-opacity hover:opacity-100">
+                <ArrowLeft size={14} /> VOLTAR
+              </button>
             </div>
           </motion.div>
 
@@ -226,12 +226,12 @@ export default function MaterialDetailPage() {
 
           <motion.div className="mt-6 flex items-center justify-between gap-4" {...fadeUp(0.35)}>
             <div className="flex min-w-0 items-center gap-3">
-              <div className="w-8 h-8 shrink-0 rounded-full bg-djon-accent/15 flex items-center justify-center overflow-hidden">
+              <div className="djon-avatar-fallback w-8 h-8 shrink-0 rounded-full flex items-center justify-center overflow-hidden">
                 {material.authorAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={material.authorAvatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-djon-accent text-xs font-black">{authorName.charAt(0)}</span>
+                  <span className="text-djon-text text-xs font-black">{authorName.charAt(0)}</span>
                 )}
               </div>
               <div className="min-w-0">

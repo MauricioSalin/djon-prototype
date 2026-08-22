@@ -321,11 +321,11 @@ export default function MaterialPage() {
                   )}
                   <div className="flex items-center justify-between mt-auto pt-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-djon-accent/15 flex items-center justify-center overflow-hidden">
+                      <div className="djon-avatar-fallback w-5 h-5 rounded-full flex items-center justify-center overflow-hidden">
                         {mat.authorAvatar
                           // eslint-disable-next-line @next/next/no-img-element
                           ? <img src={mat.authorAvatar} alt="" className="w-full h-full object-cover" />
-                          : <span className="text-djon-accent text-djon-micro font-black">{mat.authorName.charAt(0)}</span>
+                          : <span className="text-djon-text text-djon-micro font-black">{mat.authorName.charAt(0)}</span>
                         }
                       </div>
                       <span className="text-djon-text/30 text-djon-label font-bold">

@@ -42,6 +42,7 @@
   --djon-color-calendar-cell: var(--djon-color-panel-dark);
   --djon-color-calendar-empty: var(--djon-color-black-stage);
   --djon-color-accent: var(--djon-color-green);
+  --djon-color-image-fallback: var(--djon-color-light-purple);
   --djon-color-text: var(--djon-color-white);
   --djon-color-text-inverse: var(--djon-color-black-stage);
   --djon-color-line: var(--djon-color-line-gray);
@@ -95,9 +96,6 @@
   --djon-shadow-popover: 0 22px 70px rgb(0 0 0 / 0.5);
   --djon-shadow-focus-soft: 0 0 0 1px color-mix(in srgb, var(--djon-color-green) 20%, transparent);
   --djon-drop-shadow-soft: 0 8px 12px rgb(0 0 0 / 0.35);
-  --djon-gradient-profile-admin: linear-gradient(135deg, var(--djon-color-black-stage) 0%, var(--djon-color-green) 60%, var(--djon-color-panel-dark) 100%);
-  --djon-gradient-profile-professor: linear-gradient(135deg, var(--djon-color-black-stage) 0%, var(--djon-color-light-purple) 60%, var(--djon-color-panel-dark) 100%);
-  --djon-gradient-profile-student: linear-gradient(135deg, var(--djon-color-black-stage) 0%, var(--djon-color-warning-red) 60%, var(--djon-color-panel-dark) 100%);
   --djon-gradient-config-banner: linear-gradient(135deg, var(--djon-color-green), var(--djon-color-light-purple));
 
   --background: var(--djon-color-black-stage);
@@ -394,6 +392,17 @@
 .djon-skeleton {
   position: relative;
   isolation: isolate;
+}
+
+.djon-avatar-fallback {
+  color: var(--djon-color-white);
+  background:
+    linear-gradient(145deg, rgb(0 0 0 / 0.32) 0%, rgb(0 0 0 / 0.76) 100%),
+    var(--djon-color-green);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.1),
+    0 8px 24px rgb(0 0 0 / 0.2);
+  text-shadow: 0 2px 10px rgb(0 0 0 / 0.45);
 }
 
 .djon-skeleton::after {

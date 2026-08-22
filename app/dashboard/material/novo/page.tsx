@@ -50,6 +50,10 @@ type EditorSnapshot = {
   attachments: MaterialAttachment[]
 }
 
+type PendingExit =
+  | { type: "back" }
+  | { type: "href"; href: string }
+
 function snapshotOf(value: EditorSnapshot) {
   return JSON.stringify(value)
 }
@@ -75,7 +79,7 @@ export default function NovoMaterialPage() {
   const committedRef = useRef(false)
   const allowNavigationRef = useRef(false)
   const dirtyRef = useRef(false)
-  const pendingHrefRef = useRef("/dashboard/material")
+  const pendingExitRef = useRef<PendingExit>({ type: "back" })
   const editorHrefRef = useRef("")
 
   const coverRef = useRef<HTMLInputElement>(null)
@@ -165,13 +169,13 @@ export default function NovoMaterialPage() {
       if (destination.href === window.location.href) return
       event.preventDefault()
       event.stopPropagation()
-      pendingHrefRef.current = destination.href
+      pendingExitRef.current = { type: "href", href: destination.href }
       setExitModalOpen(true)
     }
     const handlePopState = () => {
       if (!dirtyRef.current || allowNavigationRef.current) return
       window.history.pushState(null, "", editorHrefRef.current)
-      pendingHrefRef.current = "/dashboard/material"
+      pendingExitRef.current = { type: "back" }
       setExitModalOpen(true)
     }
 
@@ -280,16 +284,30 @@ export default function NovoMaterialPage() {
     window.location.assign(destination.href)
   }
 
-  const requestExit = (href = "/dashboard/material") => {
-    if (!isDirty) {
-      navigateTo(href)
+  const navigateBack = () => {
+    allowNavigationRef.current = true
+    router.back()
+  }
+
+  const navigateToPendingExit = () => {
+    const pendingExit = pendingExitRef.current
+    if (pendingExit.type === "back") {
+      navigateBack()
       return
     }
-    pendingHrefRef.current = href
+    navigateTo(pendingExit.href)
+  }
+
+  const requestExit = () => {
+    if (!isDirty) {
+      navigateBack()
+      return
+    }
+    pendingExitRef.current = { type: "back" }
     setExitModalOpen(true)
   }
 
-  const persistMaterial = async (status: Material["status"], destination?: string) => {
+  const persistMaterial = async (status: Material["status"], destination?: string | "back") => {
     if (!user) return false
     if (status === "published" && (!title.trim() || !category)) {
       notifyError(
@@ -332,12 +350,16 @@ export default function NovoMaterialPage() {
       draftIdsRef.current.clear()
       committedRef.current = true
       setInitialSnapshot(currentSnapshot)
-      navigateTo(
-        destination ??
-          (status === "draft"
-            ? "/dashboard/material?category=Rascunhos"
-            : `/dashboard/material/${material.id}`),
-      )
+      if (destination === "back") {
+        navigateBack()
+      } else {
+        navigateTo(
+          destination ??
+            (status === "draft"
+              ? "/dashboard/material?category=Rascunhos"
+              : `/dashboard/material/${material.id}`),
+        )
+      }
       return true
     } catch {
       // A camada da API exibe um toast com o motivo do erro.
@@ -363,7 +385,7 @@ export default function NovoMaterialPage() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
           <motion.button
             type="button"
-            onClick={() => requestExit("/dashboard/material")}
+            onClick={requestExit}
             className="cursor-pointer mb-10 inline-flex items-center gap-2 text-djon-text opacity-40 text-xs font-black tracking-widest transition-opacity hover:opacity-100"
             {...fadeUp(0)}
           >
@@ -606,7 +628,7 @@ export default function NovoMaterialPage() {
                   type="button"
                   onClick={() => {
                     setExitModalOpen(false)
-                    navigateTo(pendingHrefRef.current)
+                    navigateToPendingExit()
                   }}
                   disabled={saving}
                   className="cursor-pointer rounded-full border border-djon-warning-red/35 px-4 py-3 text-xs font-black tracking-wider text-djon-warning-red transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
@@ -615,12 +637,13 @@ export default function NovoMaterialPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    const pendingExit = pendingExitRef.current
                     void persistMaterial(
                       editingStatus === "published" && editingId ? "published" : "draft",
-                      pendingHrefRef.current,
+                      pendingExit.type === "back" ? "back" : pendingExit.href,
                     )
-                  }
+                  }}
                   disabled={saving || (editingStatus === "published" && Boolean(editingId) && (!title.trim() || !category))}
                   className="cursor-pointer rounded-full bg-djon-accent px-4 py-3 text-xs font-black tracking-wider text-djon-ink transition-[filter] hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >

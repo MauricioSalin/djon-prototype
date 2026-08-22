@@ -222,11 +222,7 @@ export default function StudentEventPage() {
           {upcoming.length === 0 ? (
             <motion.div className="rounded-3xl border-2 border-dashed border-djon-text/8 p-8 text-center sm:p-20" {...fadeUp(0.2)}>
               <Music2 size={48} className="text-djon-text/12 mx-auto mb-4" />
-              <p className="text-djon-text/25 text-sm font-bold mb-6">Nenhum evento cadastrado</p>
-              <button onClick={openNew}
-                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest transition-[filter] hover:brightness-90">
-                <Plus size={14} /> CADASTRAR EVENTO
-              </button>
+              <p className="text-djon-text/25 text-sm font-bold">Nenhum evento cadastrado</p>
             </motion.div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

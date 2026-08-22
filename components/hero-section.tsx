@@ -126,9 +126,7 @@ export function HeroSection() {
               className="flex flex-wrap gap-3 pt-2"
             >
               <motion.a
-                href="https://www.djonacademy.com/"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#contato"
                 className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-djon-accent px-7 py-3 text-sm font-black tracking-widest text-djon-ink group sm:w-auto"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}

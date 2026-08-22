@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, LogIn } from "lucide-react"
 import { store } from "@/lib/store"
@@ -41,10 +40,10 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-djon-black/75" />
       </div>
 
-      <Link href="/" className="absolute top-6 left-6 z-10 flex items-center gap-2 text-djon-text opacity-50 text-xs font-bold tracking-wide transition-opacity hover:opacity-100">
+      <button type="button" onClick={() => router.back()} className="absolute top-6 left-6 z-10 flex items-center gap-2 text-djon-text opacity-50 text-xs font-bold tracking-wide transition-opacity hover:opacity-100">
         <ArrowLeft size={14} />
         VOLTAR
-      </Link>
+      </button>
 
       <motion.div
         className="w-full max-w-md relative z-10"

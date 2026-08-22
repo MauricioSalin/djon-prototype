@@ -28,11 +28,7 @@ const ROLE_LABELS: Record<string, string> = {
   student: "Aluno DJ ON Academy",
 }
 
-const BANNER_GRADIENTS = [
-  "var(--djon-gradient-profile-admin)",
-  "var(--djon-gradient-profile-professor)",
-  "var(--djon-gradient-profile-student)",
-]
+const BANNER_FALLBACK = "var(--djon-color-image-fallback)"
 
 interface ProfileViewProps {
   user: User
@@ -109,11 +105,9 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       year: "numeric",
     })
 
-  // Pick a deterministic banner gradient based on user id if no banner uploaded
-  const gradientIndex = user.id.charCodeAt(user.id.length - 1) % BANNER_GRADIENTS.length
   const bannerBg = user.banner
     ? `url(${user.banner}) center/cover`
-    : BANNER_GRADIENTS[gradientIndex]
+    : BANNER_FALLBACK
 
   return (
     <div className="bg-djon-page">
@@ -160,7 +154,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
           <div className="relative z-10 -mt-14 flex flex-col items-start gap-4 pb-2 sm:flex-row sm:items-end sm:gap-5 md:-mt-16">
             {/* Avatar */}
             <div
-              className={`relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-djon-page bg-djon-accent/15 sm:h-28 sm:w-28 md:h-36 md:w-36 ${isOwner ? "cursor-pointer group" : ""}`}
+              className={`djon-avatar-fallback relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-djon-page sm:h-28 sm:w-28 md:h-36 md:w-36 ${isOwner ? "cursor-pointer group" : ""}`}
               role={isOwner ? "button" : undefined}
               tabIndex={isOwner ? 0 : undefined}
               aria-label={isOwner ? "Alterar foto de perfil" : undefined}
@@ -176,7 +170,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-djon-accent text-4xl font-black sm:text-5xl">{user.name.charAt(0)}</span>
+                <span className="text-djon-text text-4xl font-black sm:text-5xl">{user.name.charAt(0)}</span>
               )}
               {isOwner && (
                 <div className="absolute inset-0 bg-djon-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

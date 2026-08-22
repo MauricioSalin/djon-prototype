@@ -4,12 +4,22 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { motion } from "framer-motion"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   Calendar, Users, GraduationCap,
-  Clock, CheckCircle, AlertCircle, Music2,
+  Clock, Music2,
 } from "lucide-react"
-import { store, type User, type Booking } from "@/lib/store"
+import {
+  store,
+  type Booking,
+  type Equipment,
+  type Unit,
+  type User,
+} from "@/lib/store"
+import {
+  BookingDetailsDialog,
+  type BookingWithUser,
+} from "@/components/booking-details-dialog"
 import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const fadeUp = (delay = 0) => ({
@@ -19,21 +29,64 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 })
 
+const bookingStatusMeta = {
+  confirmado: {
+    badge: "bg-djon-success/10 border-djon-success/20 text-djon-success",
+    dot: "bg-djon-success",
+    label: "Confirmado",
+  },
+  pendente: {
+    badge: "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
+    dot: "bg-djon-light-purple",
+    label: "Pendente",
+  },
+  cancelado: {
+    badge: "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
+    dot: "bg-djon-warning-red",
+    label: "Cancelado",
+  },
+} as const
+
+function professorBookings(allBookings: Booking[], professor: User) {
+  return allBookings.filter(
+    (booking) =>
+      booking.professorId === professor.id ||
+      (booking.type === "treino" &&
+        booking.status === "pendente" &&
+        (!professor.unitId || booking.unitId === professor.unitId)),
+  )
+}
+
 export default function ProfessorHomePage() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [students, setStudents] = useState<User[]>([])
+  const [professors, setProfessors] = useState<User[]>([])
+  const [units, setUnits] = useState<Unit[]>([])
+  const [equipments, setEquipments] = useState<Equipment[]>([])
+  const [selected, setSelected] = useState<BookingWithUser | null>(null)
 
   useEffect(() => {
     let mounted = true
-    void store.bootstrap().then((u) => {
+    void store.bootstrap().then(async (u) => {
       if (!mounted) return
       if (!u) { router.replace("/login"); return }
       if (u.role !== "professor") { router.replace("/dashboard/student"); return }
+
+      try {
+        await store.refreshBookings(true)
+      } catch {
+        // A API já informa a falha; o cache atual mantém a página utilizável.
+      }
+      if (!mounted) return
+
       setUser(u)
-      setBookings(store.getBookings())
+      setBookings(professorBookings(store.getBookings(), u))
       setStudents(store.getStudents().filter((student) => student.active !== false))
+      setProfessors(store.getProfessors().filter((professor) => professor.active !== false))
+      setUnits(store.getUnits().filter((unit) => unit.active))
+      setEquipments(store.getEquipments().filter((equipment) => equipment.active))
     })
     return () => { mounted = false }
   }, [router])
@@ -46,6 +99,17 @@ export default function ProfessorHomePage() {
     .slice(0, 6)
 
   const confirmed = bookings.filter((b) => b.status === "confirmado").length
+
+  const syncBookings = () => {
+    const currentUser = store.getCurrentUser()
+    if (!currentUser || currentUser.role !== "professor") return
+    setBookings(professorBookings(store.getBookings(), currentUser))
+  }
+
+  const handleSaved = (updated: BookingWithUser) => {
+    syncBookings()
+    setSelected(updated)
+  }
 
   const fmt = (d: string) =>
     new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
@@ -244,10 +308,14 @@ export default function ProfessorHomePage() {
               {upcoming.map((b, i) => {
                 const student = store.getUserById(b.userId)
                 const studentName = student?.name ?? b.studentName ?? "Aluno"
+                const status = bookingStatusMeta[b.status]
                 return (
-                  <motion.div
+                  <motion.button
                     key={b.id}
-                    className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5 hover:brightness-110 transition-all group"
+                    type="button"
+                    onClick={() => setSelected({ ...b, student })}
+                    aria-label={`Ver detalhes de ${b.title}`}
+                    className="group cursor-pointer rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 text-left transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-djon-accent/70"
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0 }}
@@ -256,30 +324,45 @@ export default function ProfessorHomePage() {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0">
-                          <span className="text-djon-accent font-black text-xs">{studentName.charAt(0)}</span>
+                        <div className="djon-avatar-fallback w-8 h-8 rounded-full flex items-center justify-center shrink-0">
+                          <span className="text-djon-text font-black text-xs">{studentName.charAt(0)}</span>
                         </div>
                         <div>
                           <p className="text-djon-text text-xs font-black">{studentName}</p>
                           <p className="text-djon-text/30 text-djon-label capitalize">{b.type}</p>
                         </div>
                       </div>
-                      {b.status === "confirmado"
-                        ? <CheckCircle size={14} className="text-djon-accent" />
-                        : <AlertCircle size={14} className="text-djon-light-purple" />
-                      }
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-djon-label font-black tracking-widest ${status.badge}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+                        {status.label.toUpperCase()}
+                      </span>
                     </div>
                     <h3 className="text-djon-text font-black text-base tracking-tight mb-3 leading-tight">{b.title}</h3>
                     <div className="flex items-center gap-2 text-djon-text/40 text-xs">
                       <Clock size={11} />{fmt(b.date)} às {b.time}
                     </div>
-                  </motion.div>
+                  </motion.button>
                 )
               })}
             </div>
           )}
         </div>
       </section>
+
+      <AnimatePresence>
+        {selected && (
+          <BookingDetailsDialog
+            bk={selected}
+            canEdit
+            units={units}
+            professors={professors}
+            equipments={equipments}
+            onClose={() => setSelected(null)}
+            onSaved={handleSaved}
+            onRemoved={syncBookings}
+          />
+        )}
+      </AnimatePresence>
 
     </div>
   )

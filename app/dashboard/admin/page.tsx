@@ -222,8 +222,8 @@ export default function AdminPage() {
                     whileHover={{ y: -4 }}
                   >
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-9 h-9 rounded-full bg-djon-accent/15 flex items-center justify-center shrink-0">
-                        <span className="text-djon-accent text-sm font-black">{ownerName.charAt(0)}</span>
+                      <div className="djon-avatar-fallback w-9 h-9 rounded-full flex items-center justify-center shrink-0">
+                        <span className="text-djon-text text-sm font-black">{ownerName.charAt(0)}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-djon-text text-xs font-black truncate">{ownerName}</p>

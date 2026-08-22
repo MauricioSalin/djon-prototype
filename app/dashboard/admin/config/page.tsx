@@ -74,14 +74,14 @@ export default function AdminConfigPage() {
         <div className="px-4 pb-6 sm:px-6">
           <div className="-mt-8 mb-4 flex items-end gap-4">
             <div
-              className="w-14 h-14 rounded-full border-4 border-djon-surface-2 bg-djon-accent flex items-center justify-center cursor-pointer group relative overflow-hidden shrink-0"
+              className="djon-avatar-fallback w-14 h-14 rounded-full border-4 border-djon-surface-2 flex items-center justify-center cursor-pointer group relative overflow-hidden shrink-0"
               onClick={() => avatarRef.current?.click()}
             >
               {user.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-djon-ink text-xl font-black">{user.name.charAt(0)}</span>
+                <span className="text-djon-text text-xl font-black">{user.name.charAt(0)}</span>
               )}
               <div className="absolute inset-0 bg-djon-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera size={14} className="text-djon-text" />
