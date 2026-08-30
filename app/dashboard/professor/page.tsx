@@ -325,7 +325,7 @@ export default function ProfessorHomePage() {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="djon-avatar-fallback w-8 h-8 rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-djon-text font-black text-xs">{studentName.charAt(0)}</span>
+                          <span className="text-djon-accent font-black text-xs">{studentName.charAt(0)}</span>
                         </div>
                         <div>
                           <p className="text-djon-text text-xs font-black">{studentName}</p>

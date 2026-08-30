@@ -81,7 +81,7 @@ export default function AdminConfigPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-djon-text text-xl font-black">{user.name.charAt(0)}</span>
+                <span className="text-djon-accent text-xl font-black">{user.name.charAt(0)}</span>
               )}
               <div className="absolute inset-0 bg-djon-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Camera size={14} className="text-djon-text" />

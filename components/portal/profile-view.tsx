@@ -28,7 +28,7 @@ const ROLE_LABELS: Record<string, string> = {
   student: "Aluno DJ ON Academy",
 }
 
-const BANNER_FALLBACK = "var(--djon-color-image-fallback)"
+const BANNER_FALLBACK = "var(--djon-gradient-image-fallback)"
 
 interface ProfileViewProps {
   user: User
@@ -52,6 +52,8 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
   })
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" })
   const [passwordMessage, setPasswordMessage] = useState("")
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null)
+  const [failedBanner, setFailedBanner] = useState<string | null>(null)
   const avatarRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
 
@@ -105,9 +107,8 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       year: "numeric",
     })
 
-  const bannerBg = user.banner
-    ? `url(${user.banner}) center/cover`
-    : BANNER_FALLBACK
+  const hasAvatar = Boolean(user.avatar && failedAvatar !== user.avatar)
+  const hasBanner = Boolean(user.banner && failedBanner !== user.banner)
 
   return (
     <div className="bg-djon-page">
@@ -117,7 +118,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         {/* Banner — purely decorative, no glow */}
         <div
           className={`h-56 md:h-72 relative overflow-hidden ${isOwner ? "cursor-pointer group" : ""}`}
-          style={{ background: bannerBg }}
+          style={{ background: BANNER_FALLBACK }}
           role={isOwner ? "button" : undefined}
           tabIndex={isOwner ? 0 : undefined}
           aria-label={isOwner ? "Alterar banner" : undefined}
@@ -129,6 +130,16 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             }
           } : undefined}
         >
+
+          {hasBanner && user.banner && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={user.banner}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={() => setFailedBanner(user.banner ?? null)}
+            />
+          )}
 
           {/* Subtle static dark vignette at bottom so avatar sits on it */}
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-djon-page to-transparent" />
@@ -166,11 +177,16 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 }
               } : undefined}
             >
-              {user.avatar ? (
+              {hasAvatar && user.avatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                  onError={() => setFailedAvatar(user.avatar ?? null)}
+                />
               ) : (
-                <span className="text-djon-text text-4xl font-black sm:text-5xl">{user.name.charAt(0)}</span>
+                <span className="text-djon-accent text-4xl font-black sm:text-5xl">{user.name.charAt(0)}</span>
               )}
               {isOwner && (
                 <div className="absolute inset-0 bg-djon-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

@@ -29,7 +29,7 @@ function UserIdentity({ user }: { user: User }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatar} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="text-xs font-black text-djon-text">
+          <span className="text-xs font-black text-djon-accent">
             {user.name.charAt(0)}
           </span>
         )}

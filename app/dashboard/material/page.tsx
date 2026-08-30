@@ -325,7 +325,7 @@ export default function MaterialPage() {
                         {mat.authorAvatar
                           // eslint-disable-next-line @next/next/no-img-element
                           ? <img src={mat.authorAvatar} alt="" className="w-full h-full object-cover" />
-                          : <span className="text-djon-text text-djon-micro font-black">{mat.authorName.charAt(0)}</span>
+                          : <span className="text-djon-accent text-djon-micro font-black">{mat.authorName.charAt(0)}</span>
                         }
                       </div>
                       <span className="text-djon-text/30 text-djon-label font-bold">

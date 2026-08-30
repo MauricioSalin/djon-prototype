@@ -1061,7 +1061,7 @@ export default function DashboardLayout({
                                       className="w-full h-full object-cover"
                                     />
                                   ) : (
-                                    <span className="text-djon-text text-djon-meta font-black">
+                                    <span className="text-djon-accent text-djon-meta font-black">
                                       {u.name.charAt(0)}
                                     </span>
                                   )}
@@ -1166,7 +1166,7 @@ export default function DashboardLayout({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-djon-text text-xs font-black">
+                      <span className="text-djon-accent text-xs font-black">
                         {user.name.charAt(0)}
                       </span>
                     )}

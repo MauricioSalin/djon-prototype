@@ -504,7 +504,7 @@ export default function AdminAgendarPage() {
                 transition={{ delay: i * 0.04 }}
               >
                 <div className="djon-avatar-fallback w-9 h-9 rounded-full flex items-center justify-center shrink-0">
-                  <span className="text-djon-text font-black text-sm">
+                  <span className="text-djon-accent font-black text-sm">
                     {ownerName.charAt(0)}
                   </span>
                 </div>

@@ -424,7 +424,7 @@ export default function AlunosPage() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <span className="text-djon-text font-black text-sm">
+                  <span className="text-djon-accent font-black text-sm">
                     {u.name.charAt(0)}
                   </span>
                 )}

@@ -59,7 +59,7 @@ function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
         {/* Author row */}
         <div className="flex items-center justify-between mb-5">
           <Link href={`/dashboard/perfil/${ev.createdBy}`} className="flex items-center gap-3 group/author">
-            <div className="djon-avatar-fallback w-10 h-10 rounded-full flex items-center justify-center text-djon-text font-black text-sm shrink-0 overflow-hidden">
+            <div className="djon-avatar-fallback w-10 h-10 rounded-full flex items-center justify-center text-djon-accent font-black text-sm shrink-0 overflow-hidden">
               {ev.createdByAvatar ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={ev.createdByAvatar} alt={ev.createdByName} className="w-full h-full object-cover" />

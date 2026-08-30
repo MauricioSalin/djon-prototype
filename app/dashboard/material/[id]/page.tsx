@@ -231,7 +231,7 @@ export default function MaterialDetailPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={material.authorAvatar} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-djon-text text-xs font-black">{authorName.charAt(0)}</span>
+                  <span className="text-djon-accent text-xs font-black">{authorName.charAt(0)}</span>
                 )}
               </div>
               <div className="min-w-0">

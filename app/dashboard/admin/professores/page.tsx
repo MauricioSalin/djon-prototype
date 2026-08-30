@@ -240,7 +240,7 @@ export default function ProfessoresAdminPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-djon-text font-black text-sm">{u.name.charAt(0)}</span>
+                  <span className="text-djon-accent font-black text-sm">{u.name.charAt(0)}</span>
                 )}
               </div>
               <div className="min-w-0 flex-1">

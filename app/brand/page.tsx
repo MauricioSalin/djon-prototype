@@ -407,7 +407,7 @@ export default function BrandPage() {
             <ComponentCard icon={<User size={14} />} title="PERFIL">
               <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-9 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="djon-avatar-fallback flex size-12 items-center justify-center rounded-full text-sm font-black text-djon-text">C</div>
+                  <div className="djon-avatar-fallback flex size-12 items-center justify-center rounded-full text-sm font-black text-djon-accent">C</div>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-black text-djon-text">Camila Souza</p>
                     <p className="text-[10px] font-black tracking-widest text-djon-accent">PROFESSOR</p>

@@ -261,7 +261,7 @@ export default function StudentPage() {
                     )}
                     <div className="p-5">
                       <div className="flex items-center gap-3 mb-3">
-                        <div className="djon-avatar-fallback w-9 h-9 rounded-full flex items-center justify-center text-djon-text font-black text-sm shrink-0">
+                        <div className="djon-avatar-fallback w-9 h-9 rounded-full flex items-center justify-center text-djon-accent font-black text-sm shrink-0">
                           {ev.createdByName.charAt(0)}
                         </div>
                         <div>
