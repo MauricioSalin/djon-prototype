@@ -1,35 +1,56 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter, useParams } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, FileText, ImageIcon, Download, Eye, X, Paperclip, File as FileIcon, Edit2,
-} from "lucide-react"
-import { store, type Material, type MaterialAttachment, type User } from "@/lib/store"
-import { DashboardPageSkeleton } from "@/components/loading-skeletons"
+  ArrowLeft,
+  FileText,
+  ImageIcon,
+  Download,
+  Eye,
+  X,
+  Paperclip,
+  File as FileIcon,
+  Edit2,
+} from "lucide-react";
+import {
+  hasPermission,
+  store,
+  type Material,
+  type MaterialAttachment,
+  type User,
+} from "@/lib/store";
+import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { usePageTitle } from "@/components/page-title-manager";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const, delay },
-})
+});
 
 function triggerDownload(url: string, name: string) {
-  if (!url) return
-  const a = document.createElement("a")
-  a.href = url
-  a.download = name
-  a.target = "_blank"
-  a.rel = "noopener noreferrer"
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  if (!url) return;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // ── PDF Viewer Modal ────────────────────────────────────────────────────────
-function PDFViewer({ att, onClose }: { att: MaterialAttachment; onClose: () => void }) {
-  const hasUrl = Boolean(att.url)
+function PDFViewer({
+  att,
+  onClose,
+}: {
+  att: MaterialAttachment;
+  onClose: () => void;
+}) {
+  const hasUrl = Boolean(att.url);
 
   return (
     <motion.div
@@ -41,7 +62,9 @@ function PDFViewer({ att, onClose }: { att: MaterialAttachment; onClose: () => v
       <div className="flex flex-col gap-3 border-b border-djon-text/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="flex items-center gap-3 min-w-0">
           <FileText size={16} className="text-djon-accent shrink-0" />
-          <p className="text-djon-text font-bold text-sm truncate">{att.name}</p>
+          <p className="text-djon-text font-bold text-sm truncate">
+            {att.name}
+          </p>
         </div>
         <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
           <button
@@ -61,21 +84,33 @@ function PDFViewer({ att, onClose }: { att: MaterialAttachment; onClose: () => v
       </div>
       <div className="flex-1 p-4">
         {hasUrl ? (
-          <iframe src={att.url} className="w-full h-full rounded-xl border border-djon-text/10" title={att.name} />
+          <iframe
+            src={att.url}
+            className="w-full h-full rounded-xl border border-djon-text/10"
+            title={att.name}
+          />
         ) : (
           <div className="w-full h-full rounded-xl border border-djon-text/10 bg-djon-text/5 flex items-center justify-center">
-            <p className="text-djon-text/40 text-sm font-bold">Arquivo indisponível.</p>
+            <p className="text-djon-text/40 text-sm font-bold">
+              Arquivo indisponível.
+            </p>
           </div>
         )}
       </div>
     </motion.div>
-  )
+  );
 }
 
 // ── Image Lightbox ──────────────────────────────────────────────────────────
-function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () => void }) {
-  const [imageError, setImageError] = useState(false)
-  const hasUrl = Boolean(att.url) && !imageError
+function ImageLightbox({
+  att,
+  onClose,
+}: {
+  att: MaterialAttachment;
+  onClose: () => void;
+}) {
+  const [imageError, setImageError] = useState(false);
+  const hasUrl = Boolean(att.url) && !imageError;
 
   return (
     <motion.div
@@ -87,7 +122,10 @@ function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () 
     >
       <div className="absolute left-4 right-4 top-4 flex items-center justify-end gap-2 sm:left-auto sm:right-5 sm:top-5">
         <button
-          onClick={(e) => { e.stopPropagation(); triggerDownload(att.url, att.name) }}
+          onClick={(e) => {
+            e.stopPropagation();
+            triggerDownload(att.url, att.name);
+          }}
           disabled={!att.url}
           className="cursor-pointer flex items-center gap-2 bg-djon-accent text-djon-ink px-4 py-2 rounded-full text-xs font-black tracking-widest transition-[filter] hover:brightness-90"
         >
@@ -117,44 +155,60 @@ function ImageLightbox({ att, onClose }: { att: MaterialAttachment; onClose: () 
           className="w-full max-w-2xl h-[50vh] rounded-2xl border border-djon-text/10 bg-djon-text/5 flex items-center justify-center"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-djon-text/40 text-sm font-bold">Imagem indisponível.</p>
+          <p className="text-djon-text/40 text-sm font-bold">
+            Imagem indisponível.
+          </p>
         </div>
       )}
       <p className="text-djon-text/50 text-sm mt-4 font-medium">{att.name}</p>
     </motion.div>
-  )
+  );
 }
 
 export default function MaterialDetailPage() {
-  const router = useRouter()
-  const params = useParams()
-  const id = params?.id as string
+  const router = useRouter();
+  const params = useParams();
+  const id = params?.id as string;
 
-  const [user, setUser] = useState<User | null>(null)
-  const [material, setMaterial] = useState<Material | null>(null)
-  const [loaded, setLoaded] = useState(false)
-  const [viewer, setViewer] = useState<MaterialAttachment | null>(null)
-  const [coverError, setCoverError] = useState(false)
+  const [user, setUser] = useState<User | null>(null);
+  const [material, setMaterial] = useState<Material | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [viewer, setViewer] = useState<MaterialAttachment | null>(null);
+  const [coverError, setCoverError] = useState(false);
+
+  usePageTitle(material?.title);
 
   useEffect(() => {
-    const u = store.getCurrentUser()
-    if (!u) { router.replace("/login"); return }
-    setUser(u)
-    let active = true
-    store.fetchMaterialById(id)
-      .then((item) => { if (active) setMaterial(item) })
+    const u = store.getCurrentUser();
+    if (!u) {
+      router.replace("/login");
+      return;
+    }
+    setUser(u);
+    let active = true;
+    store
+      .fetchMaterialById(id)
+      .then((item) => {
+        if (active) setMaterial(item);
+      })
       .catch(() => undefined)
-      .finally(() => { if (active) setLoaded(true) })
-    return () => { active = false }
-  }, [id, router])
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, router]);
 
-  if (!user || !loaded) return <DashboardPageSkeleton variant="profile" />
+  if (!user || !loaded) return <DashboardPageSkeleton variant="article" />;
 
   if (!material) {
     return (
       <div className="bg-djon-page min-h-screen flex flex-col items-center justify-center px-4 text-center sm:px-6">
         <FileText size={40} className="text-djon-text/10 mb-4" />
-        <p className="text-djon-text/40 font-bold text-lg mb-6">Material não encontrado</p>
+        <p className="text-djon-text/40 font-bold text-lg mb-6">
+          Material não encontrado
+        </p>
         <button
           type="button"
           onClick={() => router.back()}
@@ -163,25 +217,34 @@ export default function MaterialDetailPage() {
           <ArrowLeft size={15} /> VOLTAR
         </button>
       </div>
-    )
+    );
   }
 
-  const cover = material.coverImage || (material.fileType === "image" ? material.fileUrl : undefined)
-  const createdAt = material.createdAt ? new Date(material.createdAt) : new Date()
+  const cover =
+    material.coverImage ||
+    (material.fileType === "image" ? material.fileUrl : undefined);
+  const createdAt = material.createdAt
+    ? new Date(material.createdAt)
+    : new Date();
   const date = Number.isNaN(createdAt.getTime())
     ? "Data não informada"
-    : createdAt.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })
-  const attachments = (material.attachments ?? []).filter((att) => att && att.id && att.name)
-  const authorName = material.authorName || "DJ ON Academy"
+    : createdAt.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+  const attachments = (material.attachments ?? []).filter(
+    (att) => att && att.id && att.name,
+  );
+  const authorName = material.authorName || "DJ ON Academy";
 
   const handleAttachmentClick = (att: MaterialAttachment) => {
-    if (att.type === "pdf" || att.type === "image") setViewer(att)
-    else triggerDownload(att.url, att.name)
-  }
+    if (att.type === "pdf" || att.type === "image") setViewer(att);
+    else triggerDownload(att.url, att.name);
+  };
 
   return (
     <div className="bg-djon-page min-h-screen">
-
       {/* ── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[62vh] flex items-end overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -202,7 +265,11 @@ export default function MaterialDetailPage() {
         <div className="relative z-10 max-w-4xl mx-auto px-4 py-14 w-full sm:px-6 sm:py-16">
           <motion.div {...fadeUp(0)}>
             <div className="mb-8 flex flex-wrap items-center gap-4">
-              <button type="button" onClick={() => router.back()} className="inline-flex items-center gap-2 text-djon-text opacity-50 text-xs font-black tracking-widest uppercase transition-opacity hover:opacity-100">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="inline-flex items-center gap-2 text-djon-text opacity-50 text-xs font-black tracking-widest uppercase transition-opacity hover:opacity-100"
+              >
                 <ArrowLeft size={14} /> VOLTAR
               </button>
             </div>
@@ -222,32 +289,49 @@ export default function MaterialDetailPage() {
             {material.title || "Material sem título"}
           </motion.h1>
 
-          <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-5" {...fadeUp(0.3)} />
+          <motion.div
+            className="h-[3px] w-10 bg-djon-accent rounded-full mt-5"
+            {...fadeUp(0.3)}
+          />
 
-          <motion.div className="mt-6 flex items-center justify-between gap-4" {...fadeUp(0.35)}>
+          <motion.div
+            className="mt-6 flex items-center justify-between gap-4"
+            {...fadeUp(0.35)}
+          >
             <div className="flex min-w-0 items-center gap-3">
               <div className="djon-avatar-fallback w-8 h-8 shrink-0 rounded-full flex items-center justify-center overflow-hidden">
                 {material.authorAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={material.authorAvatar} alt="" className="w-full h-full object-cover" />
+                  <img
+                    src={material.authorAvatar}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <span className="text-djon-accent text-xs font-black">{authorName.charAt(0)}</span>
+                  <span className="text-djon-accent text-xs font-black">
+                    {authorName.charAt(0)}
+                  </span>
                 )}
               </div>
               <div className="min-w-0">
-                <p className="truncate text-sm font-bold leading-tight text-djon-text">{authorName}</p>
+                <p className="truncate text-sm font-bold leading-tight text-djon-text">
+                  {authorName}
+                </p>
                 <p className="text-xs text-djon-text/40">{date}</p>
               </div>
             </div>
-            {(user.role === "admin" || material.authorId === user.id) && (
-              <button
-                type="button"
-                onClick={() => router.push(`/dashboard/material/novo?edit=${material.id}`)}
-                className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
-              >
-                <Edit2 size={13} /> EDITAR
-              </button>
-            )}
+            {hasPermission(user, "materials.manage") &&
+              (user.role === "admin" || material.authorId === user.id) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(`/dashboard/material/novo?edit=${material.id}`)
+                  }
+                  className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
+                >
+                  <Edit2 size={13} /> EDITAR
+                </button>
+              )}
           </motion.div>
         </div>
       </section>
@@ -255,7 +339,10 @@ export default function MaterialDetailPage() {
       {/* ── BODY ────────────────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-4 py-14 sm:px-6 sm:py-16">
         {material.description && (
-          <motion.p className="text-djon-text/60 text-lg leading-relaxed mb-10 border-l-2 border-djon-accent/40 pl-4" {...fadeUp(0)}>
+          <motion.p
+            className="text-djon-text/60 text-lg leading-relaxed mb-10 border-l-2 border-djon-accent/40 pl-4"
+            {...fadeUp(0)}
+          >
             {material.description}
           </motion.p>
         )}
@@ -278,7 +365,10 @@ export default function MaterialDetailPage() {
             <div className="flex items-center gap-2 mb-5">
               <Paperclip size={16} className="text-djon-accent" />
               <h2 className="text-djon-text font-black text-sm tracking-widest uppercase">
-                Anexos <span className="text-djon-text/30">({attachments.length})</span>
+                Anexos{" "}
+                <span className="text-djon-text/30">
+                  ({attachments.length})
+                </span>
               </h2>
             </div>
 
@@ -288,9 +378,15 @@ export default function MaterialDetailPage() {
                   key={att.id}
                   className="group flex flex-col gap-4 rounded-2xl border border-djon-text/8 bg-djon-text/4 p-4 transition-all hover:brightness-110 sm:flex-row sm:items-center"
                 >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    att.type === "pdf" ? "bg-djon-warning-red/15" : att.type === "image" ? "bg-djon-accent/12" : "bg-djon-text/8"
-                  }`}>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                      att.type === "pdf"
+                        ? "bg-djon-warning-red/15"
+                        : att.type === "image"
+                          ? "bg-djon-accent/12"
+                          : "bg-djon-text/8"
+                    }`}
+                  >
                     {att.type === "pdf" ? (
                       <FileText size={20} className="text-djon-warning-red" />
                     ) : att.type === "image" ? (
@@ -301,9 +397,12 @@ export default function MaterialDetailPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-djon-text font-bold text-sm truncate">{att.name}</p>
+                    <p className="text-djon-text font-bold text-sm truncate">
+                      {att.name}
+                    </p>
                     <p className="text-djon-text/35 text-xs uppercase tracking-widest font-bold">
-                      {att.type}{att.size ? ` · ${att.size}` : ""}
+                      {att.type}
+                      {att.size ? ` · ${att.size}` : ""}
                     </p>
                   </div>
 
@@ -342,5 +441,5 @@ export default function MaterialDetailPage() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }

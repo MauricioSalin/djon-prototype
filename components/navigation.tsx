@@ -8,6 +8,7 @@ import { useLenis } from "lenis/react"
 import { ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react"
 import { LocationDropdown } from "@/components/location-dropdown"
 import { store, type User } from "@/lib/store"
+import { ShimmerSkeleton } from "@/components/loading-skeletons"
 
 function portalHomeForRole(role: User["role"]) {
   if (role === "admin") return "/dashboard/admin"
@@ -141,10 +142,7 @@ export function Navigation() {
   ]
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring" as const, stiffness: 100, damping: 20 }}
+    <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         mobileMenuOpen
           ? "bg-djon-page border-b border-djon-text/10"
@@ -154,7 +152,7 @@ export function Navigation() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between sm:px-6">
-        <button onClick={() => scrollToSection("#hero")} className="cursor-pointer transition-opacity hover:opacity-80">
+        <button onClick={() => scrollToSection("#hero")} className="flex min-h-11 cursor-pointer items-center transition-opacity hover:opacity-80">
           <motion.div
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -162,7 +160,7 @@ export function Navigation() {
             <Image
               src="/images/djon-verde.png"
               alt="DJ ON Academy"
-              width={100}
+              width={126}
               height={32}
               className="h-8 w-auto"
               priority
@@ -196,10 +194,7 @@ export function Navigation() {
         <div className="hidden md:flex items-center gap-3">
           <LocationDropdown />
           {sessionLoading ? (
-            <div
-              aria-hidden="true"
-              className="h-10 w-40 animate-pulse rounded-full border border-djon-text/10 bg-djon-text/5"
-            />
+            <ShimmerSkeleton className="h-10 w-40 rounded-full" />
           ) : user ? (
             <div ref={accountRef} className="relative">
               <motion.button
@@ -261,35 +256,18 @@ export function Navigation() {
           )}
         </div>
 
-        <motion.button
-          className="cursor-pointer p-2 transition-opacity hover:opacity-70 md:hidden"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          whileTap={{ scale: 0.9 }}
+        <button
+          className="flex size-11 cursor-pointer items-center justify-center rounded-full transition-opacity hover:opacity-70 md:hidden"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
+          aria-expanded={mobileMenuOpen}
         >
-          <AnimatePresence mode="wait">
-            {mobileMenuOpen ? (
-              <motion.div
-                key="close"
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: 90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <X className="text-djon-text" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="menu"
-                initial={{ rotate: 90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                exit={{ rotate: -90, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Menu className="text-djon-text" />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.button>
+          {mobileMenuOpen ? (
+            <X className="text-djon-text" />
+          ) : (
+            <Menu className="text-djon-text" />
+          )}
+        </button>
       </div>
 
       <AnimatePresence>
@@ -307,7 +285,7 @@ export function Navigation() {
                 <motion.button
                   key={item.label}
                   onClick={() => scrollToSection(item.href)}
-                  className="cursor-pointer block w-full text-left text-djon-text/80 hover:brightness-110 text-base font-black tracking-widest py-2"
+                  className="flex min-h-11 w-full cursor-pointer items-center text-left text-base font-black tracking-widest text-djon-text/80 hover:brightness-110"
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
@@ -317,7 +295,7 @@ export function Navigation() {
               ))}
               <LocationDropdown align="left" mobile />
               {sessionLoading ? (
-                <div className="mt-2 h-12 w-full animate-pulse rounded-full border border-djon-text/10 bg-djon-text/5" />
+                <ShimmerSkeleton className="mt-2 h-12 w-full rounded-full" />
               ) : user ? (
                 <motion.div
                   className="mt-2 rounded-2xl border border-djon-text/12 bg-djon-text/5 p-2"
@@ -332,7 +310,7 @@ export function Navigation() {
                     <Link
                       href={portalHomeForRole(user.role)}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
+                      className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
                     >
                       <LayoutDashboard size={14} />
                       ACESSAR PORTAL
@@ -340,7 +318,7 @@ export function Navigation() {
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="cursor-pointer flex w-full items-center justify-center gap-2 rounded-full border border-djon-warning-red/25 px-6 py-3 text-xs font-black tracking-widest text-djon-warning-red transition-[filter] hover:brightness-110"
+                      className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-warning-red/25 px-6 py-3 text-xs font-black tracking-widest text-djon-warning-red transition-[filter] hover:brightness-110"
                     >
                       <LogOut size={14} />
                       SAIR
@@ -350,7 +328,7 @@ export function Navigation() {
               ) : (
                 <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                   <motion.div
-                    className="w-full flex items-center justify-center gap-2 border border-djon-text/20 text-djon-text/70 px-6 py-3 rounded-full font-black text-xs tracking-widest mt-2"
+                    className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-djon-text/20 px-6 py-3 text-xs font-black tracking-widest text-djon-text/70"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.35 }}
@@ -364,6 +342,6 @@ export function Navigation() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </nav>
   )
 }

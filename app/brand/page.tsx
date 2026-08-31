@@ -223,7 +223,7 @@ export default function BrandPage() {
 
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
             <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-djon-text/10 bg-djon-surface-7 p-10 lg:col-span-2">
-              <Image src="/images/djon-verde.png" alt="DJ ON Academy em verde" width={340} height={110} className="h-auto w-full max-w-[340px]" />
+              <Image src="/images/djon-verde.png" alt="DJ ON Academy em verde" width={340} height={86} className="h-auto w-full max-w-[340px]" />
             </div>
             <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-8">
               <Image src="/images/djon-logo.png" alt="DJ ON Academy versão compacta" width={220} height={72} className="h-auto w-full max-w-[220px] drop-shadow-djon-soft" />

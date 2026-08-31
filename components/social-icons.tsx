@@ -22,3 +22,33 @@ export function SoundCloudIcon({ size = 16, className = "" }: { size?: number; c
     </svg>
   )
 }
+
+export function SpotifyIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      role="img"
+      aria-label="Spotify"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="10.75"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M6.2 9.15c3.87-1.15 8.54-.93 11.7.69M6.85 12.1c3.3-.93 7.42-.72 10.18.65M7.45 14.92c2.75-.7 6.09-.5 8.46.58"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}

@@ -19,11 +19,32 @@ export interface SocialLinks {
   instagram?: string;
   soundcloud?: string;
   youtube?: string;
+  spotify?: string;
+  pressKit?: string;
 }
+
+export interface LatestRelease {
+  title?: string;
+  link?: string;
+  cover?: string;
+}
+
+export type Permission =
+  | "users.manage"
+  | "leads.manage"
+  | "bookings.manage"
+  | "bookings.review"
+  | "courses.manage"
+  | "attendance.manage"
+  | "materials.manage"
+  | "units.manage"
+  | "equipments.manage"
+  | "audit.read";
 
 export interface User {
   id: string;
   name: string;
+  projectName?: string;
   email: string;
   whatsapp?: string;
   cpf?: string;
@@ -32,12 +53,25 @@ export interface User {
   banner?: string;
   bio?: string;
   socials?: SocialLinks;
+  latestRelease?: LatestRelease;
   role: Role;
   unitId?: string;
   unitLabel?: string;
   trainingHoursLimit?: number;
+  permissions?: Permission[];
+  showAcademicProgress?: boolean;
+  passwordChangeRequired?: boolean;
   active?: boolean;
   createdAt: string;
+}
+
+export function hasPermission(
+  user: Pick<User, "role" | "permissions"> | null | undefined,
+  permission: Permission,
+) {
+  return Boolean(
+    user && (user.role === "admin" || user.permissions?.includes(permission)),
+  );
 }
 
 export interface DJEvent {
@@ -58,6 +92,11 @@ export interface DJEvent {
 export interface Booking {
   id: string;
   userId: string;
+  studentIds?: string[];
+  isClassLesson?: boolean;
+  cohortId?: string;
+  cohortName?: string;
+  lessonId?: string;
   studentName?: string;
   studentAvatar?: string;
   title: string;
@@ -117,6 +156,9 @@ export interface Equipment {
   unitId: string;
   unitLabel?: string;
   active: boolean;
+  unavailableWeekdays: number[];
+  unavailableFrom: string | null;
+  unavailableUntil: string | null;
 }
 
 export interface Lead {
@@ -145,6 +187,10 @@ export interface Material {
   title: string;
   description?: string;
   category: string;
+  categoryId?: string;
+  courseId?: string;
+  courseName?: string;
+  locked?: boolean;
   coverImage?: string;
   body?: string;
   attachments?: MaterialAttachment[];
@@ -156,6 +202,81 @@ export interface Material {
   fileType?: "image" | "pdf";
   fileUrl?: string;
   fileName?: string;
+}
+
+export interface MaterialCategory {
+  id: string;
+  name: string;
+  type: "biblioteca" | "curso";
+  systemKey?: string;
+}
+
+export interface Course {
+  id: string;
+  name: string;
+  description?: string;
+  coverImage?: string;
+  categoryId: string;
+  categoryName?: string;
+  active: boolean;
+}
+
+export interface LessonAttendance {
+  studentId: string;
+  studentName?: string;
+  present: boolean;
+  materialReleased: boolean;
+}
+
+export interface CourseLesson {
+  id: string;
+  bookingId?: string;
+  order: number;
+  title: string;
+  materialId: string;
+  materialTitle?: string;
+  date: string;
+  time: string;
+  durationMinutes: number;
+  attendance?: LessonAttendance[];
+  locked?: boolean;
+  present?: boolean;
+}
+
+export interface Cohort {
+  id: string;
+  name: string;
+  courseId: string;
+  courseName?: string;
+  unitId: string;
+  unitLabel?: string;
+  professorId: string;
+  professorName?: string;
+  equipmentId: string;
+  equipmentName?: string;
+  students: Pick<User, "id" | "name" | "projectName" | "avatar" | "email">[];
+  lessonCount: number;
+  durationMinutes: number;
+  status: "configuracao" | "ativa" | "concluida";
+  lessons?: CourseLesson[];
+  progress: { completed: number; total: number; percent: number };
+}
+
+export interface CohortScheduleConflict {
+  lessonIndex: number;
+  date: string;
+  time: string;
+  endTime: string;
+  kind:
+    | "equipment"
+    | "professor"
+    | "equipment-weekday"
+    | "equipment-period"
+    | "cohort-lesson";
+  message: string;
+  conflictingBookingId?: string;
+  conflictingTitle?: string;
+  conflictingLessonIndex?: number;
 }
 
 export interface UploadedFile {
@@ -178,9 +299,29 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  actorName: string;
+  actorEmail?: string;
+  actorRole?: Role;
+  method: string;
+  path: string;
+  statusCode: number;
+  targetId?: string;
+  durationMs: number;
+  createdAt: string;
+}
+
+export interface AuditLogPage {
+  items: AuditLogEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 type ApiRecord = Record<string, unknown>;
 type ApiPage = { items: ApiRecord[]; total: number };
-type CategoryRecord = { id: string; name: string };
+type CategoryRecord = MaterialCategory;
 
 type PortalCacheSnapshot = {
   version: number;
@@ -205,6 +346,7 @@ const PORTAL_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 const NOTIFICATIONS_STALE_MS = 10 * 1000;
 const BOOKINGS_STALE_MS = 4 * 1000;
 export const SESSION_EXPIRED_EVENT = "djon:session-expired";
+export const CURRENT_USER_UPDATED_EVENT = "djon:current-user-updated";
 let sessionExpirationAnnounced = false;
 const userNameCollator = new Intl.Collator("pt-BR", {
   sensitivity: "base",
@@ -215,6 +357,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    public readonly payload?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -274,9 +417,11 @@ function asString(value: unknown, fallback = "") {
 
 function normalizeUser(raw: ApiRecord): User {
   const unit = reference(raw.unitId);
+  const latestRelease = reference(raw.latestRelease);
   return {
     id: asString(raw.id),
     name: asString(raw.name),
+    projectName: asString(raw.projectName) || undefined,
     email: asString(raw.email),
     whatsapp: formatPhone(asString(raw.whatsapp)) || undefined,
     cpf: asString(raw.cpf) || undefined,
@@ -285,6 +430,13 @@ function normalizeUser(raw: ApiRecord): User {
     banner: assetUrl(asString(raw.banner)) || undefined,
     bio: asString(raw.bio) || undefined,
     socials: (raw.socials as SocialLinks | undefined) ?? {},
+    latestRelease: latestRelease
+      ? {
+          title: asString(latestRelease.title) || undefined,
+          link: asString(latestRelease.link) || undefined,
+          cover: assetUrl(asString(latestRelease.cover)) || undefined,
+        }
+      : undefined,
     role: raw.role as Role,
     unitId: referenceId(raw.unitId) || undefined,
     unitLabel: asString(unit?.label) || asString(unit?.shortLabel) || undefined,
@@ -292,6 +444,11 @@ function normalizeUser(raw: ApiRecord): User {
       typeof raw.trainingHoursLimit === "number"
         ? raw.trainingHoursLimit
         : undefined,
+    permissions: Array.isArray(raw.permissions)
+      ? (raw.permissions as Permission[])
+      : [],
+    showAcademicProgress: raw.showAcademicProgress !== false,
+    passwordChangeRequired: raw.passwordChangeRequired === true,
     active: raw.active as boolean | undefined,
     createdAt: asString(raw.createdAt),
   };
@@ -323,6 +480,13 @@ function normalizeBooking(raw: ApiRecord): Booking {
   return {
     id: asString(raw.id),
     userId: referenceId(raw.studentId),
+    studentIds: Array.isArray(raw.studentIds)
+      ? raw.studentIds.map(referenceId).filter(Boolean)
+      : undefined,
+    isClassLesson: raw.isClassLesson === true,
+    cohortId: referenceId(raw.cohortId) || undefined,
+    cohortName: asString(raw.cohortName) || undefined,
+    lessonId: referenceId(raw.lessonId) || undefined,
     studentName: asString(student?.name) || undefined,
     studentAvatar: assetUrl(asString(student?.avatar)) || undefined,
     title: asString(raw.title),
@@ -353,11 +517,19 @@ function normalizeEquipment(raw: ApiRecord): Equipment {
     unitId: referenceId(raw.unitId),
     unitLabel: asString(unit?.label) || asString(unit?.shortLabel) || undefined,
     active: raw.active !== false,
+    unavailableWeekdays: Array.isArray(raw.unavailableWeekdays)
+      ? raw.unavailableWeekdays.filter(
+          (value): value is number => typeof value === "number",
+        )
+      : [],
+    unavailableFrom: asString(raw.unavailableFrom) || null,
+    unavailableUntil: asString(raw.unavailableUntil) || null,
   };
 }
 
 function normalizeMaterial(raw: ApiRecord): Material {
   const category = reference(raw.categoryId);
+  const course = reference(raw.courseId);
   const author = reference(raw.authorId);
   const body = assetHtml(asString(raw.body)) || undefined;
   const attachments = Array.isArray(raw.attachments)
@@ -377,6 +549,10 @@ function normalizeMaterial(raw: ApiRecord): Material {
     title: asString(raw.title),
     description: asString(raw.description) || undefined,
     category: asString(category?.name),
+    categoryId: referenceId(raw.categoryId) || undefined,
+    courseId: referenceId(raw.courseId) || undefined,
+    courseName: asString(course?.name) || undefined,
+    locked: raw.locked === true,
     coverImage: assetUrl(asString(raw.coverImage)) || firstImageFromHtml(body),
     body,
     attachments,
@@ -385,6 +561,98 @@ function normalizeMaterial(raw: ApiRecord): Material {
     authorAvatar: assetUrl(asString(author?.avatar)) || undefined,
     status: raw.status === "draft" ? "draft" : "published",
     createdAt: asString(raw.createdAt),
+  };
+}
+
+function normalizeCourse(raw: ApiRecord): Course {
+  const category = reference(raw.categoryId);
+  return {
+    id: asString(raw.id),
+    name: asString(raw.name),
+    description: asString(raw.description) || undefined,
+    coverImage: assetUrl(asString(raw.coverImage)) || undefined,
+    categoryId: referenceId(raw.categoryId),
+    categoryName: asString(category?.name) || undefined,
+    active: raw.active !== false,
+  };
+}
+
+function normalizeLesson(raw: ApiRecord): CourseLesson {
+  const material = reference(raw.materialId);
+  const attendance = Array.isArray(raw.attendance)
+    ? raw.attendance.map((item) => {
+        const record = item as ApiRecord;
+        const student = reference(record.studentId);
+        return {
+          studentId: referenceId(record.studentId),
+          studentName:
+            asString(student?.projectName) ||
+            asString(student?.name) ||
+            undefined,
+          present: record.present === true,
+          materialReleased: record.materialReleased === true,
+        };
+      })
+    : undefined;
+  return {
+    id: asString(raw.id),
+    bookingId: referenceId(raw.bookingId) || undefined,
+    order: typeof raw.order === "number" ? raw.order : 0,
+    title: asString(raw.title) || asString(material?.title),
+    materialId: referenceId(raw.materialId),
+    materialTitle: asString(material?.title) || undefined,
+    date: asString(raw.date),
+    time: asString(raw.time),
+    durationMinutes:
+      typeof raw.durationMinutes === "number" ? raw.durationMinutes : 60,
+    attendance,
+    locked: raw.locked === true,
+    present: raw.present === true,
+  };
+}
+
+function normalizeCohort(raw: ApiRecord): Cohort {
+  const course = reference(raw.courseId);
+  const unit = reference(raw.unitId);
+  const professor = reference(raw.professorId);
+  const equipment = reference(raw.equipmentId);
+  const progress = reference(raw.progress);
+  const students = Array.isArray(raw.studentIds)
+    ? raw.studentIds.map((item) => {
+        const student = reference(item) ?? {};
+        return {
+          id: asString(student.id),
+          name: asString(student.name),
+          projectName: asString(student.projectName) || undefined,
+          avatar: assetUrl(asString(student.avatar)) || undefined,
+          email: asString(student.email),
+        };
+      })
+    : [];
+  return {
+    id: asString(raw.id),
+    name: asString(raw.name),
+    courseId: referenceId(raw.courseId),
+    courseName: asString(course?.name) || undefined,
+    unitId: referenceId(raw.unitId),
+    unitLabel: asString(unit?.label) || asString(unit?.shortLabel) || undefined,
+    professorId: referenceId(raw.professorId),
+    professorName: asString(professor?.name) || undefined,
+    equipmentId: referenceId(raw.equipmentId),
+    equipmentName: asString(equipment?.name) || undefined,
+    students,
+    lessonCount: typeof raw.lessonCount === "number" ? raw.lessonCount : 0,
+    durationMinutes:
+      typeof raw.durationMinutes === "number" ? raw.durationMinutes : 60,
+    status: raw.status as Cohort["status"],
+    lessons: Array.isArray(raw.lessons)
+      ? raw.lessons.map((item) => normalizeLesson(item as ApiRecord))
+      : undefined,
+    progress: {
+      completed: Number(progress?.completed ?? 0),
+      total: Number(progress?.total ?? 0),
+      percent: Number(progress?.percent ?? 0),
+    },
   };
 }
 
@@ -464,7 +732,7 @@ async function request<T>(
     const message = Array.isArray(rawMessage)
       ? rawMessage.join(" ")
       : asString(rawMessage, "Não foi possível concluir a operação.");
-    const error = new ApiError(message, response.status);
+    const error = new ApiError(message, response.status, payload);
     if (showError) notifyRequestError(error);
     throw error;
   }
@@ -560,14 +828,14 @@ class ApiStore {
   }
 
   private async bootstrapPortal(force: boolean) {
-    const me = await this.restoreSession();
+    const me = await this.restoreSession(true);
     if (!me) return null;
     if (!force && this.hydratePortalCache(me)) return me;
     return this.loadAll(me);
   }
 
-  async restoreSession(): Promise<User | null> {
-    if (this.currentUser) return this.currentUser;
+  async restoreSession(force = false): Promise<User | null> {
+    if (this.currentUser && !force) return this.currentUser;
     if (!this.hasSession()) return null;
     if (this.restoreSessionPromise) return this.restoreSessionPromise;
 
@@ -628,6 +896,8 @@ class ApiStore {
     this.categories = categories.map((item) => ({
       id: asString(item.id),
       name: asString(item.name),
+      type: item.type === "curso" ? "curso" : "biblioteca",
+      systemKey: asString(item.systemKey) || undefined,
     }));
     this.notifications = notifications.map((item) =>
       this.normalizeNotification(item),
@@ -661,7 +931,9 @@ class ApiStore {
     this.events.filter((event) => event.createdBy === id);
   getBookings = () => [...this.bookings];
   getBookingsByUser = (id: string) =>
-    this.bookings.filter((booking) => booking.userId === id);
+    this.bookings.filter(
+      (booking) => booking.userId === id || booking.studentIds?.includes(id),
+    );
   getMaterials = () =>
     [...this.materials].sort(
       (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
@@ -670,10 +942,76 @@ class ApiStore {
     this.materials.find((material) => material.id === id) ?? null;
   getMaterialCategories = () =>
     this.categories.map((category) => category.name);
+  getMaterialCategoryRecords = () => [...this.categories];
+
+  async listMaterialCategories() {
+    const categories = await request<ApiRecord[]>("/materials/categories");
+    this.categories = categories.map((item) => ({
+      id: asString(item.id),
+      name: asString(item.name),
+      type: item.type === "curso" ? "curso" : "biblioteca",
+      systemKey: asString(item.systemKey) || undefined,
+    }));
+    return this.getMaterialCategoryRecords();
+  }
+
+  async listCourseMaterials(courseId: string) {
+    const items = (
+      await this.fetchAllPages(
+        `/materials?courseId=${encodeURIComponent(courseId)}`,
+      )
+    ).map(normalizeMaterial);
+    this.materials = [
+      ...items,
+      ...this.materials.filter((item) => item.courseId !== courseId),
+    ];
+    return items;
+  }
   getNotifications = () => [...this.notifications];
   getUnits = () => [...this.units];
   getEquipments = () => [...this.equipments];
   getLeads = () => [...this.leads];
+
+  async listLeads() {
+    this.leads = (await request<ApiRecord[]>("/leads")).map(normalizeLead);
+    return this.getLeads();
+  }
+
+  async listAuditLogs(
+    page = 1,
+    limit = 50,
+    method?: string,
+  ): Promise<AuditLogPage> {
+    const query = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
+    });
+    if (method) query.set("method", method);
+    const result = await request<{
+      items: ApiRecord[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/audit-logs?${query.toString()}`);
+    return {
+      ...result,
+      items: result.items.map((raw) => {
+        const actor = reference(raw.actorId);
+        return {
+          id: asString(raw.id),
+          actorName: asString(actor?.name, "Sistema"),
+          actorEmail: asString(actor?.email) || undefined,
+          actorRole: actor?.role as Role | undefined,
+          method: asString(raw.method),
+          path: asString(raw.path),
+          statusCode: Number(raw.statusCode),
+          targetId: asString(raw.targetId) || undefined,
+          durationMs: Number(raw.durationMs),
+          createdAt: asString(raw.createdAt),
+        };
+      }),
+    };
+  }
 
   async fetchUserById(id: string) {
     const cached = this.getUserById(id);
@@ -811,7 +1149,7 @@ class ApiStore {
     return request<TrainingBalance>("/bookings/training-balance");
   }
 
-  async addUser(data: Omit<User, "id" | "createdAt"> & { password: string }) {
+  async addUser(data: Omit<User, "id" | "createdAt"> & { password?: string }) {
     const user = normalizeUser(
       await request<ApiRecord>(
         "/users",
@@ -824,7 +1162,9 @@ class ApiStore {
     this.users = this.uniqueUsers([...this.users, user]);
     notifySuccess(
       data.role === "professor" ? "Professor cadastrado" : "Aluno cadastrado",
-      `${user.name} já pode acessar o portal.`,
+      data.role === "student"
+        ? `${user.name} receberá a senha temporária por e-mail.`
+        : `${user.name} já pode acessar o portal.`,
     );
     return user;
   }
@@ -879,6 +1219,15 @@ class ApiStore {
       "/users/me/password",
       json("PATCH", { currentPassword, newPassword }),
     );
+    if (this.currentUser) {
+      this.currentUser = { ...this.currentUser, passwordChangeRequired: false };
+      this.users = this.users
+        .map((user) =>
+          user.id === this.currentUser?.id ? this.currentUser : user,
+        )
+        .filter((user): user is User => Boolean(user));
+      window.dispatchEvent(new Event(CURRENT_USER_UPDATED_EVENT));
+    }
     notifySuccess("Senha alterada", "Use a nova senha no próximo acesso.");
     return result;
   }
@@ -892,6 +1241,16 @@ class ApiStore {
         : {}),
       ...(data.avatar ? { avatar: this.relativeAsset(data.avatar) } : {}),
       ...(data.banner ? { banner: this.relativeAsset(data.banner) } : {}),
+      ...(data.latestRelease
+        ? {
+            latestRelease: {
+              ...data.latestRelease,
+              cover: data.latestRelease.cover
+                ? this.relativeAsset(data.latestRelease.cover)
+                : undefined,
+            },
+          }
+        : {}),
     };
     const user = normalizeUser(
       await request<ApiRecord>(path, json("PATCH", payload)),
@@ -900,7 +1259,10 @@ class ApiStore {
       ...this.users.filter((item) => item.id !== id),
       user,
     ]);
-    if (id === this.currentUser?.id) this.currentUser = user;
+    if (id === this.currentUser?.id) {
+      this.currentUser = user;
+      window.dispatchEvent(new Event(CURRENT_USER_UPDATED_EVENT));
+    }
     notifySuccess(
       id === this.currentUser?.id ? "Perfil atualizado" : "Usuário atualizado",
       "As alterações foram salvas.",
@@ -1195,6 +1557,7 @@ class ApiStore {
           title: data.title,
           description: data.description,
           categoryId,
+          courseId: data.courseId,
           status: data.status,
           coverImage: data.coverImage
             ? this.relativeAsset(data.coverImage)
@@ -1236,6 +1599,7 @@ class ApiStore {
           categoryId: data.category
             ? this.categoryId(data.category)
             : undefined,
+          courseId: data.courseId,
           coverImage: data.coverImage
             ? this.relativeAsset(data.coverImage)
             : undefined,
@@ -1283,14 +1647,18 @@ class ApiStore {
     });
   }
 
-  async addMaterialCategory(name: string) {
+  async addMaterialCategory(
+    name: string,
+    type: MaterialCategory["type"] = "biblioteca",
+  ) {
     const category = await request<ApiRecord>(
       "/materials/categories",
-      json("POST", { name }),
+      json("POST", { name, type }),
     );
     this.categories.push({
       id: asString(category.id),
       name: asString(category.name),
+      type: category.type === "curso" ? "curso" : "biblioteca",
     });
     notifySuccess(
       "Categoria criada",
@@ -1375,6 +1743,178 @@ class ApiStore {
       undoDescription: `${name} e seus vínculos foram restaurados.`,
     });
     return this.getMaterialCategories();
+  }
+
+  async listCourses(activeOnly = true) {
+    const items = await request<ApiRecord[]>(
+      `/courses?activeOnly=${activeOnly ? "true" : "false"}`,
+    );
+    return items.map(normalizeCourse);
+  }
+
+  async createCourse(data: {
+    name: string;
+    description?: string;
+    coverImage?: string;
+  }) {
+    const course = normalizeCourse(
+      await request<ApiRecord>(
+        "/courses",
+        json("POST", {
+          ...data,
+          coverImage: data.coverImage
+            ? this.relativeAsset(data.coverImage)
+            : undefined,
+        }),
+      ),
+    );
+    notifySuccess("Curso criado", `${course.name} já pode receber materiais.`);
+    return course;
+  }
+
+  async updateCourse(
+    id: string,
+    data: { name: string; description?: string; coverImage?: string },
+  ) {
+    const course = normalizeCourse(
+      await request<ApiRecord>(
+        `/courses/${id}`,
+        json("PATCH", {
+          ...data,
+          coverImage:
+            data.coverImage === undefined
+              ? undefined
+              : data.coverImage
+                ? this.relativeAsset(data.coverImage)
+                : "",
+        }),
+      ),
+    );
+    notifySuccess("Curso atualizado", "As alterações foram salvas.");
+    return course;
+  }
+
+  async deleteCourse(id: string, options: MutationFeedbackOptions = {}) {
+    await request(`/courses/${id}`, json("DELETE"));
+    if (!options.silent) {
+      notifySuccess("Curso excluído", "O curso foi removido da biblioteca.");
+    }
+    options.onChange?.();
+  }
+
+  async listCohorts() {
+    const items = await request<ApiRecord[]>("/courses/cohorts");
+    return items.map(normalizeCohort);
+  }
+
+  async fetchCohort(id: string) {
+    return normalizeCohort(await request<ApiRecord>(`/courses/cohorts/${id}`));
+  }
+
+  async createCohort(data: {
+    name: string;
+    courseId: string;
+    unitId: string;
+    professorId: string;
+    equipmentId: string;
+    studentIds: string[];
+    lessonCount: number;
+    durationMinutes: number;
+  }) {
+    const cohort = normalizeCohort(
+      await request<ApiRecord>("/courses/cohorts", json("POST", data)),
+    );
+    notifySuccess(
+      "Turma criada",
+      "Agora configure os materiais, dias e horários das aulas.",
+    );
+    return cohort;
+  }
+
+  async createCohortWithLessons(
+    data: {
+      name: string;
+      courseId: string;
+      unitId: string;
+      professorId: string;
+      equipmentId: string;
+      studentIds: string[];
+      lessonCount: number;
+      durationMinutes: number;
+    },
+    lessons: {
+      materialId: string;
+      date: string;
+      time: string;
+      title?: string;
+    }[],
+  ) {
+    const cohort = normalizeCohort(
+      await request<ApiRecord>(
+        "/courses/cohorts/complete",
+        json("POST", { ...data, lessons }),
+        false,
+      ),
+    );
+    notifySuccess(
+      "Turma criada",
+      "A turma e suas aulas já aparecem nas agendas.",
+    );
+    return cohort;
+  }
+
+  async configureCohortLessons(
+    id: string,
+    lessons: {
+      materialId: string;
+      date: string;
+      time: string;
+      title?: string;
+    }[],
+  ) {
+    const cohort = normalizeCohort(
+      await request<ApiRecord>(
+        `/courses/cohorts/${id}/lessons`,
+        json("POST", { lessons }),
+        false,
+      ),
+    );
+    notifySuccess(
+      "Aulas configuradas",
+      "A turma já aparece na agenda do professor e dos alunos.",
+    );
+    return cohort;
+  }
+
+  async updateLessonAttendance(
+    lessonId: string,
+    data: {
+      studentId: string;
+      present?: boolean;
+      materialReleased?: boolean;
+    },
+  ) {
+    return normalizeCohort(
+      await request<ApiRecord>(
+        `/courses/lessons/${lessonId}/attendance`,
+        json("PATCH", data),
+      ),
+    );
+  }
+
+  async updateProfessorPermissions(id: string, permissions: Permission[]) {
+    const user = normalizeUser(
+      await request<ApiRecord>(
+        `/users/${id}/permissions`,
+        json("PATCH", { permissions }),
+      ),
+    );
+    this.users = this.users.map((item) => (item.id === id ? user : item));
+    notifySuccess(
+      "Privilégios atualizados",
+      `As permissões de ${user.name} foram salvas.`,
+    );
+    return user;
   }
 
   async uploadFile(file: File, purpose: string): Promise<UploadedFile> {

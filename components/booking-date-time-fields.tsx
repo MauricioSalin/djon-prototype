@@ -37,6 +37,25 @@ function currentMonth(value?: string) {
   return value?.slice(0, 7) || toLocalIso(new Date()).slice(0, 7);
 }
 
+function todayInTimezone(timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function endOfFollowingWeek(timezone: string) {
+  const date = new Date(`${todayInTimezone(timezone)}T12:00:00.000Z`);
+  const days = ((7 - date.getUTCDay()) % 7) + 7;
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 export function BookingDateTimeFields({
   type,
   unitId,
@@ -62,6 +81,9 @@ export function BookingDateTimeFields({
     occupiedEquipment: [],
   });
   const requestVersion = useRef(0);
+  const timezone =
+    store.getUnits().find((unit) => unit.id === unitId)?.timezone ??
+    "America/Sao_Paulo";
 
   const resource = useMemo(
     () => ({
@@ -152,11 +174,16 @@ export function BookingDateTimeFields({
   const isDateDisabled = useCallback(
     (candidate: Date) => {
       const iso = toLocalIso(candidate);
-      if (iso < toLocalIso(new Date())) return true;
+      if (iso < todayInTimezone(timezone)) return true;
+      if (
+        store.getCurrentUser()?.role === "student" &&
+        iso > endOfFollowingWeek(timezone)
+      )
+        return true;
       if (iso.slice(0, 7) !== loadedMonth) return true;
       return !availableDates.has(iso);
     },
-    [availableDates, loadedMonth],
+    [availableDates, loadedMonth, timezone],
   );
 
   const occupiedEquipment = useMemo(() => {
@@ -192,13 +219,18 @@ export function BookingDateTimeFields({
             onDateChange("");
             onTimeChange("");
           }}
-          options={Array.from({ length: 8 }, (_, index) => {
-            const hours = index + 1;
-            return {
-              value: String(hours * 60),
-              label: `${hours} ${hours === 1 ? "hora" : "horas"}`,
-            };
-          })}
+          options={(type === "treino"
+            ? [30, 60, 90]
+            : Array.from({ length: 16 }, (_, index) => (index + 1) * 30)
+          ).map((minutes) => ({
+            value: String(minutes),
+            label:
+              minutes === 30
+                ? "30 minutos"
+                : minutes % 60 === 0
+                  ? `${minutes / 60} ${minutes === 60 ? "hora" : "horas"}`
+                  : `${Math.floor(minutes / 60)}h30`,
+          }))}
           className="h-12"
         />
       </div>

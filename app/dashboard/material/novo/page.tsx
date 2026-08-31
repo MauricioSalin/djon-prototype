@@ -1,328 +1,415 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
-import Image from "next/image"
-import { AnimatePresence, motion } from "framer-motion"
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, File as FileIcon, FileText, ImageIcon,
-  Paperclip, Save, Upload, X,
-} from "lucide-react"
-import { store, type Material, type MaterialAttachment, type UploadedFile, type User } from "@/lib/store"
-import { RichTextEditor } from "@/components/rich-text-editor"
-import { DjonSelect } from "@/components/djon-select"
-import { useConfirmation } from "@/components/confirmation-provider"
-import { notifyError, notifyUndoable } from "@/lib/feedback"
-import { DashboardPageSkeleton } from "@/components/loading-skeletons"
+  AlertTriangle,
+  ArrowLeft,
+  File as FileIcon,
+  FileText,
+  ImageIcon,
+  Paperclip,
+  Save,
+  Upload,
+  X,
+} from "lucide-react";
+import {
+  hasPermission,
+  store,
+  type Material,
+  type MaterialAttachment,
+  type UploadedFile,
+  type User,
+} from "@/lib/store";
+import { RichTextEditor } from "@/components/rich-text-editor";
+import { DjonSelect } from "@/components/djon-select";
+import { useConfirmation } from "@/components/confirmation-provider";
+import { notifyError, notifyUndoable } from "@/lib/feedback";
+import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { usePageTitle } from "@/components/page-title-manager";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] as const, delay },
-})
+});
 
-const MAX_ATTACHMENT_SIZE = 100 * 1024 * 1024
+const MAX_ATTACHMENT_SIZE = 100 * 1024 * 1024;
 
-const inputCls = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/25 focus:outline-none focus:border-djon-accent/40 transition-colors"
+const inputCls =
+  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/25 focus:outline-none focus:border-djon-accent/40 transition-colors";
 
 function attachmentTypeOf(file: File): MaterialAttachment["type"] {
-  if (file.type === "application/pdf") return "pdf"
-  if (file.type.startsWith("image/")) return "image"
-  return "file"
+  if (file.type === "application/pdf") return "pdf";
+  if (file.type.startsWith("image/")) return "image";
+  return "file";
 }
 
 function formatSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function referencesFile(value: string | undefined, id: string) {
-  return Boolean(value?.includes(`/api/v1/files/${id}`))
+  return Boolean(value?.includes(`/api/v1/files/${id}`));
 }
 
 type EditorSnapshot = {
-  title: string
-  description: string
-  category: string
-  coverUrl: string
-  body: string
-  attachments: MaterialAttachment[]
-}
+  title: string;
+  description: string;
+  category: string;
+  coverUrl: string;
+  body: string;
+  attachments: MaterialAttachment[];
+  courseId: string;
+};
 
-type PendingExit =
-  | { type: "back" }
-  | { type: "href"; href: string }
+type PendingExit = { type: "back" } | { type: "href"; href: string };
 
 function snapshotOf(value: EditorSnapshot) {
-  return JSON.stringify(value)
+  return JSON.stringify(value);
 }
 
 export default function NovoMaterialPage() {
-  const router = useRouter()
-  const { confirm } = useConfirmation()
-  const [user, setUser] = useState<User | null>(null)
-  const [categories, setCategories] = useState<string[]>([])
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [category, setCategory] = useState("")
-  const [coverUrl, setCoverUrl] = useState("")
-  const [body, setBody] = useState("")
-  const [attachments, setAttachments] = useState<MaterialAttachment[]>([])
-  const [saving, setSaving] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingStatus, setEditingStatus] = useState<Material["status"]>("published")
-  const [loaded, setLoaded] = useState(false)
-  const [exitModalOpen, setExitModalOpen] = useState(false)
-  const [initialSnapshot, setInitialSnapshot] = useState("")
-  const draftIdsRef = useRef(new Set<string>())
-  const committedRef = useRef(false)
-  const allowNavigationRef = useRef(false)
-  const dirtyRef = useRef(false)
-  const pendingExitRef = useRef<PendingExit>({ type: "back" })
-  const editorHrefRef = useRef("")
+  const router = useRouter();
+  const { confirm } = useConfirmation();
+  const [user, setUser] = useState<User | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [body, setBody] = useState("");
+  const [attachments, setAttachments] = useState<MaterialAttachment[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingStatus, setEditingStatus] =
+    useState<Material["status"]>("published");
+  const [loaded, setLoaded] = useState(false);
+  const [exitModalOpen, setExitModalOpen] = useState(false);
+  const [initialSnapshot, setInitialSnapshot] = useState("");
+  const draftIdsRef = useRef(new Set<string>());
+  const committedRef = useRef(false);
+  const allowNavigationRef = useRef(false);
+  const dirtyRef = useRef(false);
+  const pendingExitRef = useRef<PendingExit>({ type: "back" });
+  const editorHrefRef = useRef("");
 
-  const coverRef = useRef<HTMLInputElement>(null)
-  const attachRef = useRef<HTMLInputElement>(null)
+  const coverRef = useRef<HTMLInputElement>(null);
+  const attachRef = useRef<HTMLInputElement>(null);
+
+  usePageTitle(editingId ? title.trim() || "Editar Material" : "Novo Material");
 
   useEffect(() => {
-    const draftIds = draftIdsRef.current
-    editorHrefRef.current = window.location.href
-    const currentUser = store.getCurrentUser()
+    const draftIds = draftIdsRef.current;
+    editorHrefRef.current = window.location.href;
+    const currentUser = store.getCurrentUser();
     if (!currentUser) {
-      router.replace("/login")
-      return
+      router.replace("/login");
+      return;
     }
-    if (currentUser.role !== "admin" && currentUser.role !== "professor") {
-      router.replace("/dashboard/material")
-      return
+    if (!hasPermission(currentUser, "materials.manage")) {
+      router.replace("/dashboard/material");
+      return;
     }
 
-    const materialCategories = store.getMaterialCategories()
-    setUser(currentUser)
-    setCategories(materialCategories)
-    const initialCategory = materialCategories[0] ?? ""
-    setCategory(initialCategory)
-    const materialId = new URLSearchParams(window.location.search).get("edit")
+    const categoryRecords = store.getMaterialCategoryRecords();
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedCourseId = searchParams.get("courseId") ?? "";
+    const requestedCategoryId = searchParams.get("categoryId") ?? "";
+    const requestedCategory = categoryRecords.find(
+      (item) => item.id === requestedCategoryId,
+    )?.name;
+    const materialCategories = categoryRecords
+      .filter(
+        (item) => item.type === "biblioteca" || item.id === requestedCategoryId,
+      )
+      .map((item) => item.name);
+    setUser(currentUser);
+    setCategories(materialCategories);
+    const initialCategory = requestedCategory ?? materialCategories[0] ?? "";
+    setCategory(initialCategory);
+    setCourseId(requestedCourseId);
+    const materialId = searchParams.get("edit");
     if (materialId) {
-      store.fetchMaterialById(materialId).then((material) => {
-        if (currentUser.role !== "admin" && material.authorId !== currentUser.id) { router.replace("/dashboard/material"); return }
-        setEditingId(material.id); setTitle(material.title); setDescription(material.description ?? "")
-        setCategory(material.category); setCoverUrl(material.coverImage ?? ""); setBody(material.body ?? "")
-        setAttachments(material.attachments ?? [])
-        setEditingStatus(material.status)
-        setInitialSnapshot(snapshotOf({
-          title: material.title,
-          description: material.description ?? "",
-          category: material.category,
-          coverUrl: material.coverImage ?? "",
-          body: material.body ?? "",
-          attachments: material.attachments ?? [],
-        }))
-        setLoaded(true)
-      }).catch(() => router.replace("/dashboard/material"))
+      store
+        .fetchMaterialById(materialId)
+        .then((material) => {
+          if (
+            currentUser.role !== "admin" &&
+            material.authorId !== currentUser.id
+          ) {
+            router.replace("/dashboard/material");
+            return;
+          }
+          setEditingId(material.id);
+          setTitle(material.title);
+          setDescription(material.description ?? "");
+          setCategory(material.category);
+          setCoverUrl(material.coverImage ?? "");
+          setBody(material.body ?? "");
+          setCourseId(material.courseId ?? "");
+          setCategories((current) =>
+            current.includes(material.category)
+              ? current
+              : [...current, material.category],
+          );
+          setAttachments(material.attachments ?? []);
+          setEditingStatus(material.status);
+          setInitialSnapshot(
+            snapshotOf({
+              title: material.title,
+              description: material.description ?? "",
+              category: material.category,
+              coverUrl: material.coverImage ?? "",
+              body: material.body ?? "",
+              attachments: material.attachments ?? [],
+              courseId: material.courseId ?? "",
+            }),
+          );
+          setLoaded(true);
+        })
+        .catch(() => router.replace("/dashboard/material"));
     } else {
-      setInitialSnapshot(snapshotOf({
-        title: "",
-        description: "",
-        category: initialCategory,
-        coverUrl: "",
-        body: "",
-        attachments: [],
-      }))
-      setLoaded(true)
+      setInitialSnapshot(
+        snapshotOf({
+          title: "",
+          description: "",
+          category: initialCategory,
+          coverUrl: "",
+          body: "",
+          attachments: [],
+          courseId: requestedCourseId,
+        }),
+      );
+      setLoaded(true);
     }
     return () => {
       if (!committedRef.current) {
-        for (const id of draftIds) void store.deleteFile(id, { silent: true }).catch(() => undefined)
+        for (const id of draftIds)
+          void store.deleteFile(id, { silent: true }).catch(() => undefined);
       }
-    }
-  }, [router])
+    };
+  }, [router]);
 
   const currentSnapshot = useMemo(
     () =>
-      snapshotOf({ title, description, category, coverUrl, body, attachments }),
-    [attachments, body, category, coverUrl, description, title],
-  )
-  const isDirty = loaded && currentSnapshot !== initialSnapshot
-  const isEditingDraft = Boolean(editingId && editingStatus === "draft")
-  const showDraftAction = !editingId || isEditingDraft
-  const primaryStatus: Material["status"] = isEditingDraft ? "published" : editingStatus
+      snapshotOf({
+        title,
+        description,
+        category,
+        coverUrl,
+        body,
+        attachments,
+        courseId,
+      }),
+    [attachments, body, category, courseId, coverUrl, description, title],
+  );
+  const isDirty = loaded && currentSnapshot !== initialSnapshot;
+  const isEditingDraft = Boolean(editingId && editingStatus === "draft");
+  const showDraftAction = !editingId || isEditingDraft;
+  const primaryStatus: Material["status"] = isEditingDraft
+    ? "published"
+    : editingStatus;
 
   useEffect(() => {
-    dirtyRef.current = isDirty
-  }, [isDirty])
+    dirtyRef.current = isDirty;
+  }, [isDirty]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!dirtyRef.current || allowNavigationRef.current) return
-      event.preventDefault()
-      event.returnValue = ""
-    }
+      if (!dirtyRef.current || allowNavigationRef.current) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
     const handleDocumentClick = (event: MouseEvent) => {
-      if (!dirtyRef.current || allowNavigationRef.current) return
-      const target = event.target
-      if (!(target instanceof Element)) return
-      const anchor = target.closest<HTMLAnchorElement>("a[href]")
-      if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return
-      const destination = new URL(anchor.href, window.location.href)
-      if (destination.href === window.location.href) return
-      event.preventDefault()
-      event.stopPropagation()
-      pendingExitRef.current = { type: "href", href: destination.href }
-      setExitModalOpen(true)
-    }
+      if (!dirtyRef.current || allowNavigationRef.current) return;
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const anchor = target.closest<HTMLAnchorElement>("a[href]");
+      if (
+        !anchor ||
+        anchor.target === "_blank" ||
+        anchor.hasAttribute("download")
+      )
+        return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.href === window.location.href) return;
+      event.preventDefault();
+      event.stopPropagation();
+      pendingExitRef.current = { type: "href", href: destination.href };
+      setExitModalOpen(true);
+    };
     const handlePopState = () => {
-      if (!dirtyRef.current || allowNavigationRef.current) return
-      window.history.pushState(null, "", editorHrefRef.current)
-      pendingExitRef.current = { type: "back" }
-      setExitModalOpen(true)
-    }
+      if (!dirtyRef.current || allowNavigationRef.current) return;
+      window.history.pushState(null, "", editorHrefRef.current);
+      pendingExitRef.current = { type: "back" };
+      setExitModalOpen(true);
+    };
 
-    window.addEventListener("beforeunload", handleBeforeUnload)
-    window.addEventListener("popstate", handlePopState)
-    document.addEventListener("click", handleDocumentClick, true)
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
+    document.addEventListener("click", handleDocumentClick, true);
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload)
-      window.removeEventListener("popstate", handlePopState)
-      document.removeEventListener("click", handleDocumentClick, true)
-    }
-  }, [])
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+      document.removeEventListener("click", handleDocumentClick, true);
+    };
+  }, []);
 
   const handleCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.currentTarget
-    const file = e.target.files?.[0]
-    if (!file) return
+    const input = e.currentTarget;
+    const file = e.target.files?.[0];
+    if (!file) return;
     try {
-      const uploaded = await store.uploadFile(file, "material-cover")
-      draftIdsRef.current.add(uploaded.id)
-      const currentDraftId = [...draftIdsRef.current].find((id) => coverUrl.includes(id))
-      if (currentDraftId) { await store.deleteFile(currentDraftId, { silent: true }); draftIdsRef.current.delete(currentDraftId) }
-      setCoverUrl(uploaded.url)
+      const uploaded = await store.uploadFile(file, "material-cover");
+      draftIdsRef.current.add(uploaded.id);
+      const currentDraftId = [...draftIdsRef.current].find((id) =>
+        coverUrl.includes(id),
+      );
+      if (currentDraftId) {
+        await store.deleteFile(currentDraftId, { silent: true });
+        draftIdsRef.current.delete(currentDraftId);
+      }
+      setCoverUrl(uploaded.url);
     } catch {
       // A camada de API já exibiu o motivo do erro no toast.
     } finally {
-      input.value = ""
+      input.value = "";
     }
-  }
+  };
 
   const handleAttachments = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.currentTarget
-    const files = Array.from(e.target.files ?? [])
-    const oversized = files.filter((file) => file.size > MAX_ATTACHMENT_SIZE)
+    const input = e.currentTarget;
+    const files = Array.from(e.target.files ?? []);
+    const oversized = files.filter((file) => file.size > MAX_ATTACHMENT_SIZE);
     if (oversized.length > 0) {
       notifyError(
         "Anexo maior que 100 MB",
         `${oversized[0].name} ultrapassa o limite de 100 MB por arquivo.`,
-      )
-      input.value = ""
-      return
+      );
+      input.value = "";
+      return;
     }
 
     try {
-      const uploaded = await Promise.all(files.map(async (file) => {
-        const result = await store.uploadFile(file, "material-attachment")
-        draftIdsRef.current.add(result.id)
-        return {
-          id: result.id,
-          name: file.name,
-          type: attachmentTypeOf(file),
-          url: result.url,
-          size: formatSize(file.size),
-        }
-      }))
-      setAttachments((previous) => [...previous, ...uploaded])
+      const uploaded = await Promise.all(
+        files.map(async (file) => {
+          const result = await store.uploadFile(file, "material-attachment");
+          draftIdsRef.current.add(result.id);
+          return {
+            id: result.id,
+            name: file.name,
+            type: attachmentTypeOf(file),
+            url: result.url,
+            size: formatSize(file.size),
+          };
+        }),
+      );
+      setAttachments((previous) => [...previous, ...uploaded]);
     } catch {
       // A camada de API já exibiu o motivo do erro no toast.
     } finally {
-      input.value = ""
+      input.value = "";
     }
-  }
+  };
 
   const removeAttachment = async (id: string) => {
-    const attachment = attachments.find((item) => item.id === id)
-    if (!attachment) return
+    const attachment = attachments.find((item) => item.id === id);
+    if (!attachment) return;
     const confirmed = await confirm({
       title: "Remover anexo?",
       description: `${attachment.name} será retirado do material. Você poderá desfazer pelo aviso exibido em seguida.`,
       confirmLabel: "REMOVER",
       confirmVariant: "outline",
-    })
-    if (!confirmed) return
+    });
+    if (!confirmed) return;
 
-    const index = attachments.findIndex((item) => item.id === id)
-    const wasDraft = draftIdsRef.current.has(id)
-    draftIdsRef.current.delete(id)
-    setAttachments((prev) => prev.filter((attachment) => attachment.id !== id))
+    const index = attachments.findIndex((item) => item.id === id);
+    const wasDraft = draftIdsRef.current.has(id);
+    draftIdsRef.current.delete(id);
+    setAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
     notifyUndoable({
       title: "Anexo removido",
       description: `${attachment.name} não fará mais parte do material.`,
-      commit: referencesFile(attachment.url, id) ? () => store.deleteFile(id, { silent: true, keepalive: true }) : undefined,
+      commit: referencesFile(attachment.url, id)
+        ? () => store.deleteFile(id, { silent: true, keepalive: true })
+        : undefined,
       undo: () => {
-        if (wasDraft) draftIdsRef.current.add(id)
+        if (wasDraft) draftIdsRef.current.add(id);
         setAttachments((current) => {
-          const restored = [...current]
-          restored.splice(Math.min(index, restored.length), 0, attachment)
-          return restored
-        })
+          const restored = [...current];
+          restored.splice(Math.min(index, restored.length), 0, attachment);
+          return restored;
+        });
       },
       undoDescription: `${attachment.name} voltou ao material.`,
-    })
-  }
+    });
+  };
 
   const trackRichTextUpload = (uploaded: UploadedFile) => {
-    draftIdsRef.current.add(uploaded.id)
-  }
+    draftIdsRef.current.add(uploaded.id);
+  };
 
   const navigateTo = (href: string) => {
-    allowNavigationRef.current = true
-    const destination = new URL(href, window.location.href)
+    allowNavigationRef.current = true;
+    const destination = new URL(href, window.location.href);
     if (destination.origin === window.location.origin) {
-      router.push(`${destination.pathname}${destination.search}${destination.hash}`)
-      return
+      router.push(
+        `${destination.pathname}${destination.search}${destination.hash}`,
+      );
+      return;
     }
-    window.location.assign(destination.href)
-  }
+    window.location.assign(destination.href);
+  };
 
   const navigateBack = () => {
-    allowNavigationRef.current = true
-    router.back()
-  }
+    allowNavigationRef.current = true;
+    router.back();
+  };
 
   const navigateToPendingExit = () => {
-    const pendingExit = pendingExitRef.current
+    const pendingExit = pendingExitRef.current;
     if (pendingExit.type === "back") {
-      navigateBack()
-      return
+      navigateBack();
+      return;
     }
-    navigateTo(pendingExit.href)
-  }
+    navigateTo(pendingExit.href);
+  };
 
   const requestExit = () => {
     if (!isDirty) {
-      navigateBack()
-      return
+      navigateBack();
+      return;
     }
-    pendingExitRef.current = { type: "back" }
-    setExitModalOpen(true)
-  }
+    pendingExitRef.current = { type: "back" };
+    setExitModalOpen(true);
+  };
 
-  const persistMaterial = async (status: Material["status"], destination?: string | "back") => {
-    if (!user) return false
+  const persistMaterial = async (
+    status: Material["status"],
+    destination?: string | "back",
+  ) => {
+    if (!user) return false;
     if (status === "published" && (!title.trim() || !category)) {
       notifyError(
         "Preencha os dados obrigatórios",
         "Informe o título e a categoria antes de publicar o material.",
-      )
-      return false
+      );
+      return false;
     }
-    setSaving(true)
+    setSaving(true);
 
     try {
       const payload = {
         title: title.trim(),
         description: description.trim() || undefined,
         category,
+        courseId: courseId || undefined,
         status,
         coverImage: coverUrl || undefined,
         body: body || undefined,
@@ -330,54 +417,65 @@ export default function NovoMaterialPage() {
         authorId: user.id,
         authorName: user.name,
         authorAvatar: user.avatar,
-      }
+      };
       const material = editingId
         ? await store.updateMaterial(editingId, payload)
-        : await store.addMaterial(payload)
+        : await store.addMaterial(payload);
 
       const referencedDraftIds = new Set(
-        [...draftIdsRef.current].filter((id) =>
-          referencesFile(coverUrl, id) ||
-          referencesFile(body, id) ||
-          attachments.some((attachment) => referencesFile(attachment.url, id)),
+        [...draftIdsRef.current].filter(
+          (id) =>
+            referencesFile(coverUrl, id) ||
+            referencesFile(body, id) ||
+            attachments.some((attachment) =>
+              referencesFile(attachment.url, id),
+            ),
         ),
-      )
+      );
       await Promise.allSettled(
         [...draftIdsRef.current]
           .filter((id) => !referencedDraftIds.has(id))
           .map((id) => store.deleteFile(id, { silent: true })),
-      )
-      draftIdsRef.current.clear()
-      committedRef.current = true
-      setInitialSnapshot(currentSnapshot)
+      );
+      draftIdsRef.current.clear();
+      committedRef.current = true;
+      setInitialSnapshot(currentSnapshot);
       if (destination === "back") {
-        navigateBack()
+        navigateBack();
       } else {
         navigateTo(
           destination ??
-            (status === "draft"
-              ? "/dashboard/material?category=Rascunhos"
-              : `/dashboard/material/${material.id}`),
-        )
+            (courseId
+              ? `/dashboard/material?category=Cursos&course=${courseId}`
+              : status === "draft"
+                ? "/dashboard/material?category=Rascunhos"
+                : `/dashboard/material/${material.id}`),
+        );
       }
-      return true
+      return true;
     } catch {
       // A camada da API exibe um toast com o motivo do erro.
-      return false
+      return false;
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
-  if (!user) return <DashboardPageSkeleton variant="form" />
+  if (!user) return <DashboardPageSkeleton variant="editor" />;
 
-  if (!loaded) return <DashboardPageSkeleton variant="form" />
+  if (!loaded) return <DashboardPageSkeleton variant="editor" />;
 
   return (
     <div className="min-h-screen bg-djon-page">
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <Image src="/images/material-hero.png" alt="" fill className="object-cover opacity-25" priority />
+          <Image
+            src="/images/material-hero.png"
+            alt=""
+            fill
+            className="object-cover opacity-25"
+            priority
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/88 to-djon-black/55" />
           <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
         </div>
@@ -397,19 +495,32 @@ export default function NovoMaterialPage() {
             className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4"
             {...fadeUp(0.05)}
           >
-            {editingStatus === "draft" && editingId ? "RASCUNHO" : "MATERIAL"}
+            {editingStatus === "draft" && editingId
+              ? "RASCUNHO"
+              : courseId
+                ? "AULA DO CURSO"
+                : "MATERIAL"}
           </motion.span>
           <motion.h1
             className="djon-section-title font-black text-djon-text"
             {...fadeUp(0.1)}
           >
             {editingStatus === "draft" && editingId
-              ? "Continuar Rascunho"
+              ? courseId
+                ? "Continuar Aula"
+                : "Continuar Rascunho"
               : editingId
-                ? "Editar Material"
-                : "Novo Material"}
+                ? courseId
+                  ? "Editar Aula"
+                  : "Editar Material"
+                : courseId
+                  ? "Nova Aula"
+                  : "Novo Material"}
           </motion.h1>
-          <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-4" {...fadeUp(0.15)} />
+          <motion.div
+            className="h-[3px] w-10 bg-djon-accent rounded-full mt-4"
+            {...fadeUp(0.15)}
+          />
         </div>
       </section>
 
@@ -423,12 +534,16 @@ export default function NovoMaterialPage() {
               <div className="w-9 h-9 rounded-full bg-djon-accent/15 flex items-center justify-center">
                 <Upload size={15} className="text-djon-accent" />
               </div>
-              <h2 className="text-djon-text font-black tracking-tight">Conteúdo</h2>
+              <h2 className="text-djon-text font-black tracking-tight">
+                Conteúdo
+              </h2>
             </div>
 
             <div className="space-y-5 p-4 sm:p-6">
               <div>
-                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Título</label>
+                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">
+                  Título
+                </label>
                 <input
                   className={inputCls}
                   placeholder="Nome do material..."
@@ -438,7 +553,9 @@ export default function NovoMaterialPage() {
               </div>
 
               <div>
-                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Resumo</label>
+                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">
+                  Resumo
+                </label>
                 <textarea
                   className={`${inputCls} resize-none`}
                   rows={3}
@@ -449,7 +566,9 @@ export default function NovoMaterialPage() {
               </div>
 
               <div>
-                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Conteúdo do material</label>
+                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">
+                  Conteúdo do material
+                </label>
                 <RichTextEditor
                   value={body}
                   onChange={setBody}
@@ -463,14 +582,32 @@ export default function NovoMaterialPage() {
           <aside className="space-y-4 lg:sticky lg:top-24">
             <section className="bg-djon-calendar-cell border border-djon-text/10 rounded-2xl p-5 space-y-5">
               <div>
-                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Categoria</label>
-                <DjonSelect value={category} onChange={setCategory}
-                  options={categories.map((item) => ({ value: item, label: item }))}
-                  placeholder="Selecionar categoria..." className="h-12" />
+                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">
+                  Categoria
+                </label>
+                <DjonSelect
+                  value={category}
+                  onChange={setCategory}
+                  disabled={Boolean(courseId)}
+                  options={categories.map((item) => ({
+                    value: item,
+                    label: item,
+                  }))}
+                  placeholder="Selecionar categoria..."
+                  className="h-12"
+                />
+                {courseId && (
+                  <p className="mt-2 text-[11px] leading-relaxed text-djon-accent/70">
+                    Esta aula fica vinculada ao curso e só é liberada ao aluno
+                    conforme a presença.
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Imagem de capa</label>
+                <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">
+                  Imagem de capa
+                </label>
                 <button
                   type="button"
                   onClick={() => coverRef.current?.click()}
@@ -478,15 +615,27 @@ export default function NovoMaterialPage() {
                 >
                   {coverUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={coverUrl} alt="" className="w-full h-40 object-cover" />
+                    <img
+                      src={coverUrl}
+                      alt=""
+                      className="w-full h-40 object-cover"
+                    />
                   ) : (
                     <div className="py-8 flex flex-col items-center gap-2">
                       <ImageIcon size={24} className="text-djon-text/20" />
-                      <span className="text-djon-text/30 text-xs font-bold">Adicionar capa</span>
+                      <span className="text-djon-text/30 text-xs font-bold">
+                        Adicionar capa
+                      </span>
                     </div>
                   )}
                 </button>
-                <input ref={coverRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={handleCover} />
+                <input
+                  ref={coverRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.gif"
+                  className="hidden"
+                  onChange={handleCover}
+                />
               </div>
 
               <div className="grid gap-2">
@@ -504,7 +653,11 @@ export default function NovoMaterialPage() {
                 <button
                   type="button"
                   onClick={() => void persistMaterial(primaryStatus)}
-                  disabled={saving || (primaryStatus === "published" && (!title.trim() || !category))}
+                  disabled={
+                    saving ||
+                    (primaryStatus === "published" &&
+                      (!title.trim() || !category))
+                  }
                   className="cursor-pointer w-full bg-djon-accent disabled:opacity-40 disabled:cursor-not-allowed text-djon-ink font-black text-sm tracking-widest py-3.5 rounded-full transition-[filter] hover:brightness-90"
                 >
                   {saving
@@ -513,28 +666,51 @@ export default function NovoMaterialPage() {
                       ? "PUBLICAR"
                       : editingId
                         ? "SALVAR ALTERAÇÕES"
-                        : "PUBLICAR MATERIAL"}
+                        : courseId
+                          ? "PUBLICAR AULA"
+                          : "PUBLICAR MATERIAL"}
                 </button>
               </div>
             </section>
 
             <section className="bg-djon-calendar-cell border border-djon-text/10 rounded-2xl p-5">
-              <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">Anexos</label>
+              <label className="block text-djon-text/50 text-xs font-bold tracking-widest uppercase mb-2">
+                Anexos
+              </label>
               {attachments.length > 0 && (
                 <div className="grid gap-2 mb-3">
                   {attachments.map((attachment) => (
-                    <div key={attachment.id} className="flex items-center gap-3 bg-djon-text/5 border border-djon-text/10 rounded-xl px-3 py-2.5">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        attachment.type === "pdf" ? "bg-djon-warning-red/15" : attachment.type === "image" ? "bg-djon-accent/12" : "bg-djon-text/8"
-                      }`}>
-                        {attachment.type === "pdf" ? <FileText size={14} className="text-djon-warning-red" />
-                          : attachment.type === "image" ? <ImageIcon size={14} className="text-djon-accent" />
-                          : <FileIcon size={14} className="text-djon-text/60" />}
+                    <div
+                      key={attachment.id}
+                      className="flex items-center gap-3 bg-djon-text/5 border border-djon-text/10 rounded-xl px-3 py-2.5"
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          attachment.type === "pdf"
+                            ? "bg-djon-warning-red/15"
+                            : attachment.type === "image"
+                              ? "bg-djon-accent/12"
+                              : "bg-djon-text/8"
+                        }`}
+                      >
+                        {attachment.type === "pdf" ? (
+                          <FileText
+                            size={14}
+                            className="text-djon-warning-red"
+                          />
+                        ) : attachment.type === "image" ? (
+                          <ImageIcon size={14} className="text-djon-accent" />
+                        ) : (
+                          <FileIcon size={14} className="text-djon-text/60" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-djon-text text-xs font-bold truncate">{attachment.name}</p>
+                        <p className="text-djon-text text-xs font-bold truncate">
+                          {attachment.name}
+                        </p>
                         <p className="text-djon-text/30 text-djon-label uppercase tracking-widest font-bold">
-                          {attachment.type}{attachment.size ? ` · ${attachment.size}` : ""}
+                          {attachment.type}
+                          {attachment.size ? ` · ${attachment.size}` : ""}
                         </p>
                       </div>
                       <button
@@ -555,10 +731,21 @@ export default function NovoMaterialPage() {
                 className="cursor-pointer w-full border-2 border-dashed border-djon-text/15 hover:brightness-110 rounded-xl py-5 flex flex-col items-center gap-2 transition-colors"
               >
                 <Paperclip size={20} className="text-djon-text/20" />
-                <span className="text-djon-text/30 text-xs font-bold">Adicionar anexos</span>
-                <span className="text-djon-text/20 text-djon-label">PDF, imagens ou arquivos · até 100 MB cada</span>
+                <span className="text-djon-text/30 text-xs font-bold">
+                  Adicionar anexos
+                </span>
+                <span className="text-djon-text/20 text-djon-label">
+                  PDF, imagens ou arquivos · até 100 MB cada
+                </span>
               </button>
-              <input ref={attachRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.txt,.zip,.doc,.docx,.xls,.xlsx,.mp3,.wav,.mp4" className="hidden" onChange={handleAttachments} />
+              <input
+                ref={attachRef}
+                type="file"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.txt,.zip,.doc,.docx,.xls,.xlsx,.mp3,.wav"
+                className="hidden"
+                onChange={handleAttachments}
+              />
             </section>
           </aside>
         </motion.div>
@@ -573,7 +760,8 @@ export default function NovoMaterialPage() {
             exit={{ opacity: 0 }}
             role="presentation"
             onMouseDown={(event) => {
-              if (event.target === event.currentTarget && !saving) setExitModalOpen(false)
+              if (event.target === event.currentTarget && !saving)
+                setExitModalOpen(false);
             }}
           >
             <motion.section
@@ -604,12 +792,18 @@ export default function NovoMaterialPage() {
               <p className="mt-5 text-xs font-black tracking-[0.2em] text-djon-accent">
                 ALTERAÇÕES NÃO SALVAS
               </p>
-              <h2 id="draft-exit-title" className="mt-2 text-2xl font-black text-djon-text">
+              <h2
+                id="draft-exit-title"
+                className="mt-2 text-2xl font-black text-djon-text"
+              >
                 {editingStatus === "published" && editingId
                   ? "Salvar alterações antes de sair?"
                   : "Salvar como rascunho?"}
               </h2>
-              <p id="draft-exit-description" className="mt-3 text-sm leading-6 text-djon-text/55">
+              <p
+                id="draft-exit-description"
+                className="mt-3 text-sm leading-6 text-djon-text/55"
+              >
                 {editingStatus === "published" && editingId
                   ? "Você alterou este material. Salve agora para não perder o que foi feito."
                   : "Guarde o conteúdo em Rascunhos para continuar a edição depois, ou descarte as alterações."}
@@ -627,8 +821,8 @@ export default function NovoMaterialPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setExitModalOpen(false)
-                    navigateToPendingExit()
+                    setExitModalOpen(false);
+                    navigateToPendingExit();
                   }}
                   disabled={saving}
                   className="cursor-pointer rounded-full border border-djon-warning-red/35 px-4 py-3 text-xs font-black tracking-wider text-djon-warning-red transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
@@ -638,13 +832,20 @@ export default function NovoMaterialPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const pendingExit = pendingExitRef.current
+                    const pendingExit = pendingExitRef.current;
                     void persistMaterial(
-                      editingStatus === "published" && editingId ? "published" : "draft",
+                      editingStatus === "published" && editingId
+                        ? "published"
+                        : "draft",
                       pendingExit.type === "back" ? "back" : pendingExit.href,
-                    )
+                    );
                   }}
-                  disabled={saving || (editingStatus === "published" && Boolean(editingId) && (!title.trim() || !category))}
+                  disabled={
+                    saving ||
+                    (editingStatus === "published" &&
+                      Boolean(editingId) &&
+                      (!title.trim() || !category))
+                  }
                   className="cursor-pointer rounded-full bg-djon-accent px-4 py-3 text-xs font-black tracking-wider text-djon-ink transition-[filter] hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {saving
@@ -659,5 +860,5 @@ export default function NovoMaterialPage() {
         )}
       </AnimatePresence>
     </div>
-  )
+  );
 }

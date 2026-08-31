@@ -16,7 +16,9 @@ export default function LeadsAdminPage() {
   const [filter, setFilter] = useState<Lead["status"] | "todos">("todos")
 
   const load = () => setLeads(store.getLeads())
-  useEffect(load, [])
+  useEffect(() => {
+    void store.listLeads().then(load)
+  }, [])
 
   const updateLocal = (id: string, changes: Partial<Lead>) =>
     setLeads((current) => current.map((lead) => lead.id === id ? { ...lead, ...changes } : lead))

@@ -2,31 +2,75 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Check, Clock, Edit2, Headphones, MapPin, Save, Trash2, User as UserIcon, X } from "lucide-react";
+import {
+  Calendar,
+  Check,
+  Clock,
+  Edit2,
+  Headphones,
+  MapPin,
+  Save,
+  Trash2,
+  User as UserIcon,
+  X,
+} from "lucide-react";
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { DjonSelect } from "@/components/djon-select";
-import { store, type Booking, type Equipment, type Unit, type User } from "@/lib/store";
+import {
+  store,
+  type Booking,
+  type Equipment,
+  type Unit,
+  type User,
+} from "@/lib/store";
 
-const STATUS_META: Record<string, { dot: string; badge: string; label: string }> = {
-  confirmado: { dot: "bg-djon-success", badge: "bg-djon-success/10 border-djon-success/20 text-djon-success", label: "Confirmado" },
-  pendente: { dot: "bg-djon-light-purple", badge: "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple", label: "Pendente" },
-  cancelado: { dot: "bg-djon-warning-red", badge: "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red", label: "Cancelado" },
+const STATUS_META: Record<
+  string,
+  { dot: string; badge: string; label: string }
+> = {
+  confirmado: {
+    dot: "bg-djon-success",
+    badge: "bg-djon-success/10 border-djon-success/20 text-djon-success",
+    label: "Confirmado",
+  },
+  pendente: {
+    dot: "bg-djon-light-purple",
+    badge:
+      "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
+    label: "Pendente",
+  },
+  cancelado: {
+    dot: "bg-djon-warning-red",
+    badge:
+      "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
+    label: "Cancelado",
+  },
 };
 
-interface DropdownOption { value: string; label: string; dot?: string }
+interface DropdownOption {
+  value: string;
+  label: string;
+  dot?: string;
+}
 
-export interface BookingWithUser extends Booking { student: User | null }
+export interface BookingWithUser extends Booking {
+  student: User | null;
+}
 
 function bookingStudentName(booking: BookingWithUser) {
   return booking.student?.name ?? booking.studentName ?? "Aluno";
 }
-function isoToDate(date: string) { return new Date(date + "T00:00:00"); }
+function isoToDate(date: string) {
+  return new Date(date + "T00:00:00");
+}
 
-const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/60 transition-all";
+const inp =
+  "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/60 transition-all";
 export function BookingDetailsDialog({
   bk,
   canEdit,
+  canReview,
   units,
   professors,
   equipments,
@@ -36,6 +80,7 @@ export function BookingDetailsDialog({
 }: {
   bk: BookingWithUser;
   canEdit: boolean;
+  canReview: boolean;
   units: Unit[];
   professors: User[];
   equipments: Equipment[];
@@ -46,9 +91,7 @@ export function BookingDetailsDialog({
   const { confirm } = useConfirmation();
   const mountedRef = useRef(true);
   const [editing, setEditing] = useState(false);
-  const [reviewing, setReviewing] = useState<"accept" | "reject" | null>(
-    null,
-  );
+  const [reviewing, setReviewing] = useState<"accept" | "reject" | null>(null);
   const [form, setForm] = useState({
     title: bk.title,
     date: bk.date,
@@ -168,13 +211,36 @@ export function BookingDetailsDialog({
     }
   };
 
-  const statusOptions: DropdownOption[] = [
-    { value: "confirmado", label: "Confirmado", dot: "bg-djon-success" },
-    ...(bk.status === "pendente"
-      ? [{ value: "pendente", label: "Pendente", dot: "bg-djon-light-purple" }]
-      : []),
-    { value: "cancelado", label: "Cancelado", dot: "bg-djon-warning-red" },
-  ];
+  const statusOptions: DropdownOption[] =
+    bk.status === "pendente" && !canReview
+      ? [
+          {
+            value: "pendente",
+            label: "Pendente",
+            dot: "bg-djon-light-purple",
+          },
+        ]
+      : [
+          {
+            value: "confirmado",
+            label: "Confirmado",
+            dot: "bg-djon-success",
+          },
+          ...(bk.status === "pendente"
+            ? [
+                {
+                  value: "pendente",
+                  label: "Pendente",
+                  dot: "bg-djon-light-purple",
+                },
+              ]
+            : []),
+          {
+            value: "cancelado",
+            label: "Cancelado",
+            dot: "bg-djon-warning-red",
+          },
+        ];
 
   return (
     <motion.div
@@ -262,8 +328,7 @@ export function BookingDetailsDialog({
               {bk.equipmentName && (
                 <div className="flex items-center gap-3 text-djon-text/50 text-xs">
                   <Headphones size={14} className="shrink-0" />
-                  Equipamento:{" "}
-                  {bk.equipmentName}
+                  Equipamento: {bk.equipmentName}
                 </div>
               )}
               {(bk.student || bk.studentName) && (
@@ -286,7 +351,7 @@ export function BookingDetailsDialog({
               )}
             </div>
 
-            {canEdit && bk.status === "pendente" && (
+            {canReview && bk.status === "pendente" && (
               <div className="-mx-5 -mb-5 mt-5 flex gap-2 border-t border-djon-text/10 px-5 py-4 sm:-mx-6 sm:-mb-6 sm:px-6">
                 <button
                   type="button"

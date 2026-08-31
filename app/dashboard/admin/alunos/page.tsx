@@ -34,23 +34,23 @@ const inp =
 
 type FormState = {
   name: string;
+  projectName: string;
   email: string;
   whatsapp: string;
   cpf: string;
   birthDate: string;
-  password: string;
   trainingHoursLimit: number;
   unitId: string;
 };
 
 const emptyForm: FormState = {
   name: "",
+  projectName: "",
   email: "",
   whatsapp: "",
   cpf: "",
   birthDate: "",
-  password: "",
-  trainingHoursLimit: 8,
+  trainingHoursLimit: 15,
   unitId: "",
 };
 
@@ -85,12 +85,12 @@ export default function AlunosPage() {
   const openEdit = (u: AppUser) => {
     setForm({
       name: u.name,
+      projectName: u.projectName ?? "",
       email: u.email,
       whatsapp: formatPhone(u.whatsapp),
       cpf: u.cpf ?? "",
       birthDate: u.birthDate ?? "",
-      password: "",
-      trainingHoursLimit: u.trainingHoursLimit ?? 8,
+      trainingHoursLimit: u.trainingHoursLimit ?? 15,
       unitId: u.unitId ?? units[0]?.id ?? "",
     });
     setEditingId(u.id);
@@ -102,6 +102,7 @@ export default function AlunosPage() {
     if (editingId) {
       await store.updateUser(editingId, {
         name: form.name,
+        projectName: form.projectName,
         email: form.email,
         whatsapp: form.whatsapp,
         cpf: form.cpf,
@@ -112,11 +113,11 @@ export default function AlunosPage() {
     } else {
       await store.addUser({
         name: form.name,
+        projectName: form.projectName,
         email: form.email,
         whatsapp: form.whatsapp,
         cpf: form.cpf,
         birthDate: form.birthDate || undefined,
-        password: form.password,
         trainingHoursLimit: form.trainingHoursLimit,
         role: "student",
         unitId: form.unitId,
@@ -142,12 +143,13 @@ export default function AlunosPage() {
   const filtered = students.filter(
     (u) =>
       u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.projectName?.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()) ||
       phoneMatchesSearch(u.whatsapp, search),
   );
   const pagination = useListPagination(filtered, search);
 
-  if (loading) return <DashboardPageSkeleton variant="list" />;
+  if (loading) return <DashboardPageSkeleton variant="people" />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">
@@ -217,6 +219,18 @@ export default function AlunosPage() {
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                     placeholder="Nome completo do aluno"
+                    className={inp}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold tracking-wide text-djon-text/40">
+                    NOME DO PROJETO ARTÍSTICO
+                  </label>
+                  <input
+                    value={form.projectName}
+                    onChange={(e) => setForm({ ...form, projectName: e.target.value })}
+                    placeholder="Ex: DJ Aurora"
                     className={inp}
                   />
                 </div>
@@ -355,26 +369,9 @@ export default function AlunosPage() {
                 </div>
 
                 {!editingId && (
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">
-                      SENHA INICIAL
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      value={form.password}
-                      onChange={(e) =>
-                        setForm({ ...form, password: e.target.value })
-                      }
-                      autoComplete="new-password"
-                      placeholder="Mínimo de 8 caracteres"
-                      className={inp}
-                    />
-                    <p className="mt-1 text-djon-text/25 text-xs">
-                      Informe esta senha ao aluno por um canal seguro.
-                    </p>
-                  </div>
+                  <p className="rounded-xl border border-djon-accent/20 bg-djon-accent/8 p-3 text-xs leading-relaxed text-djon-text/55">
+                    Uma senha temporária será criada e enviada automaticamente para o e-mail do aluno.
+                  </p>
                 )}
 
                 <p className="text-djon-text/25 text-xs leading-relaxed border-t border-djon-text/8 pt-3">
@@ -438,6 +435,7 @@ export default function AlunosPage() {
                 >
                   {u.name}
                 </Link>
+                {u.projectName && <p className="mb-1 text-xs font-black text-djon-accent">{u.projectName}</p>}
                 <p className="text-djon-text/40 text-xs truncate flex items-center gap-1.5">
                   <Mail size={10} className="shrink-0" />
                   <span className="truncate">{u.email}</span>

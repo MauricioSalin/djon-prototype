@@ -30,12 +30,15 @@ import {
   ArrowRight,
 } from "lucide-react";
 import {
+  hasPermission,
   store,
   SESSION_EXPIRED_EVENT,
+  CURRENT_USER_UPDATED_EVENT,
   type User as StoreUser,
   type DJEvent,
   type Booking,
   type Material,
+  type Permission,
   type Notification as PortalNotification,
 } from "@/lib/store";
 import { useConfirmation } from "@/components/confirmation-provider";
@@ -43,14 +46,11 @@ import {
   NotificationItem,
   TrainingRequestActions,
 } from "@/components/notification-item";
-import {
-  DashboardPageSkeleton,
-  DashboardShellSkeleton,
-} from "@/components/loading-skeletons";
+import { DashboardShellSkeleton } from "@/components/loading-skeletons";
 
 const studentNav = [
   { label: "Início", href: "/dashboard/student", icon: Home },
-  { label: "Agendar", href: "/dashboard/student/agendar", icon: CalendarPlus },
+  { label: "Agenda", href: "/dashboard/student/agendar", icon: CalendarPlus },
   { label: "Meus Eventos", href: "/dashboard/student/evento", icon: Music2 },
   {
     label: "Professores",
@@ -58,6 +58,7 @@ const studentNav = [
     icon: GraduationCap,
   },
   { label: "Material", href: "/dashboard/material", icon: BookOpen },
+  { label: "Cursos", href: "/dashboard/turmas", icon: GraduationCap },
   { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
 ];
 
@@ -79,6 +80,8 @@ const adminNav = [
   },
   { label: "Agenda", href: "/dashboard/agenda", icon: Calendar },
   { label: "Material", href: "/dashboard/material", icon: BookOpen },
+  { label: "Cursos", href: "/dashboard/cursos", icon: GraduationCap },
+  { label: "Turmas", href: "/dashboard/turmas", icon: Users },
   { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
 ];
 
@@ -93,12 +96,69 @@ const professorNav = [
     icon: GraduationCap,
   },
   { label: "Material", href: "/dashboard/material", icon: BookOpen },
+  { label: "Cursos", href: "/dashboard/cursos", icon: GraduationCap },
+  { label: "Turmas", href: "/dashboard/turmas", icon: Users },
   { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
 ];
 
-function getNav(role: string) {
-  if (role === "admin") return adminNav;
-  if (role === "professor") return professorNav;
+function getNav(user: StoreUser) {
+  if (user.role === "admin") return adminNav;
+  if (user.role === "professor") {
+    const managesUsers = hasPermission(user, "users.manage");
+    const baseNavigation = professorNav.filter((item) => {
+      if (
+        managesUsers &&
+        (item.href === "/dashboard/professor/alunos" ||
+          item.href === "/dashboard/professor/professores")
+      ) {
+        return false;
+      }
+      if (
+        item.href === "/dashboard/cursos" &&
+        !hasPermission(user, "courses.manage")
+      ) {
+        return false;
+      }
+      return true;
+    });
+    const privileged = [
+      managesUsers
+        ? { label: "Alunos", href: "/dashboard/admin/alunos", icon: Users }
+        : null,
+      managesUsers
+        ? {
+            label: "Professores",
+            href: "/dashboard/admin/professores",
+            icon: GraduationCap,
+          }
+        : null,
+      hasPermission(user, "bookings.manage")
+        ? {
+            label: "Novo Agendamento",
+            href: "/dashboard/admin/agendar",
+            icon: CalendarPlus,
+          }
+        : null,
+      hasPermission(user, "leads.manage")
+        ? { label: "Contatos", href: "/dashboard/admin/leads", icon: Inbox }
+        : null,
+      hasPermission(user, "units.manage")
+        ? {
+            label: "Unidades",
+            href: "/dashboard/admin/unidades",
+            icon: Building2,
+          }
+        : null,
+      hasPermission(user, "equipments.manage")
+        ? {
+            label: "Equipamentos",
+            href: "/dashboard/admin/equipamentos",
+            icon: Headphones,
+          }
+        : null,
+    ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+    return [...baseNavigation, ...privileged];
+  }
   return studentNav;
 }
 
@@ -106,24 +166,6 @@ function getPerfilHref(user: StoreUser) {
   if (user.role === "admin") return `/dashboard/perfil/${user.id}`;
   if (user.role === "professor") return `/dashboard/perfil/${user.id}`;
   return `/dashboard/student/perfil`;
-}
-
-function DashboardRouteContent({ children }: { children: React.ReactNode }) {
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setReady(true));
-    return () => window.cancelAnimationFrame(frame);
-  }, []);
-
-  return (
-    <>
-      {ready ? null : <DashboardPageSkeleton />}
-      <div className={ready ? undefined : "hidden"} aria-hidden={!ready}>
-        {children}
-      </div>
-    </>
-  );
 }
 
 type SearchResult =
@@ -235,9 +277,18 @@ export default function DashboardLayout({
   }, [router]);
 
   useEffect(() => {
+    const syncCurrentUser = () => setUser(store.getCurrentUser());
+    window.addEventListener(CURRENT_USER_UPDATED_EVENT, syncCurrentUser);
+    return () =>
+      window.removeEventListener(CURRENT_USER_UPDATED_EVENT, syncCurrentUser);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
     store
-      .bootstrap()
+      .restoreSession(true)
       .then((authenticatedUser) => {
+        if (!active) return;
         if (!authenticatedUser) {
           router.replace("/login");
           return;
@@ -245,6 +296,7 @@ export default function DashboardLayout({
         setUser(authenticatedUser);
       })
       .catch((error) => {
+        if (!active) return;
         setSessionError(
           error instanceof Error
             ? error.message
@@ -253,11 +305,52 @@ export default function DashboardLayout({
         store.logout();
         router.replace("/login");
       });
-  }, [router]);
+    return () => {
+      active = false;
+    };
+  }, [pathname, router]);
+
+  useEffect(() => {
+    let active = true;
+    const refreshPermissions = () => {
+      void store
+        .restoreSession(true)
+        .then((authenticatedUser) => {
+          if (active && authenticatedUser) setUser(authenticatedUser);
+        })
+        .catch(() => undefined);
+    };
+    window.addEventListener("focus", refreshPermissions);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refreshPermissions);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
-    if (pathname.startsWith("/dashboard/admin") && user.role !== "admin") {
+    const requiredProfilePath = getPerfilHref(user);
+    if (user.passwordChangeRequired && pathname !== requiredProfilePath) {
+      router.replace(`${requiredProfilePath}?changePassword=required`);
+      return;
+    }
+    const delegatedAdminRoutes: Array<[string, Permission]> = [
+      ["/dashboard/admin/alunos", "users.manage"],
+      ["/dashboard/admin/professores", "users.manage"],
+      ["/dashboard/admin/leads", "leads.manage"],
+      ["/dashboard/admin/unidades", "units.manage"],
+      ["/dashboard/admin/equipamentos", "equipments.manage"],
+      ["/dashboard/admin/agendar", "bookings.manage"],
+      ["/dashboard/admin/auditoria", "audit.read"],
+    ];
+    const delegatedPermission = delegatedAdminRoutes.find(([prefix]) =>
+      pathname.startsWith(prefix),
+    )?.[1];
+    if (
+      pathname.startsWith("/dashboard/admin") &&
+      user.role !== "admin" &&
+      (!delegatedPermission || !hasPermission(user, delegatedPermission))
+    ) {
       router.replace(
         user.role === "professor"
           ? "/dashboard/professor"
@@ -265,9 +358,18 @@ export default function DashboardLayout({
       );
     } else if (
       pathname.startsWith("/dashboard/professor") &&
-      user.role === "student"
+      user.role !== "professor"
     ) {
-      router.replace("/dashboard/student");
+      router.replace(
+        user.role === "admin" ? "/dashboard/admin" : "/dashboard/student",
+      );
+    } else if (
+      pathname.startsWith("/dashboard/student") &&
+      user.role !== "student"
+    ) {
+      router.replace(
+        user.role === "admin" ? "/dashboard/admin" : "/dashboard/professor",
+      );
     } else if (pathname === "/dashboard/agenda" && user.role === "student") {
       router.replace("/dashboard/student/agendar");
     }
@@ -608,10 +710,14 @@ export default function DashboardLayout({
   if (!user) {
     if (!sessionError) return <DashboardShellSkeleton />;
 
-    return <div className="min-h-screen bg-djon-page flex items-center justify-center text-djon-text/50 text-sm">{sessionError}</div>;
+    return (
+      <div className="min-h-screen bg-djon-page flex items-center justify-center text-djon-text/50 text-sm">
+        {sessionError}
+      </div>
+    );
   }
 
-  const nav = getNav(user.role);
+  const nav = getNav(user);
   const portalHomeHref = nav[0].href;
   const perfilHref = getPerfilHref(user);
 
@@ -692,7 +798,7 @@ export default function DashboardLayout({
       : user.role === "professor"
         ? "Professor"
         : "Aluno";
-  const canReviewRequests = user.role === "admin" || user.role === "professor";
+  const canReviewRequests = hasPermission(user, "bookings.review");
   const unreadNotifications = notifications.filter(
     (notification) => !notification.readAt,
   );
@@ -705,14 +811,15 @@ export default function DashboardLayout({
           {/* Logo */}
           <Link
             href={portalHomeHref}
-            className="flex shrink-0 items-center gap-2 transition-opacity hover:opacity-70 sm:mr-2"
+            className="flex min-h-11 shrink-0 items-center gap-2 transition-opacity hover:opacity-70 sm:mr-2"
           >
             <Image
               src="/images/djon-verde.png"
               alt="DJ ON Academy"
-              width={88}
+              width={111}
               height={28}
-              className="h-6 w-auto sm:h-7"
+              priority
+              className="h-5 w-auto min-[360px]:h-6 sm:h-7"
             />
             <span className="text-djon-caption text-djon-accent font-black tracking-[0.2em] uppercase hidden sm:block">
               Portal
@@ -720,7 +827,7 @@ export default function DashboardLayout({
           </Link>
 
           <button
-          className="cursor-pointer p-2 text-djon-text opacity-60 transition-opacity hover:opacity-100 md:hidden"
+            className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-djon-text opacity-60 transition-opacity hover:opacity-100 md:hidden"
             onClick={toggleMobileMenu}
             aria-expanded={mobileMenuOpen}
             aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
@@ -812,7 +919,7 @@ export default function DashboardLayout({
                       .catch(() => undefined);
                     if (canReviewRequests) void loadPendingRequests();
                   }}
-                  className={`cursor-pointer relative p-2 rounded-full transition-all ${notificationsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
+                  className={`relative flex size-11 cursor-pointer items-center justify-center rounded-full transition-all ${notificationsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
                   aria-label="Notificações"
                 >
                   <Bell size={16} />
@@ -914,8 +1021,9 @@ export default function DashboardLayout({
                                     dismissOnRead
                                     notification={notification}
                                     onOpen={() =>
-                                      void handleNotification(notification)
-                                        .catch(() => undefined)
+                                      void handleNotification(
+                                        notification,
+                                      ).catch(() => undefined)
                                     }
                                     onRead={() =>
                                       handleReadNotification(notification)
@@ -926,7 +1034,9 @@ export default function DashboardLayout({
                                           request={request}
                                           studentName={
                                             store.getUserById(request.userId)
-                                              ?.name ?? request.studentName ?? "Aluno"
+                                              ?.name ??
+                                            request.studentName ??
+                                            "Aluno"
                                           }
                                           onApprove={() =>
                                             void handleApproveRequest(
@@ -968,7 +1078,7 @@ export default function DashboardLayout({
             <button
               ref={searchButtonRef}
               onClick={searchBarOpen ? closeSearch : openSearch}
-              className={`cursor-pointer p-2 rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
+              className={`flex size-11 cursor-pointer items-center justify-center rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
               aria-label="Buscar"
             >
               {searchBarOpen ? <X size={16} /> : <Search size={16} />}
@@ -1154,7 +1264,7 @@ export default function DashboardLayout({
                     setMobileMenuOpen(false);
                     setDropdownOpen((v) => !v);
                   }}
-                  className="cursor-pointer flex items-center gap-2 bg-djon-text/6 hover:brightness-110 border border-djon-text/10 rounded-full pl-1 pr-2 py-1 transition-all sm:gap-2.5 sm:pr-3"
+                  className="flex size-11 cursor-pointer items-center justify-center gap-0 rounded-full border border-djon-text/10 bg-djon-text/6 p-0 transition-all hover:brightness-110 min-[360px]:h-auto min-[360px]:min-h-11 min-[360px]:w-auto min-[360px]:gap-2 min-[360px]:py-1.5 min-[360px]:pl-1.5 min-[360px]:pr-2 sm:gap-2.5 sm:pr-3"
                   whileTap={{ scale: 0.97 }}
                 >
                   <div className="djon-avatar-fallback w-8 h-8 rounded-full border border-djon-accent flex items-center justify-center overflow-hidden shrink-0">
@@ -1181,7 +1291,7 @@ export default function DashboardLayout({
                   </div>
                   <ChevronDown
                     size={12}
-                    className={`text-djon-text/40 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                    className={`hidden text-djon-text/40 transition-transform min-[360px]:block ${dropdownOpen ? "rotate-180" : ""}`}
                   />
                 </motion.button>
 
@@ -1277,7 +1387,25 @@ export default function DashboardLayout({
       </header>
 
       <main className="pt-16 overflow-x-hidden">
-        <DashboardRouteContent key={pathname}>{children}</DashboardRouteContent>
+        {user.passwordChangeRequired && (
+          <div className="border-b border-djon-accent/20 bg-djon-accent/10 px-4 py-3">
+            <div className="mx-auto flex max-w-7xl flex-col gap-2 text-xs text-djon-text/70 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                <strong className="text-djon-accent">
+                  Senha temporária em uso.
+                </strong>{" "}
+                Crie uma senha pessoal antes de continuar usando o portal.
+              </span>
+              <Link
+                href={`${perfilHref}?changePassword=required`}
+                className="font-black text-djon-accent underline underline-offset-4"
+              >
+                ALTERAR SENHA
+              </Link>
+            </div>
+          </div>
+        )}
+        {children}
       </main>
     </div>
   );

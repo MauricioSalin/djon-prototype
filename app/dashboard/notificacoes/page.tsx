@@ -27,6 +27,7 @@ import {
   type NotificationKind,
 } from "@/lib/notification-kinds";
 import {
+  hasPermission,
   store,
   type Booking,
   type Notification as PortalNotification,
@@ -56,15 +57,14 @@ export default function NotificationsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const canReviewRequests =
-    user?.role === "admin" || user?.role === "professor";
+  const canReviewRequests = hasPermission(user, "bookings.review");
 
   const load = useCallback(async () => {
     const currentUser = store.getCurrentUser();
     setUser(currentUser);
     const [notificationItems, bookingItems] = await Promise.all([
       store.refreshNotifications(),
-      currentUser?.role === "admin" || currentUser?.role === "professor"
+      hasPermission(currentUser, "bookings.review")
         ? store.refreshBookings()
         : Promise.resolve(store.getBookings()),
     ]);
@@ -151,7 +151,7 @@ export default function NotificationsPage() {
     (notification) => !notification.readAt,
   ).length;
 
-  if (loading) return <DashboardPageSkeleton variant="list" />;
+  if (loading) return <DashboardPageSkeleton variant="notifications" />;
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">

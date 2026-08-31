@@ -42,7 +42,7 @@ export default function AdminConfigPage() {
     setUser(updated)
   }
 
-  if (!user) return <DashboardPageSkeleton variant="form" />
+  if (!user) return <DashboardPageSkeleton variant="settings" />
 
   const totalStudents = store.getUsers().filter((u) => u.role === "student").length
   const totalEvents = store.getEvents().length

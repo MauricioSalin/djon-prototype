@@ -18,11 +18,16 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const user = await store.login(email.trim(), password)
-      const destination = user.role === "admin"
-        ? "/dashboard/admin"
-        : user.role === "professor"
-          ? "/dashboard/professor"
-          : "/dashboard/student"
+      const profileDestination = user.role === "student"
+        ? "/dashboard/student/perfil"
+        : `/dashboard/perfil/${user.id}`
+      const destination = user.passwordChangeRequired
+        ? `${profileDestination}?changePassword=required`
+        : user.role === "admin"
+          ? "/dashboard/admin"
+          : user.role === "professor"
+            ? "/dashboard/professor"
+            : "/dashboard/student"
       router.push(destination)
     } catch {
       // O cliente HTTP já apresenta o erro de forma padronizada.
@@ -40,7 +45,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-djon-black/75" />
       </div>
 
-      <button type="button" onClick={() => router.back()} className="absolute top-6 left-6 z-10 flex items-center gap-2 text-djon-text opacity-50 text-xs font-bold tracking-wide transition-opacity hover:opacity-100">
+      <button type="button" onClick={() => router.back()} className="absolute top-4 left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-6 sm:left-6">
         <ArrowLeft size={14} />
         VOLTAR
       </button>
@@ -52,7 +57,7 @@ export default function LoginPage() {
         transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const }}
       >
         <div className="flex items-center justify-center mb-10">
-          <Image src="/images/djon-verde.png" alt="DJ ON Academy" width={160} height={52} className="h-14 w-auto" priority />
+          <Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-14 w-auto" priority />
         </div>
 
         <div className="bg-djon-surface-2 border border-djon-text/10 rounded-2xl p-8">

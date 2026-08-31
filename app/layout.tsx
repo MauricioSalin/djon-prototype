@@ -119,7 +119,6 @@ export default function RootLayout({
     <html lang="pt-BR" className={`bg-djon-page ${raleway.variable} ${bowlbyOneSc.variable} ${barlowCondensed.variable}`}>
       <head>
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
-        <title>DJ ON</title>
         <meta name="application-name" content="DJ ON" />
         <meta name="apple-mobile-web-app-title" content="DJ ON" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

@@ -257,6 +257,7 @@
     background: var(--djon-color-page);
     max-width: 100%;
     overflow-x: hidden;
+    position: relative;
     scrollbar-width: thin;
     scrollbar-color: var(--page-scrollbar-thumb) var(--page-scrollbar-track);
     -webkit-text-size-adjust: 100%;
@@ -401,13 +402,11 @@
 
 .djon-avatar-fallback {
   color: var(--djon-color-green);
-  background:
-    radial-gradient(circle at 30% 22%, rgb(138 242 59 / 0.16) 0%, transparent 42%),
-    linear-gradient(145deg, var(--djon-color-panel-dark) 0%, var(--djon-color-black) 100%);
+  background: var(--djon-color-black);
   box-shadow:
     inset 0 0 0 2px rgb(138 242 59 / 0.42),
     0 8px 24px rgb(0 0 0 / 0.28);
-  text-shadow: 0 0 18px rgb(138 242 59 / 0.22);
+  text-shadow: none;
 }
 
 .djon-skeleton::after {
@@ -912,6 +911,62 @@
 .material-editor img[data-editor-selected="true"] {
   outline: 2px solid var(--djon-color-accent);
   outline-offset: 3px;
+}
+.material-prose [data-video-layout],
+.material-editor [data-video-layout] {
+  aspect-ratio: 16 / 9;
+  clear: both;
+  margin: 1.25rem auto;
+  max-width: 100%;
+  position: relative;
+  width: 100%;
+}
+.material-prose [data-video-width="25%"],
+.material-editor [data-video-width="25%"] { width: 25%; }
+.material-prose [data-video-width="50%"],
+.material-editor [data-video-width="50%"] { width: 50%; }
+.material-prose [data-video-width="75%"],
+.material-editor [data-video-width="75%"] { width: 75%; }
+.material-prose [data-video-width="100%"],
+.material-editor [data-video-width="100%"] { width: 100%; }
+.material-prose [data-video-layout="left"],
+.material-editor [data-video-layout="left"] {
+  clear: left;
+  float: left;
+  margin: 0.25rem 1.25rem 1rem 0;
+}
+.material-prose [data-video-layout="right"],
+.material-editor [data-video-layout="right"] {
+  clear: right;
+  float: right;
+  margin: 0.25rem 0 1rem 1.25rem;
+}
+.material-prose [data-video-layout] iframe,
+.material-editor [data-video-layout] iframe {
+  border: 0;
+  border-radius: 0.9rem;
+  height: 100%;
+  inset: 0;
+  position: absolute;
+  width: 100%;
+}
+.material-editor [data-video-layout] {
+  cursor: pointer;
+}
+.material-editor [data-video-layout] iframe {
+  pointer-events: none;
+}
+.material-editor [data-video-layout][data-editor-selected="true"] {
+  outline: 2px solid var(--djon-color-accent);
+  outline-offset: 3px;
+}
+@media (max-width: 640px) {
+  .material-prose [data-video-layout],
+  .material-editor [data-video-layout] {
+    float: none;
+    margin: 1.25rem auto;
+    width: 100%;
+  }
 }
 
 .djon-header-scroll {

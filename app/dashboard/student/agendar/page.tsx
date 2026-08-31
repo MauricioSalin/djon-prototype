@@ -119,22 +119,44 @@ export default function AgendarPage() {
   };
 
   useEffect(() => {
-    load();
-    const availableUnits = store.getUnits().filter((unit) => unit.active);
-    setUnits(availableUnits);
-    setEquipments(
-      store.getEquipments().filter((equipment) => equipment.active),
-    );
-    void store.getTrainingBalance()
-      .then(setTrainingBalance)
-      .finally(() => setLoading(false));
-    const selectedKey = window.localStorage.getItem(academyLocationStorageKey);
-    const studentUnitId = store.getCurrentUser()?.unitId;
-    const preferred =
-      availableUnits.find((unit) => unit.id === studentUnitId) ??
-      availableUnits.find((unit) => unit.key === selectedKey) ??
-      availableUnits[0];
-    if (preferred) setForm((current) => ({ ...current, unitId: preferred.id }));
+    let active = true;
+
+    const initialize = async () => {
+      await store.bootstrap();
+      const [, balance] = await Promise.all([
+        store.refreshBookings(true),
+        store.getTrainingBalance(),
+      ]);
+      if (!active) return;
+
+      load();
+      setTrainingBalance(balance);
+      const availableUnits = store.getUnits().filter((unit) => unit.active);
+      setUnits(availableUnits);
+      setEquipments(
+        store.getEquipments().filter((equipment) => equipment.active),
+      );
+      const selectedKey = window.localStorage.getItem(
+        academyLocationStorageKey,
+      );
+      const studentUnitId = store.getCurrentUser()?.unitId;
+      const preferred =
+        availableUnits.find((unit) => unit.id === studentUnitId) ??
+        availableUnits.find((unit) => unit.key === selectedKey) ??
+        availableUnits[0];
+      if (preferred) {
+        setForm((current) => ({ ...current, unitId: preferred.id }));
+      }
+    };
+
+    void initialize()
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const openRequest = (booking?: Booking) => {
@@ -203,11 +225,13 @@ export default function AgendarPage() {
     }
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const upcoming = bookings.filter(
-    (b) => new Date(b.date + "T00:00:00") >= new Date(),
+    (b) => new Date(b.date + "T00:00:00") >= today,
   );
   const past = bookings.filter(
-    (b) => new Date(b.date + "T00:00:00") < new Date(),
+    (b) => new Date(b.date + "T00:00:00") < today,
   );
   const upcomingPagination = useListPagination(upcoming);
   const historyPagination = useListPagination(past);
@@ -219,7 +243,7 @@ export default function AgendarPage() {
       year: "numeric",
     });
 
-  if (loading) return <DashboardPageSkeleton variant="list" />;
+  if (loading) return <DashboardPageSkeleton variant="booking" />;
 
   return (
     <div className="bg-djon-page">

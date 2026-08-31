@@ -22,6 +22,7 @@ import {
   Plus,
 } from "lucide-react";
 import {
+  hasPermission,
   store,
   type Booking,
   type Equipment,
@@ -35,7 +36,10 @@ import {
 } from "@/components/list-pagination";
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { BookingDetailsDialog } from "@/components/booking-details-dialog";
+import { CohortDetailDialog } from "@/components/cohort-detail-dialog";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { notifyRequestError } from "@/lib/feedback";
+import type { Cohort } from "@/lib/store";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -83,13 +87,15 @@ const STATUS_META: Record<
   },
   pendente: {
     dot: "bg-djon-light-purple",
-    badge: "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
+    badge:
+      "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
     text: "text-djon-light-purple",
     label: "Pendente",
   },
   cancelado: {
     dot: "bg-djon-warning-red",
-    badge: "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
+    badge:
+      "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
     text: "text-djon-warning-red",
     label: "Cancelado",
   },
@@ -102,7 +108,10 @@ interface BookingWithUser extends Booking {
   student: User | null;
 }
 
-function bookingStudentName(booking: BookingWithUser) {
+function bookingDisplayName(booking: BookingWithUser) {
+  if (booking.isClassLesson) {
+    return booking.cohortName ?? booking.title ?? "Turma";
+  }
   return booking.student?.name ?? booking.studentName ?? "Aluno";
 }
 
@@ -143,11 +152,11 @@ function CustomDropdown({
   const selected = options.find((o) => o.value === value);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative min-w-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="cursor-pointer flex min-w-[118px] items-center gap-2 rounded-lg border border-djon-text/10 bg-djon-text/5 px-3 py-1.5 text-xs font-bold text-djon-text transition-all hover:brightness-110 sm:min-w-[130px]"
+        className="flex h-11 w-full min-w-0 cursor-pointer items-center gap-2 rounded-lg border border-djon-text/10 bg-djon-text/5 px-3 text-xs font-bold text-djon-text transition-all hover:brightness-110 sm:w-auto sm:min-w-[130px]"
       >
         {selected?.dot && (
           <span className={`w-2 h-2 rounded-full shrink-0 ${selected.dot}`} />
@@ -178,7 +187,7 @@ function CustomDropdown({
                   onChange(opt.value);
                   setOpen(false);
                 }}
-                className="cursor-pointer w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-djon-text opacity-60 transition-opacity hover:opacity-100"
+                className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-djon-text opacity-60 transition-opacity hover:opacity-100"
               >
                 {opt.dot && (
                   <span
@@ -211,16 +220,15 @@ function BookingPill({
   return (
     <button
       onClick={onClick}
-      className="cursor-pointer w-full text-left rounded-lg px-2 py-1 bg-djon-text/5 border border-djon-text/8 text-djon-label font-bold truncate text-djon-text/60 hover:brightness-110 transition-all"
+      className="min-h-8 w-full cursor-pointer truncate rounded-lg border border-djon-text/8 bg-djon-text/5 px-2 py-1.5 text-left text-djon-label font-bold text-djon-text/60 transition-all hover:brightness-110"
     >
       <span
         className={`inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle ${m.dot}`}
       />
-      {bk.time} {bookingStudentName(bk).split(" ")[0]}
+      {bk.time} {bookingDisplayName(bk)}
     </button>
   );
 }
-
 
 // ─── Week view ────────────────────────────────────────────────────────────────
 
@@ -561,7 +569,7 @@ function MonthView({
                             {b.time}
                           </span>
                           <span className="text-djon-text text-xs font-bold truncate">
-                            {bookingStudentName(b).split(" ")[0]}
+                            {bookingDisplayName(b)}
                           </span>
                         </button>
                       );
@@ -639,7 +647,7 @@ function ListView({
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-djon-text text-sm font-black truncate">
-                        {b.title}
+                        {b.isClassLesson ? bookingDisplayName(b) : b.title}
                       </p>
                       <p className="text-djon-text/40 text-xs font-bold mt-0.5">
                         {b.time} — {b.type === "aula" ? "Aula" : "Treino"}
@@ -647,7 +655,7 @@ function ListView({
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-djon-text/50 text-xs font-bold">
-                        {bookingStudentName(b).split(" ")[0]}
+                        {b.isClassLesson ? b.title : bookingDisplayName(b)}
                       </p>
                       <span
                         className={`text-djon-label font-black px-2 py-0.5 rounded-full border mt-1 inline-block ${m.badge}`}
@@ -697,6 +705,8 @@ export default function AgendaPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [selected, setSelected] = useState<BookingWithUser | null>(null);
+  const [selectedCohort, setSelectedCohort] = useState<Cohort | null>(null);
+  const [selectedLessonId, setSelectedLessonId] = useState<string>();
   const [showNewForm, setShowNewForm] = useState(false);
   const [newForm, setNewForm] = useState({
     userId: "",
@@ -726,8 +736,8 @@ export default function AgendaPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const canEdit =
-    currentUser?.role === "admin" || currentUser?.role === "professor";
+  const canEdit = hasPermission(currentUser, "bookings.manage");
+  const canReview = hasPermission(currentUser, "bookings.review");
 
   const loadBookings = () => {
     const all = store.getBookings();
@@ -756,7 +766,8 @@ export default function AgendaPage() {
 
   useEffect(() => {
     let mounted = true;
-    void store.bootstrap()
+    void store
+      .bootstrap()
       .then((user) => {
         if (!mounted) return;
         if (!user) {
@@ -879,6 +890,23 @@ export default function AgendaPage() {
     setSelected(updated);
   };
 
+  const handleSelectBooking = async (booking: BookingWithUser) => {
+    if (!booking.isClassLesson || !booking.cohortId) {
+      setSelected(booking);
+      return;
+    }
+    try {
+      const cohort = await store.fetchCohort(booking.cohortId);
+      setSelectedLessonId(
+        booking.lessonId ??
+          cohort.lessons?.find((lesson) => lesson.bookingId === booking.id)?.id,
+      );
+      setSelectedCohort(cohort);
+    } catch (error) {
+      notifyRequestError(error);
+    }
+  };
+
   const openNewBooking = () => {
     const preferredUnitId =
       currentUser?.role === "professor" && currentUser.unitId
@@ -940,12 +968,13 @@ export default function AgendaPage() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6 lg:flex-nowrap">
           <div className="contents">
             {/* Left: title + nav */}
-            <div className="order-1 flex shrink-0 flex-wrap items-center gap-2 sm:gap-3">
+            <div className="order-1 flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
               {view !== "list" && (
                 <>
                   <button
                     onClick={handlePrev}
-                    className="cursor-pointer rounded-lg p-1.5 text-djon-text opacity-30 transition-opacity hover:opacity-100"
+                    className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-djon-text opacity-30 transition-opacity hover:opacity-100"
+                    aria-label="Período anterior"
                   >
                     <ChevronLeft size={18} />
                   </button>
@@ -957,7 +986,7 @@ export default function AgendaPage() {
                         setPickerYear(currentDate.getFullYear());
                         setPickerOpen((v) => !v);
                       }}
-                      className="cursor-pointer flex min-w-0 max-w-full items-center justify-center gap-1.5 text-base font-black tracking-tight text-djon-text transition-colors hover:brightness-110 sm:min-w-[200px] sm:text-lg"
+                      className="flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 text-base font-black tracking-tight text-djon-text transition-colors hover:brightness-110 sm:min-w-[200px] sm:flex-none sm:text-lg"
                     >
                       {view === "week" ? weekLabel : monthLabel}
                       {view === "month" && (
@@ -1033,13 +1062,14 @@ export default function AgendaPage() {
 
                   <button
                     onClick={handleNext}
-                    className="cursor-pointer rounded-lg p-1.5 text-djon-text opacity-30 transition-opacity hover:opacity-100"
+                    className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-djon-text opacity-30 transition-opacity hover:opacity-100"
+                    aria-label="Próximo período"
                   >
                     <ChevronRight size={18} />
                   </button>
                   <button
                     onClick={goToday}
-                    className="cursor-pointer ml-1 rounded-lg border border-djon-text/10 px-3 py-1.5 text-xs font-bold text-djon-text/40 transition-opacity hover:opacity-70"
+                    className="ml-1 h-11 shrink-0 cursor-pointer rounded-lg border border-djon-text/10 px-3 text-xs font-bold text-djon-text/40 transition-opacity hover:opacity-70"
                   >
                     Hoje
                   </button>
@@ -1064,7 +1094,7 @@ export default function AgendaPage() {
 
           {/* Actions */}
           <div className="contents">
-            <div className="order-4 ml-auto flex shrink-0 items-center justify-end gap-2">
+            <div className="order-4 grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2 sm:ml-auto sm:flex sm:w-auto sm:shrink-0 sm:items-center sm:justify-end">
               {/* Custom filter dropdown */}
               <CustomDropdown
                 value={filterStatus}
@@ -1074,19 +1104,20 @@ export default function AgendaPage() {
               />
 
               {/* View switcher */}
-              <div className="flex items-center bg-djon-text/5 border border-djon-text/10 rounded-lg p-0.5 gap-0.5">
+              <div className="order-3 col-span-2 grid grid-cols-3 items-center gap-0.5 rounded-lg border border-djon-text/10 bg-djon-text/5 p-0.5 sm:order-none sm:col-auto sm:flex">
                 {(
                   [
-                    ["month", Calendar],
-                    ["week", Clock],
-                    ["list", List],
+                    ["month", Calendar, "Visualização mensal"],
+                    ["week", Clock, "Visualização semanal"],
+                    ["list", List, "Visualização em lista"],
                   ] as const
-                ).map(([v, Icon]) => (
+                ).map(([v, Icon, label]) => (
                   <button
                     key={v}
                     onClick={() => setView(v)}
                     title={v}
-                  className={`cursor-pointer p-2 rounded-md transition-all hover:opacity-80 ${
+                    aria-label={label}
+                    className={`flex h-11 cursor-pointer items-center justify-center rounded-md transition-all hover:opacity-80 sm:w-11 ${
                       view === v
                         ? "bg-djon-accent text-djon-ink"
                         : "text-djon-text/30"
@@ -1100,7 +1131,7 @@ export default function AgendaPage() {
               {canEdit && (
                 <button
                   onClick={openNewBooking}
-                  className="cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-djon-accent px-4 py-2 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
+                  className="order-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-djon-accent px-4 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:order-none"
                 >
                   <Plus size={14} />
                   NOVO
@@ -1125,7 +1156,7 @@ export default function AgendaPage() {
               month={currentDate.getMonth()}
               bookings={visibleBookings}
               today={today}
-              onSelect={setSelected}
+              onSelect={(booking) => void handleSelectBooking(booking)}
             />
           )}
           {view === "week" && (
@@ -1133,11 +1164,14 @@ export default function AgendaPage() {
               weekDays={weekDays}
               bookings={visibleBookings}
               today={today}
-              onSelect={setSelected}
+              onSelect={(booking) => void handleSelectBooking(booking)}
             />
           )}
           {view === "list" && (
-            <ListView bookings={visibleBookings} onSelect={setSelected} />
+            <ListView
+              bookings={visibleBookings}
+              onSelect={(booking) => void handleSelectBooking(booking)}
+            />
           )}
         </div>
       </div>
@@ -1390,6 +1424,7 @@ export default function AgendaPage() {
           <BookingDetailsDialog
             bk={selected}
             canEdit={canEdit}
+            canReview={canReview}
             units={units}
             professors={professors}
             equipments={equipments}
@@ -1399,6 +1434,19 @@ export default function AgendaPage() {
           />
         )}
       </AnimatePresence>
+
+      {selectedCohort && (
+        <CohortDetailDialog
+          cohort={selectedCohort}
+          currentUser={currentUser}
+          focusedLessonId={selectedLessonId}
+          onClose={() => {
+            setSelectedCohort(null);
+            setSelectedLessonId(undefined);
+          }}
+          onUpdated={setSelectedCohort}
+        />
+      )}
     </div>
   );
 }

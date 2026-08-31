@@ -12,6 +12,7 @@ import {
   Edit2,
 } from "lucide-react";
 import {
+  hasPermission,
   store,
   type Booking,
   type Equipment,
@@ -79,6 +80,7 @@ export default function AdminAgendarPage() {
   const [professors, setProfessors] = useState<User[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [equipments, setEquipments] = useState<Equipment[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -111,9 +113,13 @@ export default function AdminAgendarPage() {
 
   useEffect(() => {
     let mounted = true;
-    void store.bootstrap()
+    void store
+      .bootstrap()
       .then((user) => {
-        if (mounted && user?.role === "admin") load();
+        if (mounted && hasPermission(user, "bookings.manage")) {
+          setCurrentUser(user);
+          load();
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -209,8 +215,18 @@ export default function AdminAgendarPage() {
     );
   });
   const pagination = useListPagination(filtered, search);
+  const editingBooking = editingId
+    ? bookings.find((booking) => booking.id === editingId)
+    : undefined;
+  const statusOptions: Booking["status"][] =
+    editingBooking?.status === "pendente" &&
+    !hasPermission(currentUser, "bookings.review")
+      ? ["pendente"]
+      : form.status === "pendente"
+        ? ["confirmado", "pendente", "cancelado"]
+        : ["confirmado", "cancelado"];
 
-  if (loading) return <DashboardPageSkeleton variant="list" />;
+  if (loading) return <DashboardPageSkeleton variant="booking" />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">
@@ -422,14 +438,7 @@ export default function AdminAgendarPage() {
                       STATUS
                     </label>
                     <div className="flex gap-2">
-                      {(form.status === "pendente"
-                        ? ([
-                            "confirmado",
-                            "pendente",
-                            "cancelado",
-                          ] as Booking["status"][])
-                        : (["confirmado", "cancelado"] as Booking["status"][])
-                      ).map((s) => (
+                      {statusOptions.map((s) => (
                         <button
                           key={s}
                           type="button"

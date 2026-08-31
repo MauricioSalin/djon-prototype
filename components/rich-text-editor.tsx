@@ -4,7 +4,7 @@ import { useRef, useEffect, useCallback, useState } from "react"
 import {
   Bold, Italic, Heading2, Heading3, List, ListOrdered,
   Quote, ImageIcon, Link2, Undo, Redo, Trash2,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, Youtube,
 } from "lucide-react"
 import { store, type UploadedFile } from "@/lib/store"
 
@@ -189,13 +189,23 @@ function normalizeImageLayouts(editor: HTMLDivElement) {
   })
 }
 
+function normalizeVideoLayouts(editor: HTMLDivElement) {
+  editor.querySelectorAll<HTMLElement>("[data-video-layout]").forEach((video) => {
+    video.contentEditable = "false"
+  })
+}
+
 export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLInputElement>(null)
   const lastEmittedValueRef = useRef<string | null>(null)
   const selectedImageRef = useRef<HTMLImageElement | null>(null)
+  const selectedVideoRef = useRef<HTMLElement | null>(null)
   const savedSelectionRef = useRef<Range | null>(null)
   const [imageSelected, setImageSelected] = useState(false)
+  const [videoSelected, setVideoSelected] = useState(false)
+  const [selectedVideoWidth, setSelectedVideoWidth] = useState("100%")
+  const [selectedVideoAlignment, setSelectedVideoAlignment] = useState<ImageAlignment>("block")
   const [selectedImageWidth, setSelectedImageWidth] = useState("auto")
   const [selectedImageAlignment, setSelectedImageAlignment] = useState<ImageAlignment>("block")
   const [activeFormats, setActiveFormats] = useState<ActiveFormats>(emptyActiveFormats)
@@ -274,9 +284,12 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
       editor.innerHTML = value || ""
       normalizeRootTextBlocks(editor)
       normalizeImageLayouts(editor)
+      normalizeVideoLayouts(editor)
       savedSelectionRef.current = null
       selectedImageRef.current = null
+      selectedVideoRef.current = null
       setImageSelected(false)
+      setVideoSelected(false)
       setSelectedImageWidth("auto")
       setSelectedImageAlignment("block")
     }
@@ -293,6 +306,9 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     const clone = editorRef.current.cloneNode(true) as HTMLDivElement
     clone.querySelectorAll("[data-editor-selected]").forEach((element) => {
       element.removeAttribute("data-editor-selected")
+    })
+    clone.querySelectorAll<HTMLElement>("[data-video-layout]").forEach((element) => {
+      element.removeAttribute("contenteditable")
     })
     clone.querySelectorAll<HTMLElement>("[data-image-tail-container]").forEach((container) => {
       const tail = container.querySelector<HTMLElement>(":scope > [data-image-tail]")
@@ -337,11 +353,24 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     setSelectedImageAlignment(alignment === "left" || alignment === "right" ? alignment : "block")
   }
 
+  const selectVideo = (video: HTMLElement | null) => {
+    selectedVideoRef.current?.removeAttribute("data-editor-selected")
+    if (video) video.setAttribute("data-editor-selected", "true")
+    selectedVideoRef.current = video
+    setVideoSelected(Boolean(video))
+    setSelectedVideoWidth(video?.dataset.videoWidth || "100%")
+    const alignment = video?.dataset.videoLayout
+    setSelectedVideoAlignment(alignment === "left" || alignment === "right" ? alignment : "block")
+  }
+
   const handleEditorClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const target = event.target
     const image = target instanceof HTMLImageElement ? target : null
+    const targetElement = target instanceof Element ? target : null
+    const video = targetElement?.closest<HTMLElement>("[data-video-layout]") ?? null
     selectImage(image)
-    if (image) setActiveFormats(emptyActiveFormats)
+    selectVideo(video)
+    if (image || video) setActiveFormats(emptyActiveFormats)
     else updateToolbarState()
   }
 
@@ -412,6 +441,42 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     editorRef.current?.focus()
   }
 
+  const resizeSelectedVideo = (width: string) => {
+    const video = selectedVideoRef.current
+    if (!video?.isConnected) return selectVideo(null)
+    video.dataset.videoWidth = width === "auto" ? "100%" : width
+    if (width === "100%" || width === "auto") {
+      video.dataset.videoLayout = "block"
+      setSelectedVideoAlignment("block")
+    } else if (selectedVideoAlignment === "block") {
+      video.dataset.videoLayout = "left"
+      setSelectedVideoAlignment("left")
+    }
+    setSelectedVideoWidth(width === "auto" ? "100%" : width)
+    emit()
+  }
+
+  const alignSelectedVideo = (alignment: ImageAlignment) => {
+    const video = selectedVideoRef.current
+    if (!video?.isConnected) return selectVideo(null)
+    video.dataset.videoLayout = alignment
+    if (alignment !== "block" && selectedVideoWidth === "100%") {
+      video.dataset.videoWidth = "50%"
+      setSelectedVideoWidth("50%")
+    }
+    setSelectedVideoAlignment(alignment)
+    emit()
+  }
+
+  const removeSelectedVideo = () => {
+    const video = selectedVideoRef.current
+    if (!video?.isConnected) return selectVideo(null)
+    video.remove()
+    selectVideo(null)
+    emit()
+    editorRef.current?.focus()
+  }
+
   const exec = (command: string, arg?: string) => {
     restoreSelection()
     document.execCommand(command, false, arg)
@@ -461,6 +526,47 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     if (url) exec("createLink", url)
   }
 
+  const youtubeEmbedUrl = (value: string) => {
+    try {
+      const url = new URL(value.trim())
+      const hostname = url.hostname.replace(/^www\./, "")
+      let id = ""
+      if (hostname === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] ?? ""
+      if (hostname === "youtube.com" || hostname === "m.youtube.com") {
+        if (url.pathname === "/watch") id = url.searchParams.get("v") ?? ""
+        else if (url.pathname.startsWith("/embed/") || url.pathname.startsWith("/shorts/")) {
+          id = url.pathname.split("/").filter(Boolean)[1] ?? ""
+        }
+      }
+      return /^[A-Za-z0-9_-]{6,}$/.test(id)
+        ? `https://www.youtube.com/embed/${id}`
+        : null
+    } catch {
+      return null
+    }
+  }
+
+  const insertYoutube = () => {
+    const raw = window.prompt("Cole o link público ou privado do YouTube:")
+    if (!raw) return
+    const src = youtubeEmbedUrl(raw)
+    if (!src) {
+      window.alert("Link do YouTube inválido.")
+      return
+    }
+    restoreSelection()
+    document.execCommand(
+      "insertHTML",
+      false,
+      `<div data-video-layout="block" data-video-width="100%" contenteditable="false"><iframe src="${src}" title="Vídeo do YouTube" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><p><br></p>`,
+    )
+    const videos = editorRef.current?.querySelectorAll<HTMLElement>("[data-video-layout]")
+    const video = videos?.item((videos?.length ?? 1) - 1) ?? null
+    selectImage(null)
+    selectVideo(video)
+    emit()
+  }
+
   const isEmpty = !value || value === "<br>" || value === "<div><br></div>"
 
   const btn = (active = false) => `cursor-pointer w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
@@ -504,6 +610,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
         <div className="w-px h-5 bg-djon-text/10 mx-1" />
         <button type="button" onMouseDown={preserveSelection} onClick={addLink} className={btn(activeFormats.link)} title="Link" aria-label="Link" aria-pressed={activeFormats.link}><Link2 size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => imageRef.current?.click()} className={btn(imageSelected)} title="Imagem" aria-label="Imagem" aria-pressed={imageSelected}><ImageIcon size={15} /></button>
+        <button type="button" onMouseDown={preserveSelection} onClick={insertYoutube} className={btn(videoSelected)} title="Vídeo do YouTube" aria-label="Vídeo do YouTube" aria-pressed={videoSelected}><Youtube size={16} /></button>
         <div className="w-px h-5 bg-djon-text/10 mx-1" />
         <button type="button" onMouseDown={preserveSelection} onClick={() => exec("undo")} className={btn()} title="Desfazer" aria-label="Desfazer"><Undo size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => exec("redo")} className={btn()} title="Refazer" aria-label="Refazer"><Redo size={15} /></button>
@@ -559,6 +666,23 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
             >
               <Trash2 size={13} />
             </button>
+          </div>
+        </div>
+      )}
+
+      {videoSelected && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-djon-text/10 bg-djon-accent/5 px-3 py-2">
+          <span className="flex items-center gap-1.5 text-djon-label font-black tracking-widest text-djon-text/45"><Youtube size={14} className="text-djon-accent" /> YOUTUBE</span>
+          <div className="flex items-center gap-1 border-l border-djon-text/10 pl-2">
+            {imageAlignments.map(({ alignment, label, icon: Icon }) => (
+              <button key={alignment} type="button" onClick={() => alignSelectedVideo(alignment)} aria-label={label.replace("Imagem", "Vídeo")} aria-pressed={selectedVideoAlignment === alignment} className={`flex h-7 w-7 items-center justify-center rounded-lg ${selectedVideoAlignment === alignment ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/45"}`}><Icon size={13} /></button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center gap-1 sm:ml-auto">
+            {imageSizes.filter((size) => size.width !== "auto").map((size) => (
+              <button key={size.width} type="button" onClick={() => resizeSelectedVideo(size.width)} className={`rounded-lg px-2 py-1.5 text-djon-label font-black ${selectedVideoWidth === size.width ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/45"}`}>{size.label}</button>
+            ))}
+            <button type="button" onClick={removeSelectedVideo} aria-label="Remover vídeo" className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg bg-djon-warning-red/10 text-djon-warning-red"><Trash2 size={13} /></button>
           </div>
         </div>
       )}

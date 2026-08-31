@@ -1,14 +1,18 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { motion } from "framer-motion"
+import { useLenis } from "lenis/react"
+import Image from "next/image"
 import Link from "next/link"
 import {
   Camera, Instagram, Youtube, Save,
   MapPin, Clock, ArrowRight, Edit3, Music, Mail, Phone,
+  ExternalLink, Upload, X, KeyRound,
 } from "lucide-react"
-import { SoundCloudIcon } from "@/components/social-icons"
+import { SoundCloudIcon, SpotifyIcon } from "@/components/social-icons"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
+import { usePageTitle } from "@/components/page-title-manager"
 import { store, type User, type DJEvent } from "@/lib/store"
 import { formatPhone } from "@/lib/phone"
 
@@ -29,6 +33,9 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const BANNER_FALLBACK = "var(--djon-gradient-image-fallback)"
+const DEFAULT_RELEASE_COVER = "/images/latest-release-default.jpg"
+
+type EditableSection = "profile" | "socials" | "release" | "password"
 
 interface ProfileViewProps {
   user: User
@@ -37,18 +44,34 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileViewProps) {
+  usePageTitle(user.projectName || user.name)
+  const lenis = useLenis()
+
   const events = store.getEventsByUser(user.id).sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   )
-  const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({
+  const [editingSection, setEditingSection] = useState<EditableSection | null>(
+    user.passwordChangeRequired ? "password" : null,
+  )
+  const [profileForm, setProfileForm] = useState({
     name: user.name,
+    projectName: user.projectName ?? "",
     email: user.email,
     whatsapp: formatPhone(user.whatsapp),
     bio: user.bio ?? "",
+    showAcademicProgress: user.showAcademicProgress !== false,
+  })
+  const [socialForm, setSocialForm] = useState({
     instagram: user.socials?.instagram ?? "",
     soundcloud: user.socials?.soundcloud ?? "",
     youtube: user.socials?.youtube ?? "",
+    spotify: user.socials?.spotify ?? "",
+    pressKit: user.socials?.pressKit ?? "",
+  })
+  const [releaseForm, setReleaseForm] = useState({
+    title: user.latestRelease?.title ?? "",
+    link: user.latestRelease?.link ?? "",
+    cover: user.latestRelease?.cover ?? "",
   })
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" })
   const [passwordMessage, setPasswordMessage] = useState("")
@@ -56,6 +79,67 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
   const [failedBanner, setFailedBanner] = useState<string | null>(null)
   const avatarRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
+  const releaseCoverRef = useRef<HTMLInputElement>(null)
+  const [pendingReleaseCoverId, setPendingReleaseCoverId] = useState<string | null>(null)
+
+  const scrollToEditor = useCallback((section: EditableSection) => {
+    const editor = document.getElementById(`${section}-editor`)
+    if (!editor) return
+    if (lenis) {
+      lenis.scrollTo(editor, { offset: -80 })
+      return
+    }
+    editor.scrollIntoView({ behavior: "smooth", block: "start" })
+  }, [lenis])
+
+  useEffect(() => {
+    if (!editingSection) return
+    const frame = window.requestAnimationFrame(() => scrollToEditor(editingSection))
+    return () => window.cancelAnimationFrame(frame)
+  }, [editingSection, scrollToEditor])
+
+  const startEditing = async (section: EditableSection) => {
+    if (user.passwordChangeRequired && section !== "password") return
+    if (editingSection === section) {
+      scrollToEditor(section)
+      return
+    }
+    if (editingSection === "release" && section !== "release") {
+      if (pendingReleaseCoverId) {
+        await store.deleteFile(pendingReleaseCoverId, { silent: true }).catch(() => undefined)
+        setPendingReleaseCoverId(null)
+      }
+      setReleaseForm({
+        title: user.latestRelease?.title ?? "",
+        link: user.latestRelease?.link ?? "",
+        cover: user.latestRelease?.cover ?? "",
+      })
+    }
+    if (editingSection === "profile" && section !== "profile") {
+      setProfileForm({
+        name: user.name,
+        projectName: user.projectName ?? "",
+        email: user.email,
+        whatsapp: formatPhone(user.whatsapp),
+        bio: user.bio ?? "",
+        showAcademicProgress: user.showAcademicProgress !== false,
+      })
+    }
+    if (editingSection === "socials" && section !== "socials") {
+      setSocialForm({
+        instagram: user.socials?.instagram ?? "",
+        soundcloud: user.socials?.soundcloud ?? "",
+        youtube: user.socials?.youtube ?? "",
+        spotify: user.socials?.spotify ?? "",
+        pressKit: user.socials?.pressKit ?? "",
+      })
+    }
+    if (editingSection === "password" && section !== "password") {
+      setPasswordForm({ current: "", next: "", confirm: "" })
+      setPasswordMessage("")
+    }
+    setEditingSection(section)
+  }
 
   const handleImageUpload = async (file: File, field: "avatar" | "banner") => {
     const uploaded = await store.uploadFile(file, field)
@@ -68,17 +152,92 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
     }
   }
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault()
     const updated = await store.updateUser(user.id, {
-      name: form.name,
-      email: form.email,
-      whatsapp: form.whatsapp,
-      bio: form.bio,
-      socials: { instagram: form.instagram, soundcloud: form.soundcloud, youtube: form.youtube },
+      name: profileForm.name,
+      projectName: profileForm.projectName,
+      email: profileForm.email,
+      whatsapp: profileForm.whatsapp,
+      bio: profileForm.bio,
+      showAcademicProgress: profileForm.showAcademicProgress,
     })
     if (updated && onUserUpdate) onUserUpdate(updated)
-    setEditing(false)
+    setEditingSection(null)
+  }
+
+  const handleSocialSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const updated = await store.updateUser(user.id, {
+      socials: {
+        instagram: socialForm.instagram.trim().replace(/^@/, "") || undefined,
+        soundcloud: socialForm.soundcloud.trim().replace(/^@/, "") || undefined,
+        youtube: socialForm.youtube.trim().replace(/^@/, "") || undefined,
+        spotify: socialForm.spotify.trim() || undefined,
+        pressKit: socialForm.pressKit.trim() || undefined,
+      },
+    })
+    if (updated && onUserUpdate) onUserUpdate(updated)
+    setEditingSection(null)
+  }
+
+  const handleReleaseCoverUpload = async (file: File) => {
+    const uploaded = await store.uploadFile(file, "latest-release-cover")
+    if (pendingReleaseCoverId) {
+      await store.deleteFile(pendingReleaseCoverId, { silent: true }).catch(() => undefined)
+    }
+    setPendingReleaseCoverId(uploaded.id)
+    setReleaseForm((current) => ({ ...current, cover: uploaded.url }))
+  }
+
+  const useDefaultReleaseCover = async () => {
+    if (pendingReleaseCoverId) {
+      await store.deleteFile(pendingReleaseCoverId, { silent: true }).catch(() => undefined)
+      setPendingReleaseCoverId(null)
+    }
+    setReleaseForm((current) => ({ ...current, cover: "" }))
+  }
+
+  const handleReleaseSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const updated = await store.updateUser(user.id, {
+      latestRelease: {
+        title: releaseForm.title.trim() || undefined,
+        link: releaseForm.link.trim() || undefined,
+        cover: releaseForm.cover || undefined,
+      },
+    })
+    setPendingReleaseCoverId(null)
+    if (updated && onUserUpdate) onUserUpdate(updated)
+    setEditingSection(null)
+  }
+
+  const cancelEditing = async () => {
+    if (editingSection === "release" && pendingReleaseCoverId) {
+      await store.deleteFile(pendingReleaseCoverId, { silent: true }).catch(() => undefined)
+      setPendingReleaseCoverId(null)
+    }
+    setProfileForm({
+      name: user.name,
+      projectName: user.projectName ?? "",
+      email: user.email,
+      whatsapp: formatPhone(user.whatsapp),
+      bio: user.bio ?? "",
+      showAcademicProgress: user.showAcademicProgress !== false,
+    })
+    setSocialForm({
+      instagram: user.socials?.instagram ?? "",
+      soundcloud: user.socials?.soundcloud ?? "",
+      youtube: user.socials?.youtube ?? "",
+      spotify: user.socials?.spotify ?? "",
+      pressKit: user.socials?.pressKit ?? "",
+    })
+    setReleaseForm({
+      title: user.latestRelease?.title ?? "",
+      link: user.latestRelease?.link ?? "",
+      cover: user.latestRelease?.cover ?? "",
+    })
+    setEditingSection(null)
   }
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -91,6 +250,10 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
     try {
       await store.changePassword(passwordForm.current, passwordForm.next)
       setPasswordForm({ current: "", next: "", confirm: "" })
+      const updated = store.getCurrentUser()
+      if (updated && onUserUpdate) onUserUpdate(updated)
+      setPasswordMessage("")
+      setEditingSection(null)
     } catch {
       // O cliente HTTP já apresenta o erro de forma padronizada.
     }
@@ -109,6 +272,15 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
 
   const hasAvatar = Boolean(user.avatar && failedAvatar !== user.avatar)
   const hasBanner = Boolean(user.banner && failedBanner !== user.banner)
+  const hasSocials = Boolean(
+    user.socials?.instagram ||
+    user.socials?.soundcloud ||
+    user.socials?.youtube ||
+    user.socials?.spotify,
+  )
+  const hasLatestRelease = Boolean(
+    user.latestRelease?.title || user.latestRelease?.link || user.latestRelease?.cover,
+  )
 
   return (
     <div className="bg-djon-page">
@@ -218,33 +390,39 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                {user.name}
+                {user.projectName || user.name}
               </motion.h1>
+              {user.projectName && <p className="mt-1 text-sm font-bold text-djon-text/40">{user.name}</p>}
             </div>
 
-            {/* Edit button — pinned to the right, aligned to bottom of row */}
+            {/* Account actions — pinned to the right, aligned to bottom of row */}
             {isOwner && (
-              <motion.button
-                onClick={() => setEditing((v) => !v)}
-                className="cursor-pointer hidden md:flex items-center gap-2 shrink-0 mb-2 border border-djon-text/15 text-djon-text/50 px-5 py-2.5 rounded-full text-xs font-black tracking-widest transition-opacity hover:opacity-70"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <Edit3 size={13} /> EDITAR
-              </motion.button>
+              <div className="mb-2 hidden shrink-0 items-center gap-2 md:flex">
+                {!user.passwordChangeRequired && (
+                  <motion.button onClick={() => startEditing("profile")} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-djon-text/15 px-5 py-2.5 text-xs font-black tracking-widest text-djon-text/50 transition-opacity hover:opacity-70" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                    <Edit3 size={13} /> EDITAR
+                  </motion.button>
+                )}
+                <motion.button onClick={() => startEditing("password")} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-djon-text/15 px-5 py-2.5 text-xs font-black tracking-widest text-djon-text/50 transition-opacity hover:opacity-70" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                  <KeyRound size={13} /> ALTERAR SENHA
+                </motion.button>
+              </div>
             )}
           </div>
 
           {/* Bio + socials + private info — full width below the avatar row */}
           <div className="pb-8 pt-4">
             {isOwner && (
-              <motion.button
-                onClick={() => setEditing((v) => !v)}
-                className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70 md:hidden"
-                whileTap={{ scale: 0.97 }}
-              >
-                <Edit3 size={13} /> EDITAR PERFIL
-              </motion.button>
+              <div className="mb-5 grid gap-2 md:hidden">
+                {!user.passwordChangeRequired && (
+                  <motion.button onClick={() => startEditing("profile")} className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70" whileTap={{ scale: 0.97 }}>
+                    <Edit3 size={13} /> EDITAR PERFIL
+                  </motion.button>
+                )}
+                <motion.button onClick={() => startEditing("password")} className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70" whileTap={{ scale: 0.97 }}>
+                  <KeyRound size={13} /> ALTERAR SENHA
+                </motion.button>
+              </div>
             )}
 
             {user.bio && (
@@ -258,154 +436,162 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
               </motion.p>
             )}
 
-            {/* Socials */}
-            {(user.socials?.instagram || user.socials?.soundcloud || user.socials?.youtube) && (
-              <motion.div
-                className="flex flex-wrap gap-4 mb-4"
+            {user.socials?.pressKit && (
+              <motion.a
+                href={user.socials.pressKit}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-djon-text/10 px-4 py-2 text-xs font-black tracking-wide text-djon-text/45 transition-all hover:border-djon-accent/40 hover:text-djon-text"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                {user.socials?.instagram && (
-                  <a
-                    href={`https://instagram.com/${user.socials.instagram}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold transition-opacity hover:opacity-100"
-                  >
-                    <Instagram size={18} /> @{user.socials.instagram}
-                  </a>
-                )}
-                {user.socials?.soundcloud && (
-                  <a
-                    href={`https://soundcloud.com/${user.socials.soundcloud}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold transition-opacity hover:opacity-100"
-                  >
-                    <SoundCloudIcon size={22} /> {user.socials.soundcloud}
-                  </a>
-                )}
-                {user.socials?.youtube && (
-                  <a
-                    href={`https://youtube.com/@${user.socials.youtube}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-djon-text opacity-40 text-xs font-bold transition-opacity hover:opacity-100"
-                  >
-                    <Youtube size={18} /> {user.socials.youtube}
-                  </a>
-                )}
-              </motion.div>
+                PRESS KIT <ExternalLink size={12} />
+              </motion.a>
             )}
-
-
           </div>
         </div>
       </section>
 
-      {/* ── EDIT FORM ─────────────────────────────────────────────────────────── */}
-      {isOwner && editing && (
-        <section className="bg-djon-muted-panel border-t border-djon-text/8 border-b">
-          <div className="max-w-7xl mx-auto px-4 py-14 sm:px-6 sm:py-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2">EDITAR</span>
-              <h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2">Seu Perfil</h2>
-              <div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" />
-              <form onSubmit={handleSave} className="grid max-w-3xl gap-6 md:grid-cols-2 md:gap-8">
-                <div className="space-y-5">
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">NOME</label>
-                    <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">E-MAIL</label>
-                    <div className="relative">
-                      <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
-                      <input
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        className={`${inputCls} pl-10`}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">TELEFONE</label>
-                    <div className="relative">
-                      <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
-                      <input
-                        type="tel"
-                        value={form.whatsapp}
-                        onChange={(e) => setForm({ ...form, whatsapp: formatPhone(e.target.value) })}
-                        placeholder="(51) 99999-0000"
-                        inputMode="numeric"
-                        autoComplete="tel"
-                        maxLength={15}
-                        className={`${inputCls} pl-10`}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">BIO</label>
-                    <textarea
-                      value={form.bio}
-                      onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                      rows={4}
-                      placeholder="Escreva algo sobre você..."
-                      className={`${inputCls} resize-none`}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <label className="text-djon-text/40 text-xs font-black tracking-widest mb-2 block">REDES SOCIAIS</label>
-                  <div className="relative">
-                    <Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
-                    <input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} placeholder="instagram" className={`${inputCls} pl-10`} />
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30">
-                      <SoundCloudIcon size={20} />
-                    </span>
-                    <input value={form.soundcloud} onChange={(e) => setForm({ ...form, soundcloud: e.target.value })} placeholder="soundcloud" className={`${inputCls} pl-10`} />
-                  </div>
-                  <div className="relative">
-                    <Youtube size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" />
-                    <input value={form.youtube} onChange={(e) => setForm({ ...form, youtube: e.target.value })} placeholder="youtube" className={`${inputCls} pl-10`} />
-                  </div>
-                  <motion.button
-                    type="submit"
-                    className="cursor-pointer w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-widest flex items-center justify-center gap-2 mt-2"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <Save size={15} /> SALVAR PERFIL
-                  </motion.button>
-                </div>
+      {/* ── EDIÇÃO DO PERFIL ────────────────────────────────────────────────── */}
+      {isOwner && editingSection === "profile" && (
+        <section id="profile-editor" className="scroll-mt-20 border-y border-djon-text/8 bg-djon-muted-panel">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <EditorHeading title="Seu Perfil" onCancel={cancelEditing} />
+              <form onSubmit={handleProfileSave} className="grid max-w-3xl gap-5 md:grid-cols-2 md:gap-6">
+                <Field label="NOME">
+                  <input required value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className={inputCls} />
+                </Field>
+                <Field label="NOME DO PROJETO ARTÍSTICO">
+                  <input value={profileForm.projectName} onChange={(e) => setProfileForm({ ...profileForm, projectName: e.target.value })} placeholder="Ex: DJ Aurora" className={inputCls} />
+                </Field>
+                <Field label="E-MAIL">
+                  <div className="relative"><Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input required type="email" value={profileForm.email} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} className={`${inputCls} pl-10`} /></div>
+                </Field>
+                <Field label="TELEFONE">
+                  <div className="relative"><Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input type="tel" value={profileForm.whatsapp} onChange={(e) => setProfileForm({ ...profileForm, whatsapp: formatPhone(e.target.value) })} placeholder="(51) 99999-0000" inputMode="numeric" autoComplete="tel" maxLength={15} className={`${inputCls} pl-10`} /></div>
+                </Field>
+                <Field label="BIO" className="md:col-span-2">
+                  <textarea value={profileForm.bio} onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })} rows={4} placeholder="Escreva algo sobre você..." className={`${inputCls} resize-none`} />
+                </Field>
+                {user.role === "student" && (
+                  <label className="flex items-center gap-3 rounded-xl border border-djon-text/10 bg-djon-text/5 px-4 py-3 text-xs font-bold text-djon-text/55 md:col-span-2">
+                    <input type="checkbox" checked={profileForm.showAcademicProgress} onChange={(e) => setProfileForm({ ...profileForm, showAcademicProgress: e.target.checked })} />
+                    Exibir meu progresso acadêmico no perfil
+                  </label>
+                )}
+                <SaveActions onCancel={cancelEditing} />
               </form>
-              <form onSubmit={handlePasswordChange} className="mt-10 max-w-3xl border-t border-djon-text/10 pt-8">
-                <p className="mb-5 text-xs font-black tracking-widest text-djon-accent">SEGURANÇA DA CONTA</p>
+            </motion.div>
+          </div>
+        </section>
+      )}
+
+      {isOwner && editingSection === "password" && (
+        <section id="password-editor" className="scroll-mt-20 border-y border-djon-text/8 bg-djon-muted-panel">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+              <EditorHeading title={user.passwordChangeRequired ? "Crie sua nova senha" : "Alterar Senha"} onCancel={user.passwordChangeRequired ? undefined : cancelEditing} />
+              {user.passwordChangeRequired && (
+                <p className="mb-7 max-w-2xl rounded-2xl border border-djon-accent/20 bg-djon-accent/8 p-4 text-sm leading-relaxed text-djon-text/65">
+                  Você entrou com uma senha temporária. Defina uma senha pessoal para liberar o restante do portal.
+                </p>
+              )}
+              <form onSubmit={handlePasswordChange} className="max-w-3xl">
                 <div className="grid gap-4 md:grid-cols-3">
-                  <input type="password" required value={passwordForm.current} autoComplete="current-password"
-                    onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
-                    placeholder="Senha atual" className={inputCls} />
-                  <input type="password" required minLength={8} value={passwordForm.next} autoComplete="new-password"
-                    onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
-                    placeholder="Nova senha" className={inputCls} />
-                  <input type="password" required minLength={8} value={passwordForm.confirm} autoComplete="new-password"
-                    onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
-                    placeholder="Confirmar nova senha" className={inputCls} />
+                  <Field label="SENHA ATUAL"><input type="password" required value={passwordForm.current} autoComplete="current-password" onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })} placeholder={user.passwordChangeRequired ? "Senha temporária" : "Senha atual"} className={inputCls} /></Field>
+                  <Field label="NOVA SENHA"><input type="password" required minLength={8} value={passwordForm.next} autoComplete="new-password" onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })} placeholder="Mínimo de 8 caracteres" className={inputCls} /></Field>
+                  <Field label="CONFIRMAR NOVA SENHA"><input type="password" required minLength={8} value={passwordForm.confirm} autoComplete="new-password" onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })} placeholder="Repita a nova senha" className={inputCls} /></Field>
                 </div>
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <button type="submit" className="rounded-xl bg-djon-text/10 px-5 py-3 text-xs font-black tracking-widest text-djon-text hover:brightness-110">ALTERAR SENHA</button>
-                  {passwordMessage && <p role="status" className="text-xs font-bold text-djon-text/60">{passwordMessage}</p>}
+                <div className="mt-6 flex flex-col gap-3 sm:items-start">
+                  <div className="flex w-full flex-col-reverse gap-3 sm:w-72 sm:flex-row">
+                    {!user.passwordChangeRequired && <button type="button" onClick={cancelEditing} className="h-12 w-full flex-1 rounded-xl border border-djon-text/10 px-5 text-xs font-black tracking-widest text-djon-text/50 transition-colors hover:text-djon-text">CANCELAR</button>}
+                    <button type="submit" className="flex h-12 w-full flex-1 items-center justify-center gap-2 rounded-xl bg-djon-accent px-6 text-sm font-black tracking-widest text-djon-ink"><Save size={15} /> SALVAR</button>
+                  </div>
+                  {passwordMessage && <p role="status" className="text-xs font-bold text-djon-warning-red">{passwordMessage}</p>}
                 </div>
               </form>
             </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* ── REDES SOCIAIS ───────────────────────────────────────────────────── */}
+      {(isOwner || hasSocials) && (
+        <section id={editingSection === "socials" ? "socials-editor" : undefined} className={`scroll-mt-20 border-t border-djon-text/6 py-16 sm:py-20 ${editingSection === "socials" ? "bg-djon-muted-panel" : "bg-djon-page"}`}>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            {editingSection === "socials" ? (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <EditorHeading title="Redes Sociais" onCancel={cancelEditing} />
+                <form onSubmit={handleSocialSave} className="grid max-w-3xl gap-5 md:grid-cols-2">
+                  <Field label="INSTAGRAM"><div className="relative"><Instagram size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input value={socialForm.instagram} onChange={(e) => setSocialForm({ ...socialForm, instagram: e.target.value })} placeholder="seuusuario" className={`${inputCls} pl-10`} /></div></Field>
+                  <Field label="SOUNDCLOUD"><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30"><SoundCloudIcon size={20} /></span><input value={socialForm.soundcloud} onChange={(e) => setSocialForm({ ...socialForm, soundcloud: e.target.value })} placeholder="seuusuario" className={`${inputCls} pl-10`} /></div></Field>
+                  <Field label="YOUTUBE"><div className="relative"><Youtube size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input value={socialForm.youtube} onChange={(e) => setSocialForm({ ...socialForm, youtube: e.target.value })} placeholder="seucanal" className={`${inputCls} pl-10`} /></div></Field>
+                  <Field label="SPOTIFY"><div className="relative"><SpotifyIcon size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input type="url" value={socialForm.spotify} onChange={(e) => setSocialForm({ ...socialForm, spotify: e.target.value })} placeholder="https://open.spotify.com/artist/..." className={`${inputCls} pl-10`} /></div></Field>
+                  <Field label="PRESS KIT" className="md:col-span-2"><div className="relative"><ExternalLink size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input type="url" value={socialForm.pressKit} onChange={(e) => setSocialForm({ ...socialForm, pressKit: e.target.value })} placeholder="https://..." className={`${inputCls} pl-10`} /></div></Field>
+                  <SaveActions onCancel={cancelEditing} />
+                </form>
+              </motion.div>
+            ) : (
+              <>
+                <SectionHeading eyebrow="CONEXÕES" title="Redes Sociais" isOwner={isOwner && !user.passwordChangeRequired} onEdit={() => startEditing("socials")} />
+                {hasSocials ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {user.socials?.instagram && <SocialCard href={`https://instagram.com/${user.socials.instagram}`} label="Instagram" value={`@${user.socials.instagram}`} icon={<Instagram size={22} />} />}
+                    {user.socials?.soundcloud && <SocialCard href={`https://soundcloud.com/${user.socials.soundcloud}`} label="SoundCloud" value={user.socials.soundcloud} icon={<SoundCloudIcon size={25} />} />}
+                    {user.socials?.youtube && <SocialCard href={`https://youtube.com/@${user.socials.youtube}`} label="YouTube" value={user.socials.youtube} icon={<Youtube size={23} />} />}
+                    {user.socials?.spotify && <SocialCard href={user.socials.spotify} label="Spotify" value="Ouvir perfil" icon={<SpotifyIcon size={24} />} />}
+                  </div>
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-djon-text/10 px-5 py-8 text-sm font-bold text-djon-text/30">Adicione suas redes para que outros artistas encontrem você.</p>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ── ÚLTIMO LANÇAMENTO ───────────────────────────────────────────────── */}
+      {(isOwner || hasLatestRelease) && (
+        <section id={editingSection === "release" ? "release-editor" : undefined} className={`scroll-mt-20 py-16 sm:py-20 ${editingSection === "release" ? "border-y border-djon-text/8 bg-djon-page" : "bg-djon-muted-panel"}`}>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            {editingSection === "release" ? (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <EditorHeading title="Último Lançamento" onCancel={cancelEditing} />
+                <form onSubmit={handleReleaseSave} className="grid max-w-3xl gap-6 md:grid-cols-[220px_1fr] md:gap-8">
+                  <div>
+                    <button type="button" onClick={() => releaseCoverRef.current?.click()} className="group relative aspect-square w-full overflow-hidden rounded-2xl border border-djon-text/10 bg-djon-surface-2">
+                      <Image src={releaseForm.cover || DEFAULT_RELEASE_COVER} alt="Prévia da capa" fill sizes="220px" className="object-cover transition-[filter] group-hover:brightness-75" />
+                      <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"><span className="flex items-center gap-2 rounded-full bg-djon-black/75 px-4 py-2 text-xs font-black text-djon-text"><Upload size={14} /> TROCAR CAPA</span></span>
+                    </button>
+                    <input ref={releaseCoverRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={(e) => e.target.files?.[0] && handleReleaseCoverUpload(e.target.files[0])} />
+                    <p className="mt-3 text-xs leading-relaxed text-djon-text/30">Sem imagem? A capa padrão do DJ ON será usada automaticamente.</p>
+                    {releaseForm.cover && <button type="button" onClick={useDefaultReleaseCover} className="mt-3 text-xs font-black tracking-wide text-djon-text/40 transition-colors hover:text-djon-accent">USAR CAPA PADRÃO</button>}
+                  </div>
+                  <div className="space-y-5">
+                    <Field label="TÍTULO"><input value={releaseForm.title} onChange={(e) => setReleaseForm({ ...releaseForm, title: e.target.value })} placeholder="Nome do single, EP, álbum ou set" maxLength={150} className={inputCls} /></Field>
+                    <Field label="LINK"><div className="relative"><ExternalLink size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input type="url" value={releaseForm.link} onChange={(e) => setReleaseForm({ ...releaseForm, link: e.target.value })} placeholder="https://..." className={`${inputCls} pl-10`} /></div></Field>
+                    <SaveActions onCancel={cancelEditing} />
+                  </div>
+                </form>
+              </motion.div>
+            ) : (
+              <>
+                <SectionHeading eyebrow="NOVIDADE" title="Último Lançamento" isOwner={isOwner && !user.passwordChangeRequired} onEdit={() => startEditing("release")} />
+                <div className="max-w-3xl overflow-hidden rounded-3xl border border-djon-text/10 bg-djon-surface-2 shadow-djon-soft sm:flex">
+                  <div className="relative aspect-square w-full shrink-0 overflow-hidden sm:w-64">
+                    <Image src={user.latestRelease?.cover || DEFAULT_RELEASE_COVER} alt={`Capa de ${user.latestRelease?.title || "último lançamento"}`} fill sizes="(min-width: 640px) 256px, 100vw" className="object-cover" />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col justify-center p-6 sm:p-8">
+                    <span className="mb-3 text-xs font-black tracking-[0.2em] text-djon-accent">LANÇAMENTO MAIS RECENTE</span>
+                    <h3 className="text-2xl font-black tracking-tight text-djon-text sm:text-3xl">{user.latestRelease?.title || "Adicione seu último lançamento"}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-djon-text/40">Compartilhe sua música mais recente, seja single, EP, álbum ou set.</p>
+                    {user.latestRelease?.link && <a href={user.latestRelease.link} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-djon-accent px-5 py-3 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90">OUVIR AGORA <ExternalLink size={13} /></a>}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}
@@ -499,6 +685,70 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         </section>
       )}
     </div>
+  )
+}
+
+function Field({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      <label className="mb-2 block text-xs font-black tracking-widest text-djon-text/40">{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function EditorHeading({ title, onCancel }: { title: string; onCancel?: () => void }) {
+  return (
+    <div className="mb-10 flex items-start justify-between gap-4">
+      <div>
+        <span className="mb-2 block text-xs font-black uppercase tracking-widest text-djon-accent">EDITAR</span>
+        <h2 className="text-3xl font-black tracking-tighter text-djon-text md:text-5xl">{title}</h2>
+        <div className="mt-2 h-[3px] w-10 rounded-full bg-djon-accent" />
+      </div>
+      {onCancel && (
+        <button type="button" onClick={onCancel} aria-label="Fechar edição" className="flex size-10 shrink-0 items-center justify-center rounded-full border border-djon-text/10 text-djon-text/45 transition-colors hover:border-djon-text/25 hover:text-djon-text">
+          <X size={16} />
+        </button>
+      )}
+    </div>
+  )
+}
+
+function SaveActions({ onCancel }: { onCancel: () => void }) {
+  return (
+    <div className="flex w-full flex-col-reverse gap-3 md:col-span-2 sm:ml-auto sm:w-72 sm:flex-row">
+      <button type="button" onClick={onCancel} className="h-12 w-full flex-1 rounded-xl border border-djon-text/10 px-5 text-xs font-black tracking-widest text-djon-text/50 transition-colors hover:text-djon-text">CANCELAR</button>
+      <motion.button type="submit" className="flex h-12 w-full flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-djon-accent px-6 text-sm font-black tracking-widest text-djon-ink" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+        <Save size={15} /> SALVAR
+      </motion.button>
+    </div>
+  )
+}
+
+function SectionHeading({ eyebrow, title, isOwner, onEdit }: { eyebrow: string; title: string; isOwner: boolean; onEdit: () => void }) {
+  return (
+    <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <motion.span className="mb-2 block text-xs font-black uppercase tracking-widest text-djon-accent" {...fadeUp(0)}>{eyebrow}</motion.span>
+        <motion.h2 className="text-3xl font-black tracking-tighter text-djon-text md:text-5xl" {...fadeUp(0.1)}>{title}</motion.h2>
+        <motion.div className="mt-2 h-[3px] w-10 rounded-full bg-djon-accent" {...fadeUp(0.15)} />
+      </div>
+      {isOwner && (
+        <motion.button type="button" onClick={onEdit} className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-djon-text/15 px-5 py-2.5 text-xs font-black tracking-widest text-djon-text/50 transition-opacity hover:opacity-70 sm:w-auto" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+          <Edit3 size={13} /> EDITAR
+        </motion.button>
+      )}
+    </div>
+  )
+}
+
+function SocialCard({ href, label, value, icon }: { href: string; label: string; value: string; icon: ReactNode }) {
+  return (
+    <motion.a href={href} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 transition-all hover:border-djon-accent/30 hover:brightness-110" {...fadeUp(0.1)} whileHover={{ y: -3 }}>
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-djon-text/5 text-djon-text/55 transition-colors group-hover:text-djon-accent">{icon}</span>
+      <span className="min-w-0 flex-1"><span className="block text-xs font-black tracking-widest text-djon-text">{label}</span><span className="mt-1 block truncate text-xs font-bold text-djon-text/35">{value}</span></span>
+      <ExternalLink size={14} className="shrink-0 text-djon-text/20 transition-colors group-hover:text-djon-accent" />
+    </motion.a>
   )
 }
 

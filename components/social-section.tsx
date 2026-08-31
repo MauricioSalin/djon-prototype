@@ -228,7 +228,7 @@ export function SocialSection() {
                   href={location.mapsHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="ml-auto shrink-0 rounded-full bg-djon-accent px-3 py-1.5 text-djon-label font-black tracking-wide text-djon-ink"
+                  className="ml-auto inline-flex min-h-11 shrink-0 items-center rounded-full bg-djon-accent px-3 py-1.5 text-djon-label font-black tracking-wide text-djon-ink"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
