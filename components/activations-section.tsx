@@ -151,6 +151,7 @@ export function ActivationsSection() {
                 scene="https://prod.spline.design/AUAj4HtJL15gKfTA/scene.splinecode"
                 lazyThreshold={0.01}
                 onLoad={() => setShowcaseSplineLoaded(true)}
+                onFallback={() => setShowcaseSplineLoaded(true)}
                 style={{ width: "100%", height: "100%" }}
               />
             </motion.div>

@@ -371,6 +371,30 @@ test.describe("PWA real", () => {
   });
 });
 
+test.describe("landing em iPhone", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    userAgent:
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1",
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  test("não inicializa cenas WebGL pesadas", async ({ page }) => {
+    const splineRequests: string[] = [];
+    page.on("request", (request) => {
+      if (request.url().includes("prod.spline.design")) splineRequests.push(request.url());
+    });
+    await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("[data-spline-fallback]").first()).toBeVisible();
+    await page.waitForTimeout(500);
+
+    expect(splineRequests).toEqual([]);
+  });
+});
+
 for (const viewport of [
   { name: "320x568", width: 320, height: 568 },
   { name: "360x800", width: 360, height: 800 },

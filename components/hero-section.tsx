@@ -189,6 +189,7 @@ export function HeroSection() {
                   scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
                   lazyThreshold={0.01}
                   onLoad={revealSpline}
+                  onFallback={revealSpline}
                   style={{ width: "100%", height: "100%" }}
                 />
               </motion.div>
@@ -207,6 +208,7 @@ export function HeroSection() {
                 scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
                 lazyThreshold={0.01}
                 onLoad={revealSpline}
+                onFallback={revealSpline}
                 style={{ width: "100%", height: "100%" }}
               />
             </motion.div>
