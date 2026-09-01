@@ -2296,7 +2296,7 @@ class ApiStore {
       return this.getUnits();
     }
     if (!this.publicUnitsPromise) {
-      this.publicUnitsPromise = request<ApiRecord[]>("/units")
+      this.publicUnitsPromise = request<ApiRecord[]>("/units", {}, false)
         .then((items) => {
           this.units = items.map(normalizeUnit);
           this.publicUnitsLoadedAt = Date.now();
@@ -2725,7 +2725,7 @@ class ApiStore {
   }
 
   async listLandingContent(): Promise<LandingSectionContent[]> {
-    const records = await request<ApiRecord[]>("/landing-content");
+    const records = await request<ApiRecord[]>("/landing-content", {}, false);
     return records.map((record) => ({
       key: asString(record.key) as LandingSectionKey,
       data: mapLandingAssets(record.data, false) as LandingSectionDataMap[LandingSectionKey],

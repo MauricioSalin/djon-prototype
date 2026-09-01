@@ -195,6 +195,7 @@ const routes: Record<PortalRole, string[]> = {
     "/dashboard/material",
     "/dashboard/material/novo",
     `/dashboard/material/${ids.material}`,
+    `/dashboard/material/cursos/${ids.material}`,
     "/dashboard/mural",
     "/dashboard/notificacoes",
     `/dashboard/perfil/${ids.admin}`,
@@ -210,6 +211,7 @@ const routes: Record<PortalRole, string[]> = {
     "/dashboard/material",
     "/dashboard/material/novo",
     `/dashboard/material/${ids.material}`,
+    `/dashboard/material/cursos/${ids.material}`,
     "/dashboard/mural",
     "/dashboard/notificacoes",
     `/dashboard/perfil/${ids.professor}`,
@@ -223,6 +225,7 @@ const routes: Record<PortalRole, string[]> = {
     "/dashboard/turmas",
     "/dashboard/material",
     `/dashboard/material/${ids.material}`,
+    `/dashboard/material/cursos/${ids.material}`,
     "/dashboard/mural",
     "/dashboard/notificacoes",
   ],
@@ -260,11 +263,36 @@ async function expectMobilePage(page: Page, path: string) {
         className: element.className?.toString().slice(0, 140) ?? "",
         text: element.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "",
       }));
+    const clippedControls = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        "a[href], button, input, select, textarea, [role='button']",
+      ),
+    )
+      .filter((element) => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return (
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          rect.width > 1 &&
+          rect.height > 1 &&
+          rect.bottom > 0 &&
+          rect.top < window.innerHeight &&
+          (rect.right > viewport + 1 || rect.left < -1)
+        );
+      })
+      .slice(0, 8)
+      .map((element) => ({
+        tag: element.tagName.toLowerCase(),
+        className: element.className?.toString().slice(0, 140) ?? "",
+        text: element.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "",
+      }));
     return {
       viewport,
       documentWidth: document.documentElement.scrollWidth,
       bodyWidth: document.body.scrollWidth,
       overflowing,
+      clippedControls,
       notFound: document.body.innerText.includes("This page could not be found."),
     };
   });
@@ -276,6 +304,7 @@ async function expectMobilePage(page: Page, path: string) {
   expect
     .soft(layout.bodyWidth, `${path} fez o body exceder a largura mobile`)
     .toBeLessThanOrEqual(layout.viewport + 1);
+  expect.soft(layout.clippedControls, `${path} recortou controles interativos`).toEqual([]);
   expect.soft(errors, `${path} gerou erro no console`).toEqual([]);
 
   page.off("pageerror", onPageError);
@@ -343,6 +372,7 @@ test.describe("PWA real", () => {
 });
 
 for (const viewport of [
+  { name: "320x568", width: 320, height: 568 },
   { name: "360x800", width: 360, height: 800 },
   { name: "390x844", width: 390, height: 844 },
 ]) {
@@ -350,13 +380,21 @@ for (const viewport of [
     test.use({ viewport });
 
     test("páginas públicas", async ({ page }) => {
-      for (const path of ["/", "/login", "/brand"]) {
+      await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
+      for (const path of [
+        "/",
+        "/login",
+        "/recuperar-senha",
+        "/redefinir-senha?token=mobile-audit",
+        "/brand",
+      ]) {
         await expectMobilePage(page, path);
       }
     });
 
     for (const role of ["admin", "professor", "student"] as const) {
       test(`${role}: rotas e subtelas`, async ({ page }) => {
+        test.setTimeout(90_000);
         await mockPortal(page, role);
         for (const path of routes[role]) await expectMobilePage(page, path);
       });

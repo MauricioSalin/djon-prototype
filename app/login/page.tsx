@@ -36,7 +36,7 @@ export default function LoginPage() {
   const fieldClass = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:brightness-110 transition-all"
 
   return (
-    <div className="min-h-svh flex flex-col items-center justify-center px-4 py-8 sm:py-10 relative overflow-x-clip noise-overlay bg-djon-page">
+    <div className="min-h-svh flex flex-col items-center justify-center px-4 py-6 sm:py-10 relative overflow-x-clip noise-overlay bg-djon-page">
       <div className="absolute inset-0 z-0">
         <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-25" priority />
         <div className="absolute inset-0 bg-djon-black/75" />
@@ -44,7 +44,7 @@ export default function LoginPage() {
 
       <button type="button" onClick={() => router.push("/")} className="absolute top-4 left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-6 sm:left-6">
         <ArrowLeft size={14} />
-        VOLTAR
+        <span className="hidden min-[360px]:inline">VOLTAR</span>
       </button>
 
       <motion.div
@@ -53,11 +53,11 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const }}
       >
-        <div className="flex items-center justify-center mb-10">
-          <Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-14 w-auto" priority />
+        <div className="mb-6 flex items-center justify-center sm:mb-10">
+          <Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-11 w-auto sm:h-14" priority />
         </div>
 
-        <div className="bg-djon-surface-2 border border-djon-text/10 rounded-2xl p-8">
+        <div className="bg-djon-surface-2 border border-djon-text/10 rounded-2xl p-6 sm:p-8">
           <p className="text-djon-accent text-xs tracking-wide font-bold mb-2">ÁREA DO ALUNO</p>
           <h1 className="text-3xl font-black text-djon-text tracking-tighter mb-1">Acessar Portal</h1>
           <div className="h-[3px] w-10 bg-djon-accent rounded-full mb-6" />
