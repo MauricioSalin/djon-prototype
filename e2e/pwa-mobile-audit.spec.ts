@@ -1,0 +1,365 @@
+import { expect, test, type Page, type Route } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  await page.route("**/_vercel/insights/script.js", (route) =>
+    route.fulfill({
+      contentType: "application/javascript",
+      body: "",
+    }),
+  );
+});
+
+const ids = {
+  admin: "507f1f77bcf86cd799439001",
+  professor: "507f1f77bcf86cd799439002",
+  student: "507f1f77bcf86cd799439003",
+  unit: "507f1f77bcf86cd799439004",
+  equipment: "507f1f77bcf86cd799439005",
+  material: "507f1f77bcf86cd799439006",
+};
+
+const permissions = [
+  "admin.access",
+  "users.manage",
+  "permissions.manage",
+  "leads.manage",
+  "bookings.manage",
+  "bookings.review",
+  "courses.manage",
+  "attendance.manage",
+  "materials.manage",
+  "units.manage",
+  "equipments.manage",
+  "events.manage",
+  "notifications.manage",
+  "portal.edit",
+];
+
+type PortalRole = "admin" | "professor" | "student";
+
+function user(role: PortalRole) {
+  return {
+    id: ids[role],
+    name:
+      role === "admin"
+        ? "Administrador Mobile"
+        : role === "professor"
+          ? "Professor Mobile"
+          : "Aluno Mobile",
+    email: `${role}-mobile@teste.com`,
+    role,
+    permissions: role === "admin" ? permissions : [],
+    unitId: {
+      id: ids.unit,
+      label: "Porto Alegre / RS",
+      shortLabel: "POA",
+    },
+    active: true,
+    createdAt: "2026-09-01T12:00:00.000Z",
+  };
+}
+
+const unit = {
+  id: ids.unit,
+  key: "poa",
+  label: "Porto Alegre / RS",
+  shortLabel: "POA",
+  address: "Unidade Mobile",
+  active: true,
+};
+
+const equipment = {
+  id: ids.equipment,
+  name: "CDJ Mobile",
+  unitId: unit,
+  active: true,
+  unavailableWeekdays: [],
+};
+
+const material = {
+  id: ids.material,
+  title: "Material Mobile",
+  description: "Conteúdo para validar a leitura em telas pequenas.",
+  body: "<p>Conteúdo de teste responsivo.</p>",
+  categoryId: { id: "507f1f77bcf86cd799439007", name: "Biblioteca" },
+  authorId: user("admin"),
+  status: "published",
+  attachments: [],
+  createdAt: "2026-09-01T12:00:00.000Z",
+};
+
+async function mockPortal(page: Page, role: PortalRole) {
+  const current = user(role);
+  const users = [user("admin"), user("professor"), user("student")];
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem("djon_access_token", "token-mobile-audit");
+    window.sessionStorage.clear();
+  });
+
+  await page.context().route("**/api/v1/**", async (route: Route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const path = url.pathname.replace(/^\/api\/v1/, "");
+
+    if (path === "/users/me") {
+      await route.fulfill({ json: current });
+      return;
+    }
+    if (/^\/users\/[a-f\d]{24}$/.test(path)) {
+      const selected = users.find((item) => path.endsWith(item.id)) ?? current;
+      await route.fulfill({ json: selected });
+      return;
+    }
+    if (path === "/users" || path.startsWith("/users?")) {
+      await route.fulfill({
+        json: { items: users, total: users.length, page: 1, limit: 100 },
+      });
+      return;
+    }
+    if (path === `/materials/${ids.material}`) {
+      await route.fulfill({ json: material });
+      return;
+    }
+    if (path === "/materials" || path.startsWith("/materials?")) {
+      await route.fulfill({
+        json: { items: [material], total: 1, page: 1, limit: 100 },
+      });
+      return;
+    }
+    if (path === "/events" || path.startsWith("/events?")) {
+      await route.fulfill({ json: { items: [], total: 0, page: 1, limit: 100 } });
+      return;
+    }
+    if (path === "/bookings" || path.startsWith("/bookings?")) {
+      await route.fulfill({ json: { items: [], total: 0, page: 1, limit: 100 } });
+      return;
+    }
+    if (path === "/units" || path === "/units/admin/all") {
+      await route.fulfill({ json: [unit] });
+      return;
+    }
+    if (path === "/equipments" || path === "/equipments/admin/all") {
+      await route.fulfill({ json: [equipment] });
+      return;
+    }
+    if (path === "/materials/categories") {
+      await route.fulfill({ json: [material.categoryId] });
+      return;
+    }
+    if (path === "/bookings/training-balance") {
+      await route.fulfill({ json: { usedMinutes: 0, limitMinutes: 600 } });
+      return;
+    }
+    if (path === "/audit-logs" || path.startsWith("/audit-logs?")) {
+      await route.fulfill({ json: { items: [], total: 0, page: 1, limit: 50 } });
+      return;
+    }
+    if (path.startsWith("/portal-content/")) {
+      await route.fulfill({
+        json: {
+          key: path.slice("/portal-content/".length),
+          label: "DJ ON",
+          title: "Portal\nDJ ON.",
+          description: "Conteúdo responsivo do portal.",
+          banner: null,
+        },
+      });
+      return;
+    }
+    if (
+      path === "/notifications" ||
+      path === "/leads" ||
+      path.startsWith("/courses")
+    ) {
+      await route.fulfill({ json: [] });
+      return;
+    }
+    await route.fulfill({ json: [] });
+  });
+}
+
+const routes: Record<PortalRole, string[]> = {
+  admin: [
+    "/dashboard/admin",
+    "/dashboard/admin/config",
+    "/dashboard/admin/alunos",
+    "/dashboard/admin/professores",
+    "/dashboard/admin/eventos",
+    "/dashboard/admin/leads",
+    "/dashboard/admin/unidades",
+    "/dashboard/admin/equipamentos",
+    "/dashboard/agenda",
+    "/dashboard/cursos",
+    "/dashboard/turmas",
+    "/dashboard/material",
+    "/dashboard/material/novo",
+    `/dashboard/material/${ids.material}`,
+    "/dashboard/mural",
+    "/dashboard/notificacoes",
+    `/dashboard/perfil/${ids.admin}`,
+  ],
+  professor: [
+    "/dashboard/professor",
+    "/dashboard/professor/alunos",
+    "/dashboard/professor/professores",
+    "/dashboard/professor/evento",
+    "/dashboard/agenda",
+    "/dashboard/cursos",
+    "/dashboard/turmas",
+    "/dashboard/material",
+    "/dashboard/material/novo",
+    `/dashboard/material/${ids.material}`,
+    "/dashboard/mural",
+    "/dashboard/notificacoes",
+    `/dashboard/perfil/${ids.professor}`,
+  ],
+  student: [
+    "/dashboard/student",
+    "/dashboard/student/perfil",
+    "/dashboard/student/agendar",
+    "/dashboard/student/evento",
+    "/dashboard/student/professores",
+    "/dashboard/turmas",
+    "/dashboard/material",
+    `/dashboard/material/${ids.material}`,
+    "/dashboard/mural",
+    "/dashboard/notificacoes",
+  ],
+};
+
+async function expectMobilePage(page: Page, path: string) {
+  const errors: string[] = [];
+  const onPageError = (error: Error) => errors.push(error.message);
+  const onConsole = (message: { type(): string; text(): string }) => {
+    if (
+      message.type() === "error" &&
+      message.text() !== "Failed to load resource: net::ERR_FAILED"
+    ) {
+      errors.push(message.text());
+    }
+  };
+  page.on("pageerror", onPageError);
+  page.on("console", onConsole);
+
+  await page.goto(path, { waitUntil: "domcontentloaded" });
+  await page.waitForTimeout(350);
+
+  const layout = await page.evaluate(() => {
+    const viewport = document.documentElement.clientWidth;
+    const overflowing = Array.from(document.body.querySelectorAll("*"))
+      .filter((element) => {
+        const style = getComputedStyle(element);
+        if (style.position === "fixed" || style.position === "absolute") return false;
+        const rect = element.getBoundingClientRect();
+        return rect.width > 1 && (rect.right > viewport + 1 || rect.left < -1);
+      })
+      .slice(0, 8)
+      .map((element) => ({
+        tag: element.tagName.toLowerCase(),
+        className: element.className?.toString().slice(0, 140) ?? "",
+        text: element.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "",
+      }));
+    return {
+      viewport,
+      documentWidth: document.documentElement.scrollWidth,
+      bodyWidth: document.body.scrollWidth,
+      overflowing,
+      notFound: document.body.innerText.includes("This page could not be found."),
+    };
+  });
+
+  expect.soft(layout.notFound, `${path} não deve renderizar 404`).toBe(false);
+  expect
+    .soft(layout.documentWidth, `${path} excedeu a largura mobile: ${JSON.stringify(layout.overflowing)}`)
+    .toBeLessThanOrEqual(layout.viewport + 1);
+  expect
+    .soft(layout.bodyWidth, `${path} fez o body exceder a largura mobile`)
+    .toBeLessThanOrEqual(layout.viewport + 1);
+  expect.soft(errors, `${path} gerou erro no console`).toEqual([]);
+
+  page.off("pageerror", onPageError);
+  page.off("console", onConsole);
+}
+
+test.describe("PWA real", () => {
+  test.use({ serviceWorkers: "allow" });
+
+  test("registra o service worker e entrega um manifest PWA coerente", async ({
+    page,
+    request,
+  }) => {
+    const errors: string[] = [];
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", {
+        configurable: true,
+        get: () => false,
+      });
+    });
+    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", (message) => {
+      if (
+        (message.type() === "error" || message.type() === "warning") &&
+        message.text() !== "Failed to load resource: net::ERR_FAILED"
+      ) {
+        errors.push(message.text());
+      }
+    });
+
+    await page.goto("/login");
+    await expect
+      .poll(async () =>
+        page.evaluate(async () => Boolean(await navigator.serviceWorker.getRegistration("/"))),
+      )
+      .toBe(true);
+
+    const serviceWorker = await request.get("/sw.js");
+    expect(serviceWorker.ok()).toBe(true);
+    expect(serviceWorker.headers()["content-type"]).toContain("application/javascript");
+    expect(serviceWorker.headers()["cache-control"]).toContain("no-store");
+
+    const manifestResponse = await request.get("/manifest.webmanifest");
+    expect(manifestResponse.ok()).toBe(true);
+    const manifest = (await manifestResponse.json()) as {
+      start_url: string;
+      display: string;
+      icons: Array<{ src: string; sizes: string; purpose?: string }>;
+      screenshots: Array<{ src: string; sizes: string }>;
+    };
+    expect(manifest.start_url).toBe("/login");
+    expect(manifest.display).toBe("standalone");
+    expect(manifest.icons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ src: "/icons/djon-icon-192.png", sizes: "192x192" }),
+        expect.objectContaining({ src: "/icons/djon-icon-512.png", sizes: "512x512" }),
+      ]),
+    );
+    expect(manifest.icons.some((icon) => icon.purpose === "maskable")).toBe(false);
+    expect(manifest.screenshots).toEqual([
+      expect.objectContaining({ src: "/djon-screenshot2.png", sizes: "1280x577" }),
+    ]);
+    expect(errors).toEqual([]);
+  });
+});
+
+for (const viewport of [
+  { name: "360x800", width: 360, height: 800 },
+  { name: "390x844", width: 390, height: 844 },
+]) {
+  test.describe(`portal mobile ${viewport.name}`, () => {
+    test.use({ viewport });
+
+    test("páginas públicas", async ({ page }) => {
+      for (const path of ["/", "/login", "/brand"]) {
+        await expectMobilePage(page, path);
+      }
+    });
+
+    for (const role of ["admin", "professor", "student"] as const) {
+      test(`${role}: rotas e subtelas`, async ({ page }) => {
+        await mockPortal(page, role);
+        for (const path of routes[role]) await expectMobilePage(page, path);
+      });
+    }
+  });
+}

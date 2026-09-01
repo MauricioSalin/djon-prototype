@@ -40,6 +40,12 @@ const STATUS_META: Record<
       "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
     label: "Pendente",
   },
+  recusado: {
+    dot: "bg-djon-warning-red",
+    badge:
+      "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
+    label: "Recusado",
+  },
   cancelado: {
     dot: "bg-djon-warning-red",
     badge:
@@ -70,6 +76,7 @@ const inp =
 export function BookingDetailsDialog({
   bk,
   canEdit,
+  canRemove,
   canReview,
   units,
   professors,
@@ -80,6 +87,7 @@ export function BookingDetailsDialog({
 }: {
   bk: BookingWithUser;
   canEdit: boolean;
+  canRemove: boolean;
   canReview: boolean;
   units: Unit[];
   professors: User[];
@@ -129,11 +137,6 @@ export function BookingDetailsDialog({
         confirmLabel: "CANCELAR AGENDAMENTO",
       });
       if (!confirmed) return;
-      await store.updateBooking(
-        bk.id,
-        { ...form, status: bk.status },
-        { silent: true },
-      );
       await store.cancelBooking(bk.id, {
         onChange: () => {
           const current = store
@@ -187,21 +190,15 @@ export function BookingDetailsDialog({
     if (reviewing) return;
     const confirmed = await confirm({
       title: "Recusar solicitação?",
-      description: `${bk.title} será recusada e o aluno será informado. Você poderá desfazer pelo aviso exibido em seguida.`,
+      description: `${bk.title} será recusada, permanecerá na agenda para histórico e o aluno será informado.`,
       confirmLabel: "RECUSAR",
     });
     if (!confirmed) return;
 
     setReviewing("reject");
     try {
-      const rejected = await store.cancelBooking(bk.id, {
-        onChange: () => {
-          onRemoved();
-          const current = store
-            .getBookings()
-            .find((booking) => booking.id === bk.id);
-          if (current) syncReviewedBooking(current);
-        },
+      const rejected = await store.updateBooking(bk.id, {
+        status: "recusado",
       });
       syncReviewedBooking(rejected);
     } catch {
@@ -233,13 +230,32 @@ export function BookingDetailsDialog({
                   label: "Pendente",
                   dot: "bg-djon-light-purple",
                 },
+                {
+                  value: "recusado",
+                  label: "Recusado",
+                  dot: "bg-djon-warning-red",
+                },
               ]
-            : []),
-          {
-            value: "cancelado",
-            label: "Cancelado",
-            dot: "bg-djon-warning-red",
-          },
+            : bk.status === "recusado"
+              ? [
+                  {
+                    value: "recusado",
+                    label: "Recusado",
+                    dot: "bg-djon-warning-red",
+                  },
+                  {
+                    value: "cancelado",
+                    label: "Cancelado",
+                    dot: "bg-djon-warning-red",
+                  },
+                ]
+              : [
+                  {
+                    value: "cancelado",
+                    label: "Cancelado",
+                    dot: "bg-djon-warning-red",
+                  },
+                ]),
         ];
 
   return (
@@ -275,7 +291,7 @@ export function BookingDetailsDialog({
                 <Edit2 size={14} />
               </button>
             )}
-            {canEdit && !editing && (
+            {canRemove && !editing && (
               <button
                 onClick={() => void handleRemove()}
                 aria-label="Remover agendamento"

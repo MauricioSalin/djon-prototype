@@ -18,11 +18,11 @@ import {
   useListPagination,
 } from "@/components/list-pagination"
 import { LockedCoverOverlay } from "@/components/locked-cover-overlay"
-import type { Course, Material, User } from "@/lib/store"
+import { canEditMaterial, type Course, type Material, type User } from "@/lib/store"
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 24 },
-  animate: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
   transition: {
     duration: 0.45,
     ease: [0.25, 0.4, 0.25, 1] as const,
@@ -64,7 +64,7 @@ type MaterialCourseViewProps = {
   course: Course
   lessons: Material[]
   user: User
-  canManage: boolean
+  canCreate: boolean
   onBack: () => void
   onNewLesson: () => void
   onOpenLesson: (lesson: Material) => void
@@ -75,7 +75,7 @@ export function MaterialCourseView({
   course,
   lessons,
   user,
-  canManage,
+  canCreate,
   onBack,
   onNewLesson,
   onOpenLesson,
@@ -156,9 +156,9 @@ export function MaterialCourseView({
             onClick={onBack}
             className="inline-flex h-11 cursor-pointer items-center gap-2 text-xs font-black tracking-widest text-djon-text/45 transition-colors hover:text-djon-text"
           >
-            <ArrowLeft size={14} /> VOLTAR PARA CURSOS
+            <ArrowLeft size={14} /> VOLTAR
           </button>
-          {canManage ? (
+          {canCreate ? (
             <button
               type="button"
               onClick={onNewLesson}
@@ -176,7 +176,7 @@ export function MaterialCourseView({
             {pagination.paginatedItems.map((lesson, index) => (
               <motion.article
                 key={lesson.id}
-                className={`group flex min-h-[322px] flex-col overflow-hidden rounded-2xl border border-djon-text/8 bg-djon-text/4 transition-all ${lesson.locked ? "cursor-not-allowed" : "cursor-pointer hover:brightness-110"}`}
+                className={`group flex min-h-[322px] cursor-pointer flex-col overflow-hidden rounded-2xl border border-djon-text/8 bg-djon-text/4 transition-all ${lesson.locked ? "" : "hover:brightness-110"}`}
                 {...fadeUp(index * 0.025)}
                 whileHover={lesson.locked ? undefined : { y: -4 }}
                 onClick={() => !lesson.locked && onOpenLesson(lesson)}
@@ -245,8 +245,7 @@ export function MaterialCourseView({
                         {lesson.authorName || "DJ ON Academy"}
                       </span>
                     </div>
-                    {canManage &&
-                    (user.role === "admin" || lesson.authorId === user.id) ? (
+                    {canEditMaterial(user, lesson) ? (
                       <button
                         type="button"
                         aria-label={`Excluir aula ${lesson.title}`}

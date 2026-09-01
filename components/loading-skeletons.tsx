@@ -22,7 +22,9 @@ export type DashboardSkeletonVariant =
   | "list"
   | "grid"
   | "dashboard"
+  | "admin-dashboard"
   | "agenda"
+  | "student-agenda"
   | "form"
   | "profile"
   | "material"
@@ -31,6 +33,7 @@ export type DashboardSkeletonVariant =
   | "courses"
   | "cohorts"
   | "people"
+  | "people-grid"
   | "equipment"
   | "units"
   | "notifications"
@@ -38,6 +41,8 @@ export type DashboardSkeletonVariant =
   | "settings"
   | "booking"
   | "events"
+  | "admin-events"
+  | "leads"
 
 type DashboardPageSkeletonProps = {
   variant?: DashboardSkeletonVariant
@@ -89,15 +94,14 @@ function Hero({ article = false }: { article?: boolean }) {
   return (
     <section
       className={cn(
-        "relative overflow-hidden bg-djon-black",
-        article ? "min-h-[62vh]" : "h-[360px] sm:h-[420px]",
+        "djon-portal-hero relative flex overflow-hidden bg-djon-black",
+        article ? "items-end" : "items-center",
       )}
     >
       <ShimmerSkeleton className="absolute inset-0 rounded-none border-0 bg-djon-text/[0.035]" />
       <div
         className={cn(
-          "relative mx-auto flex h-full max-w-7xl flex-col px-4 sm:px-6",
-          article ? "justify-end pb-14" : "justify-center",
+          "relative mx-auto flex w-full max-w-7xl flex-col px-4 py-14 sm:px-6 sm:py-16",
         )}
       >
         <ShimmerSkeleton className="mb-4 h-3 w-36 rounded-full" />
@@ -304,9 +308,32 @@ function CoursesSkeleton({ rows = 8 }: { rows?: number }) {
 function CohortsSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <LoadingFrame>
-      <main className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 sm:py-10">
-        <PageHeading />
-        <CompactCards rows={rows} />
+      <Hero />
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+        <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <ShimmerSkeleton className="h-11 min-w-0 flex-1 rounded-xl" />
+          <ShimmerSkeleton className="h-11 rounded-xl lg:w-52" />
+          <ShimmerSkeleton className="h-11 rounded-full bg-djon-accent/10 lg:w-40" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: rows }, (_, index) => (
+            <article
+              key={index}
+              className="rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <ShimmerSkeleton className="h-3 w-28 rounded-md bg-djon-accent/10" />
+                  <ShimmerSkeleton className="h-6 w-48 max-w-[80%] rounded-md" />
+                  <ShimmerSkeleton className="h-3 w-56 max-w-full rounded-md" />
+                </div>
+                <ShimmerSkeleton className="h-7 w-20 shrink-0 rounded-full" />
+              </div>
+              <ShimmerSkeleton className="mt-5 h-2 w-full rounded-full" />
+              <ShimmerSkeleton className="mt-3 h-3 w-28 rounded-md" />
+            </article>
+          ))}
+        </div>
       </main>
     </LoadingFrame>
   )
@@ -366,9 +393,9 @@ function AgendaSkeleton() {
 function PortalSkeleton() {
   return (
     <LoadingFrame>
-      <section className="relative flex min-h-[70vh] items-center overflow-hidden bg-djon-black">
+      <section className="djon-portal-hero relative flex items-center overflow-hidden bg-djon-black">
         <ShimmerSkeleton className="absolute inset-0 rounded-none border-0 bg-djon-text/[0.035]" />
-        <div className="relative mx-auto w-full max-w-7xl space-y-5 px-4 py-20 sm:px-6">
+        <div className="relative mx-auto w-full max-w-7xl space-y-5 px-4 py-14 sm:px-6 sm:py-16">
           <ShimmerSkeleton className="h-3 w-36 rounded-full" />
           <ShimmerSkeleton className="h-14 w-[min(38rem,85vw)] rounded-xl sm:h-20" />
           <ShimmerSkeleton className="h-4 w-[min(30rem,75vw)] rounded-md" />
@@ -391,22 +418,123 @@ function PortalSkeleton() {
 }
 
 function ProfileSkeleton() {
+  const pathname = usePathname()
+  const showsBackBar = /^\/dashboard\/perfil\/[^/]+\/?$/.test(pathname)
+
   return (
     <LoadingFrame>
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-        <ShimmerSkeleton className="h-60 rounded-3xl" />
-        <div className="-mt-16 flex items-end gap-5 px-5">
-          <ShimmerSkeleton className="size-28 shrink-0 rounded-full border-4 border-djon-page" />
-          <div className="mb-3 flex-1 space-y-3">
-            <ShimmerSkeleton className="h-7 w-56 max-w-full rounded-md" />
-            <ShimmerSkeleton className="h-4 w-36 rounded-md" />
+      {showsBackBar ? (
+        <div className="border-b border-djon-text/8 bg-djon-page">
+          <div className="mx-auto flex h-12 max-w-7xl items-center gap-2 px-4 sm:px-6">
+            <ShimmerSkeleton className="size-3 rounded-full border-0" />
+            <ShimmerSkeleton className="h-3 w-12 rounded-full border-0" />
           </div>
         </div>
-        <div className="grid gap-5 pt-10 lg:grid-cols-3">
-          <ShimmerSkeleton className="h-48 rounded-2xl lg:col-span-2" />
-          <ShimmerSkeleton className="h-48 rounded-2xl" />
-        </div>
+      ) : null}
+
+      <main>
+        <section className="relative overflow-hidden">
+          <ShimmerSkeleton className="absolute inset-0 rounded-none border-0" />
+          <div aria-hidden="true" className="h-56 md:h-72" />
+
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="relative z-10 -mt-14 flex flex-col items-start gap-4 pb-2 sm:flex-row sm:items-end sm:gap-5 md:-mt-16">
+              <ShimmerSkeleton className="size-24 shrink-0 rounded-full border-4 border-djon-page sm:size-28 md:size-36" />
+              <div className="min-w-0 flex-1 space-y-2 pb-2">
+                <ShimmerSkeleton className="h-5 w-40 rounded-full border-0 bg-djon-accent/10" />
+                <ShimmerSkeleton className="h-10 w-72 max-w-[80vw] rounded-lg sm:h-12" />
+              </div>
+            </div>
+
+            <div className="space-y-2 pb-8 pt-4">
+              <ShimmerSkeleton className="h-4 w-[min(31rem,82vw)] rounded-md" />
+              <ShimmerSkeleton className="h-4 w-[min(23rem,68vw)] rounded-md" />
+            </div>
+          </div>
+        </section>
+
+        <section className="border-t border-djon-text/6 bg-djon-page py-16 sm:py-20">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mb-10 space-y-2">
+              <ShimmerSkeleton className="h-3 w-20 rounded-full border-0 bg-djon-accent/10" />
+              <ShimmerSkeleton className="h-10 w-64 max-w-[80vw] rounded-lg sm:h-12" />
+              <ShimmerSkeleton className="h-[3px] w-10 rounded-full border-0 bg-djon-accent/15" />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex items-center gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5">
+                <ShimmerSkeleton className="size-11 shrink-0 rounded-xl" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <ShimmerSkeleton className="h-3 w-20 rounded-md" />
+                  <ShimmerSkeleton className="h-3 w-28 max-w-full rounded-md" />
+                </div>
+                <ShimmerSkeleton className="size-3 shrink-0 rounded-full border-0" />
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
+    </LoadingFrame>
+  )
+}
+
+function AdminDashboardSkeleton() {
+  return (
+    <LoadingFrame>
+      <Hero />
+      <section className="bg-djon-muted-panel py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl space-y-10 px-4 sm:px-6">
+          <PageHeading action={false} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }, (_, index) => (
+              <ShimmerSkeleton key={index} className="h-36 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </section>
+      <section className="bg-djon-page py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl space-y-10 px-4 sm:px-6">
+          <PageHeading action={false} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {Array.from({ length: 6 }, (_, index) => (
+              <ShimmerSkeleton key={index} className="h-36 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </section>
+    </LoadingFrame>
+  )
+}
+
+function StudentAgendaSkeleton() {
+  return (
+    <LoadingFrame>
+      <Hero />
+      <section className="bg-djon-muted-panel py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mb-8 grid gap-3 rounded-2xl border border-djon-accent/15 bg-djon-accent/5 p-4 sm:grid-cols-3 sm:p-5">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="space-y-3">
+                <ShimmerSkeleton className="h-3 w-28 rounded-md" />
+                <ShimmerSkeleton className="h-6 w-16 rounded-md" />
+              </div>
+            ))}
+          </div>
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+            <div className="space-y-2">
+              <ShimmerSkeleton className="h-3 w-20 rounded-full bg-djon-accent/10" />
+              <ShimmerSkeleton className="h-10 w-72 max-w-[75vw] rounded-lg sm:h-12" />
+              <ShimmerSkeleton className="h-[3px] w-10 rounded-full bg-djon-accent/15" />
+            </div>
+            <ShimmerSkeleton className="h-11 w-48 rounded-full bg-djon-accent/10" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }, (_, index) => (
+              <ShimmerSkeleton key={index} className="h-52 rounded-2xl" />
+            ))}
+          </div>
+        </div>
+      </section>
     </LoadingFrame>
   )
 }
@@ -486,12 +614,96 @@ function EventsSkeleton() {
   )
 }
 
+function SettingsSkeleton() {
+  return (
+    <LoadingFrame>
+      <main className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+        <PageHeading action={false} />
+        <section className="overflow-hidden rounded-2xl border border-djon-text/8 bg-djon-surface-2">
+          <ShimmerSkeleton className="h-28 w-full rounded-none border-0" />
+          <div className="flex items-end gap-4 px-5 pb-6">
+            <ShimmerSkeleton className="-mt-8 size-14 shrink-0 rounded-full border-4 border-djon-surface-2" />
+            <div className="space-y-2 pb-1">
+              <ShimmerSkeleton className="h-5 w-40 rounded-md" />
+              <ShimmerSkeleton className="h-3 w-28 rounded-md bg-djon-accent/10" />
+            </div>
+          </div>
+        </section>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {Array.from({ length: 3 }, (_, index) => (
+            <ShimmerSkeleton key={index} className="h-24 rounded-2xl" />
+          ))}
+        </div>
+        <section className="space-y-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5">
+          <ShimmerSkeleton className="h-3 w-32 rounded-md bg-djon-accent/10" />
+          <ShimmerSkeleton className="h-7 w-40 rounded-md" />
+          <ShimmerSkeleton className="h-11 w-full rounded-xl" />
+          <ShimmerSkeleton className="h-24 w-full rounded-xl" />
+          {Array.from({ length: 3 }, (_, index) => (
+            <ShimmerSkeleton key={index} className="h-11 w-full rounded-xl" />
+          ))}
+          <ShimmerSkeleton className="h-12 w-full rounded-xl bg-djon-accent/10" />
+        </section>
+      </main>
+    </LoadingFrame>
+  )
+}
+
+function LeadsSkeleton({ rows = 4 }: { rows?: number }) {
+  return (
+    <LoadingFrame>
+      <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+        <PageHeading />
+        {Array.from({ length: rows }, (_, index) => (
+          <section
+            key={index}
+            className="grid gap-5 rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 lg:grid-cols-[minmax(0,1fr)_18rem]"
+          >
+            <div className="space-y-3">
+              <ShimmerSkeleton className="h-5 w-48 max-w-[70%] rounded-md" />
+              <ShimmerSkeleton className="h-3 w-56 max-w-[85%] rounded-md" />
+              <ShimmerSkeleton className="h-20 w-full rounded-xl" />
+            </div>
+            <div className="space-y-3">
+              <ShimmerSkeleton className="h-11 w-full rounded-xl" />
+              <ShimmerSkeleton className="h-20 w-full rounded-xl" />
+              <ShimmerSkeleton className="h-10 w-full rounded-xl bg-djon-accent/10" />
+            </div>
+          </section>
+        ))}
+      </main>
+    </LoadingFrame>
+  )
+}
+
+function AdminEventsSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <LoadingFrame>
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+        <PageHeading />
+        <div className="flex flex-wrap gap-2">
+          {[104, 118, 92].map((width) => (
+            <ShimmerSkeleton
+              key={width}
+              className="h-9 rounded-full"
+              style={{ width }}
+            />
+          ))}
+        </div>
+        <ListRows rows={rows} avatar={false} />
+      </main>
+    </LoadingFrame>
+  )
+}
+
 export function DashboardPageSkeleton({
   variant = "list",
   rows,
 }: DashboardPageSkeletonProps) {
   if (variant === "dashboard") return <PortalSkeleton />
+  if (variant === "admin-dashboard") return <AdminDashboardSkeleton />
   if (variant === "agenda") return <AgendaSkeleton />
+  if (variant === "student-agenda") return <StudentAgendaSkeleton />
   if (variant === "material") return <MaterialSkeleton rows={rows} />
   if (variant === "article") return <ArticleSkeleton />
   if (variant === "editor") return <EditorSkeleton />
@@ -500,6 +712,15 @@ export function DashboardPageSkeleton({
   if (variant === "cohorts") return <CohortsSkeleton rows={rows ?? 4} />
   if (variant === "people" || variant === "list")
     return <DirectorySkeleton rows={rows ?? 6} />
+  if (variant === "people-grid")
+    return (
+      <LoadingFrame>
+        <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+          <PageHeading action={false} />
+          <CompactCards rows={rows ?? 6} />
+        </main>
+      </LoadingFrame>
+    )
   if (variant === "equipment" || variant === "units")
     return (
       <LoadingFrame>
@@ -513,8 +734,11 @@ export function DashboardPageSkeleton({
   if (variant === "audit") return <AuditSkeleton rows={rows} />
   if (variant === "profile") return <ProfileSkeleton />
   if (variant === "booking") return <FormSkeleton booking />
-  if (variant === "settings" || variant === "form") return <FormSkeleton />
+  if (variant === "settings") return <SettingsSkeleton />
+  if (variant === "form") return <FormSkeleton />
   if (variant === "events") return <EventsSkeleton />
+  if (variant === "admin-events") return <AdminEventsSkeleton rows={rows} />
+  if (variant === "leads") return <LeadsSkeleton rows={rows} />
   return <DirectorySkeleton rows={rows} />
 }
 
@@ -526,7 +750,8 @@ export function getDashboardSkeletonVariant(
   if (/\/material\/[^/]+\/?$/.test(pathname)) return "article"
   if (/\/material\/?$/.test(pathname)) return "material"
   if (/\/agenda\/?$/.test(pathname)) return "agenda"
-  if (/\/(student|professor|admin)\/?$/.test(pathname)) return "dashboard"
+  if (/\/admin\/?$/.test(pathname)) return "admin-dashboard"
+  if (/\/(student|professor)\/?$/.test(pathname)) return "dashboard"
   if (/\/cursos\/?$/.test(pathname)) return "courses"
   if (/\/turmas\/?$/.test(pathname)) return "cohorts"
   if (/\/notificacoes\/?$/.test(pathname)) return "notifications"
@@ -534,21 +759,21 @@ export function getDashboardSkeletonVariant(
   if (/\/equipamentos\/?$/.test(pathname)) return "equipment"
   if (/\/unidades\/?$/.test(pathname)) return "units"
   if (/\/config\/?$/.test(pathname)) return "settings"
+  if (/\/admin\/leads\/?$/.test(pathname)) return "leads"
+  if (/\/student\/agendar\/?$/.test(pathname)) return "student-agenda"
   if (/\/agendar\/?$/.test(pathname)) return "booking"
-  if (/\/(evento|eventos|mural)\/?$/.test(pathname)) return "events"
+  if (/\/admin\/eventos\/?$/.test(pathname)) return "admin-events"
+  if (/\/(evento|mural)\/?$/.test(pathname)) return "events"
   if (/\/perfil(\/|$)/.test(pathname)) return "profile"
-  if (/\/(alunos|professores|leads)\/?$/.test(pathname)) return "people"
+  if (/\/(student|professor)\/professores\/?$/.test(pathname))
+    return "people-grid"
+  if (/\/(alunos|professores)\/?$/.test(pathname)) return "people"
   return "people"
 }
 
-export function DashboardRouteSkeleton() {
-  const pathname = usePathname()
-  return (
-    <DashboardPageSkeleton variant={getDashboardSkeletonVariant(pathname)} />
-  )
-}
-
 export function DashboardShellSkeleton() {
+  const pathname = usePathname()
+
   return (
     <div className="min-h-svh bg-djon-page">
       <div className="fixed inset-x-0 top-0 z-20 flex h-16 items-center gap-5 border-b border-djon-text/8 bg-djon-page px-4 sm:px-6">
@@ -562,7 +787,9 @@ export function DashboardShellSkeleton() {
         <ShimmerSkeleton className="h-10 w-36 rounded-full" />
       </div>
       <main className="pt-16">
-        <PortalSkeleton />
+        <DashboardPageSkeleton
+          variant={getDashboardSkeletonVariant(pathname)}
+        />
       </main>
     </div>
   )

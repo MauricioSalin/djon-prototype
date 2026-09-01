@@ -7,6 +7,7 @@ import { BentoGrid } from "@/components/bento-grid"
 import { ActivationsSection } from "@/components/activations-section"
 import { SocialSection } from "@/components/social-section"
 import { Footer } from "@/components/footer"
+import { LandingContentProvider } from "@/components/landing/landing-content-provider"
 
 const title = "Seu sonho começa aqui | DJ ON"
 const shareTitle = "DJ ON Academy | Curso de DJ e Produção Musical"
@@ -46,14 +47,16 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
-      <Navigation />
-      <HeroSection />
-      <LifestyleSection />
-      <FlavorCarousel />
-      <BentoGrid />
-      <ActivationsSection />
-      <SocialSection />
-      <Footer />
+      <LandingContentProvider>
+        <Navigation />
+        <HeroSection />
+        <LifestyleSection />
+        <FlavorCarousel />
+        <BentoGrid />
+        <ActivationsSection />
+        <SocialSection />
+        <Footer />
+      </LandingContentProvider>
     </main>
   )
 }

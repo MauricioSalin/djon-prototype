@@ -39,8 +39,8 @@ export default function ProfessorProfessoresPage() {
             <motion.div
               key={u.id}
               className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: i * 0.07 }}
             >
               <div className="flex items-center gap-4 mb-4">

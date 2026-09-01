@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowRight,
   Edit2,
   GraduationCap,
   ImageIcon,
@@ -17,14 +16,19 @@ import {
 } from "lucide-react";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { notifyError } from "@/lib/feedback";
-import { hasPermission, store, type Course, type User } from "@/lib/store";
+import {
+  canAuthorMaterials,
+  store,
+  type Course,
+  type User,
+} from "@/lib/store";
 
 const field =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-4 py-3 text-sm text-djon-text outline-none placeholder:text-djon-text/25 focus:border-djon-accent/50";
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 24 },
-  animate: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
   transition: { duration: 0.45, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 });
 
@@ -85,7 +89,7 @@ export default function CoursesPage() {
   const load = useCallback(async () => {
     const current = await store.bootstrap();
     if (!current) return;
-    if (!hasPermission(current, "courses.manage")) {
+    if (!canAuthorMaterials(current)) {
       router.replace("/dashboard/turmas");
       return;
     }
@@ -236,7 +240,7 @@ export default function CoursesPage() {
             >
               <Link
                 href={`/dashboard/material?category=Cursos&course=${encodeURIComponent(course.id)}`}
-                aria-label={`Acessar perfil do curso ${course.name}`}
+                aria-label={`Acessar curso ${course.name}`}
                 className="absolute inset-0 z-10 cursor-pointer"
               />
               <div className="relative h-44 overflow-hidden bg-djon-muted-panel">
@@ -259,10 +263,7 @@ export default function CoursesPage() {
                     {course.description}
                   </p>
                 ) : null}
-                <div className="mt-auto flex items-center justify-between gap-3 pt-4">
-                  <span className="inline-flex items-center gap-1.5 text-djon-label font-black tracking-widest text-djon-accent">
-                    ACESSAR PERFIL <ArrowRight size={12} />
-                  </span>
+                <div className="mt-auto flex items-center justify-end gap-3 pt-4">
                   <div className="relative z-20 flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                     <button
                       type="button"

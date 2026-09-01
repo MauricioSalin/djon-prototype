@@ -3,39 +3,12 @@
 import { motion, useInView } from "framer-motion"
 import { useRef, useState } from "react"
 import Image from "next/image"
-import { Mic2, Star, Users, Music, MousePointerClick } from "lucide-react"
+import { MousePointerClick } from "lucide-react"
 import { SplineScene } from "@/components/spline-scene"
-
-const teamMembers = [
-  {
-    name: "Segredo",
-    role: "Diretor, DJ, Produtor Musical",
-    description: "Professor Curso Formação de DJ e Produção Musical",
-    image: "/images/djon-team-segredo.png",
-    accent: "var(--djon-color-accent)",
-  },
-  {
-    name: "Kampff",
-    role: "DJ, Adm e Professor",
-    description: "Curso Formação DJ e Mentor de Marketing para DJs",
-    image: "/images/djon-team-kampff.png",
-    accent: "var(--djon-color-light-purple)",
-  },
-  {
-    name: "Xinddy",
-    role: "DJ, Produtora Musical",
-    description: "Professora Curso Formação DJ (Psytrance) e Designer",
-    image: "/images/djon-team-xinddy.png",
-    accent: "var(--djon-color-warning-red)",
-  },
-  {
-    name: "Guilherme",
-    role: "DJ e Gestor",
-    description: "Gestão e suporte aos alunos da academia",
-    image: "/images/djon-team-gui.png",
-    accent: "var(--djon-color-accent)",
-  },
-]
+import { LandingEditButton } from "@/components/landing/landing-edit-button"
+import { useLandingSection } from "@/components/landing/landing-content-provider"
+import { LandingIconView } from "@/components/landing/landing-options"
+import { landingColor, type TeamLandingData } from "@/lib/landing-content"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -46,16 +19,32 @@ const containerVariants = {
 }
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  hidden: { opacity: 0, scale: 0.95 },
   visible: {
     opacity: 1,
-    y: 0,
     scale: 1,
     transition: { type: "spring" as const, stiffness: 100, damping: 20 },
   },
 }
 
+function balancedRows(items: TeamLandingData["members"]) {
+  if (items.length <= 4) return [items]
+  const rowCount = Math.ceil(items.length / 4)
+  const base = Math.floor(items.length / rowCount)
+  const extra = items.length % rowCount
+  const rows: TeamLandingData["members"][] = []
+  let start = 0
+  for (let row = 0; row < rowCount; row += 1) {
+    const size = base + (row < extra ? 1 : 0)
+    rows.push(items.slice(start, start + size))
+    start += size
+  }
+  return rows
+}
+
 export function ActivationsSection() {
+  const showcase = useLandingSection("showcase")
+  const team = useLandingSection("team")
   const teamRef = useRef(null)
   const isInView = useInView(teamRef, { once: true, margin: "-100px" })
   const [showcaseSplineLoaded, setShowcaseSplineLoaded] = useState(false)
@@ -74,15 +63,18 @@ export function ActivationsSection() {
               transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as const }}
             >
               <Image
-                src="/images/djon-showcase.png"
+                loader={({ src }) => src}
+                unoptimized
+                src={showcase.data.image}
                 alt="SHOWCASE — Evento Oficial DJ ON"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-djon-black/80 via-djon-black/20 to-transparent" />
               <div className="absolute bottom-6 left-6">
                 <span className="bg-djon-accent text-djon-ink px-4 py-1.5 rounded-full font-black text-xs tracking-widest">
-                  EVENTO OFICIAL
+                  {showcase.data.imageLabel}
                 </span>
               </div>
             </motion.div>
@@ -102,43 +94,33 @@ export function ActivationsSection() {
                   viewport={{ once: true }}
                   transition={{ delay: 0.2 }}
                 >
-                  EVENTO OFICIAL DA DJ ON
+                  {showcase.data.label}
                 </motion.span>
                 <h2 className="text-3xl md:text-5xl font-black text-djon-ink tracking-tighter mt-2 leading-[0.9]">
-                  SHOWCASE
+                  {showcase.data.title}
                 </h2>
               </div>
 
-              <p className="text-sm text-djon-ink/60 leading-relaxed">
-                Aqui, depois de formado, você terá a oportunidade de sentir a experiência de tocar num palco real, expandindo as suas possibilidades de networking e iniciando a sua base de fãs!
-              </p>
-              <p className="text-sm text-djon-ink/60 leading-relaxed">
-                Você será preparado durante o curso para chegar confiante, com seu Set pronto e todas as dicas necessárias para arrasar na sua primeira performance!
-              </p>
+              {showcase.data.description.split(/\n\s*\n/).map((paragraph, index) => (
+                <p key={index} className="text-sm text-djon-ink/60 leading-relaxed">{paragraph}</p>
+              ))}
 
               <div className="grid grid-cols-2 gap-3">
-                {[
-                  { icon: Mic2, label: "Palco Real" },
-                  { icon: Star, label: "Primeira Performance" },
-                  { icon: Users, label: "Networking" },
-                  { icon: Music, label: "Set Completo" },
-                ].map(({ icon: Icon, label }) => (
+                {showcase.data.items.map((item) => (
                   <motion.div
-                    key={label}
+                    key={item.text}
                     className="flex items-center gap-2 bg-djon-ink rounded-xl px-4 py-3"
                     whileHover={{ y: -3, scale: 1.02 }}
                     transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
                   >
-                    <Icon className="w-4 h-4 text-djon-accent" />
-                    <span className="text-djon-text font-black text-xs tracking-wide">{label}</span>
+                    <LandingIconView name={item.icon} className="h-4 w-4 text-djon-accent" />
+                    <span className="text-djon-text font-black text-xs tracking-wide">{item.text}</span>
                   </motion.div>
                 ))}
               </div>
 
               <motion.a
-                href="https://www.djonacademy.com/"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="#contato"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-djon-ink px-7 py-3 text-sm font-black tracking-wide text-djon-accent sm:w-auto"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -210,6 +192,7 @@ export function ActivationsSection() {
               </span>
             </motion.div>
           </motion.div>
+          {showcase.canEdit ? <LandingEditButton onClick={showcase.edit} /> : null}
         </div>
       </section>
 
@@ -230,7 +213,7 @@ export function ActivationsSection() {
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
             >
-              QUEM FAZ ACONTECER
+              {team.data.label}
             </motion.span>
             <motion.h2
               className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2"
@@ -239,7 +222,7 @@ export function ActivationsSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const, delay: 0.2 }}
             >
-              Nosso Time
+              {team.data.title}
             </motion.h2>
             <motion.div
               className="h-[3px] w-10 bg-djon-accent mx-auto mt-3 rounded-full"
@@ -255,50 +238,57 @@ export function ActivationsSection() {
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
             >
-              Esse é o time de profissionais que vai te acompanhar durante a grande jornada rumo ao seu sonho. Cada professor traz consigo uma bagagem única de experiência, talento e paixão pela música eletrônica.
+              {team.data.description}
             </motion.p>
           </motion.div>
 
           <motion.div
             ref={teamRef}
-            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+            className="space-y-4"
             variants={containerVariants}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
           >
-            {teamMembers.map((member) => (
-              <motion.div
-                key={member.name}
+            {balancedRows(team.data.members).map((row, rowIndex) => (
+              <div key={rowIndex} className="flex flex-wrap justify-center gap-4 lg:flex-nowrap">
+              {row.map((member) => {
+                const accent = landingColor(member.color).color
+                return <motion.article
+                key={member.id}
                 variants={itemVariants}
                 whileHover={{ y: -8, scale: 1.02, transition: { type: "spring" as const, stiffness: 400, damping: 17 } }}
-                className="group relative bg-djon-surface-3 rounded-2xl overflow-hidden cursor-pointer"
+                className="group relative w-full cursor-pointer overflow-hidden rounded-2xl bg-djon-surface-3 sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] lg:flex-none"
               >
                 <div className="relative aspect-square overflow-hidden">
                   <Image
+                    loader={({ src }) => src}
+                    unoptimized
                     src={member.image}
                     alt={member.name}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                   />
                   <motion.div
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: `linear-gradient(to top, color-mix(in srgb, ${member.accent} 38%, transparent), transparent)` }}
+                    style={{ background: `linear-gradient(to top, color-mix(in srgb, ${accent} 38%, transparent), transparent)` }}
                   />
                 </div>
                 <div className="p-4">
                   <h3 className="font-black text-djon-text text-base tracking-tight">{member.name}</h3>
-                  <p className="text-xs mt-0.5 font-bold" style={{ color: member.accent }}>{member.role}</p>
+                  <p className="text-xs mt-0.5 font-bold" style={{ color: accent }}>{member.role}</p>
                   <p className="text-xs text-djon-text/50 mt-1 leading-relaxed">{member.description}</p>
                 </div>
                 <motion.div
                   className="absolute bottom-0 left-0 right-0 h-0.5"
-                  style={{ backgroundColor: member.accent }}
+                  style={{ backgroundColor: accent }}
                   initial={{ scaleX: 0, originX: 0 }}
                   whileInView={{ scaleX: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.8, delay: 0.3 }}
                 />
-              </motion.div>
+              </motion.article>})}
+              </div>
             ))}
           </motion.div>
 
@@ -318,6 +308,7 @@ export function ActivationsSection() {
               />
             </div>
           </motion.div>
+          {team.canEdit ? <LandingEditButton onClick={team.edit} /> : null}
         </div>
       </section>
     </>

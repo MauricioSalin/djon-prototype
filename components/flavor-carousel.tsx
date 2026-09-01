@@ -2,67 +2,12 @@
 
 import type React from "react"
 import { motion, AnimatePresence, useSpring } from "framer-motion"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-
-const courses = [
-  {
-    id: 1,
-    name: "Formação DJ",
-    tagline: "Do Zero ao Profissional",
-    description: "Aqui você vai aprender tudo que precisa para se tornar um DJ. Por hobby ou profissão, nossa metodologia prática e teórica abrange tudo o que você vai precisar para discotecar de maneira profissional e com confiança.",
-    image: "/images/djon-course-dj.png",
-    bgColor: "from-djon-accent/15 via-djon-accent/5 to-transparent",
-    accentColor: "var(--djon-color-accent)",
-    items: [
-      "Mixagem de Música Eletrônica",
-      "Todas as funções do mixer e do CDJ",
-      "Play Match e Beat Match",
-      "Mixagem com fone de ouvido",
-      "Pitch e BPM / Frequências",
-      "Software Rekordbox & Mixed in Key",
-      "Elaboração de repertório",
-      "Introdução ao marketing",
-    ],
-  },
-  {
-    id: 2,
-    name: "Produção Musical",
-    tagline: "Do Beat à Track Final",
-    description: "O curso de produção musical vai elevar suas habilidades criativas e transformar sua paixão pela música em resultados extraordinários. Explore técnicas incríveis e domine as ferramentas indispensáveis.",
-    image: "/images/djon-course-producao.png",
-    bgColor: "from-djon-light-purple/15 via-djon-light-purple/5 to-transparent",
-    accentColor: "var(--djon-color-light-purple)",
-    items: [
-      "Software Ableton Live 11",
-      "Construção da sua primeira track do zero",
-      "Construção de baterias",
-      "Arranjo / Storytelling",
-      "Basslines & Síntese",
-      "Teoria musical",
-      "VSTs & Processamentos",
-    ],
-  },
-  {
-    id: 3,
-    name: "Mentoria de Marketing",
-    tagline: "Construa sua Carreira",
-    description: "A mentoria de marketing especializada para DJs vai impulsionar sua carreira e expandir sua presença no mercado da música eletrônica. Aprenda a promover sua imagem e conquistar novas oportunidades.",
-    image: "/images/djon-course-marketing.png",
-    bgColor: "from-djon-warning-red/15 via-djon-warning-red/5 to-transparent",
-    accentColor: "var(--djon-color-warning-red)",
-    items: [
-      "Mindset de artista",
-      "Dominar as redes sociais",
-      "Conquistar novos contratantes",
-      "Como ter uma agenda lotada",
-      "Performance de palco",
-      "Plano de carreira",
-      "Comunicação & Produza seu primeiro evento",
-    ],
-  },
-]
+import { LandingEditButton } from "@/components/landing/landing-edit-button"
+import { useLandingSection } from "@/components/landing/landing-content-provider"
+import { landingColor } from "@/lib/landing-content"
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -85,9 +30,19 @@ const slideVariants = {
 }
 
 export function FlavorCarousel() {
+  const { data, canEdit, edit } = useLandingSection("courses")
+  const courses = data.courses
   const [currentIndex, setCurrentIndex] = useState(0)
   const [[page, direction], setPage] = useState([0, 0])
-  const currentCourse = courses[currentIndex]
+  const currentCourse = courses[currentIndex] ?? courses[0]
+  const palette = landingColor(currentCourse.color)
+
+  useEffect(() => {
+    if (currentIndex >= courses.length) {
+      setCurrentIndex(0)
+      setPage([0, 0])
+    }
+  }, [courses.length, currentIndex])
 
   const rotateX = useSpring(0, { stiffness: 150, damping: 20 })
   const rotateY = useSpring(0, { stiffness: 150, damping: 20 })
@@ -116,11 +71,11 @@ export function FlavorCarousel() {
   return (
     <section id="cursos" className="relative py-16 bg-djon-ink overflow-hidden">
       <motion.div
-        className={`absolute inset-0 bg-gradient-to-br ${currentCourse.bgColor}`}
+        className={`absolute inset-0 bg-gradient-to-br ${palette.gradient}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        key={currentCourse.id}
+          key={currentCourse.id}
       />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
@@ -133,8 +88,8 @@ export function FlavorCarousel() {
         >
           <motion.span
             className="text-xs tracking-wide font-bold"
-            style={{ color: currentCourse.accentColor }}
-            animate={{ color: currentCourse.accentColor }}
+            style={{ color: palette.color }}
+            animate={{ color: palette.color }}
             transition={{ duration: 0.5 }}
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -153,8 +108,8 @@ export function FlavorCarousel() {
           </motion.h2>
           <motion.div
             className="h-[3px] w-10 mx-auto mt-3 rounded-full"
-            style={{ backgroundColor: currentCourse.accentColor }}
-            animate={{ backgroundColor: currentCourse.accentColor }}
+            style={{ backgroundColor: palette.color }}
+            animate={{ backgroundColor: palette.color }}
             transition={{ duration: 0.5 }}
             initial={{ scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
@@ -209,8 +164,11 @@ export function FlavorCarousel() {
                     >
                       <Image
                         src={currentCourse.image}
-                        alt={currentCourse.name}
+                        alt={currentCourse.title}
                         fill
+                        loader={({ src }) => src}
+                        unoptimized
+                        sizes="(max-width: 768px) 100vw, 50vw"
                         className="object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-djon-black/60 to-transparent" />
@@ -220,12 +178,12 @@ export function FlavorCarousel() {
                       <div>
                         <motion.span
                           className="text-xs tracking-wide font-bold"
-                          style={{ color: currentCourse.accentColor }}
+                          style={{ color: palette.color }}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.2 }}
                         >
-                          {currentCourse.tagline}
+                          {currentCourse.label}
                         </motion.span>
                         <motion.h3
                           className="text-2xl md:text-3xl font-black text-djon-text tracking-tighter mt-1"
@@ -233,7 +191,7 @@ export function FlavorCarousel() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.3, type: "spring" as const, stiffness: 100 }}
                         >
-                          {currentCourse.name}
+                          {currentCourse.title}
                         </motion.h3>
                       </div>
 
@@ -252,7 +210,7 @@ export function FlavorCarousel() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.45 }}
                       >
-                        <p className="text-xs font-black tracking-widest" style={{ color: currentCourse.accentColor }}>
+                        <p className="text-xs font-black tracking-widest" style={{ color: palette.color }}>
                           O QUE VOCÊ VAI APRENDER:
                         </p>
                         <div className="space-y-1 mt-1">
@@ -264,7 +222,7 @@ export function FlavorCarousel() {
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.5 + i * 0.04 }}
                             >
-                              <span style={{ color: currentCourse.accentColor }} className="mt-0.5 shrink-0">•</span>
+                              <span style={{ color: palette.color }} className="mt-0.5 shrink-0">•</span>
                               {item}
                             </motion.div>
                           ))}
@@ -272,11 +230,9 @@ export function FlavorCarousel() {
                       </motion.div>
 
                       <motion.a
-                        href="https://www.djonacademy.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href="#contato"
                         className="relative inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 text-sm font-black tracking-widest sm:w-auto"
-                        style={{ backgroundColor: currentCourse.accentColor, color: "var(--djon-color-ink)" }}
+                        style={{ backgroundColor: palette.color, color: "var(--djon-color-ink)" }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -335,7 +291,7 @@ export function FlavorCarousel() {
                   setPage([index, newDirection])
                 }}
                 className="cursor-pointer h-2 rounded-full transition-all"
-                style={{ backgroundColor: index === currentIndex ? course.accentColor : "color-mix(in srgb, var(--djon-color-white) 20%, transparent)" }}
+                style={{ backgroundColor: index === currentIndex ? landingColor(course.color).color : "color-mix(in srgb, var(--djon-color-white) 20%, transparent)" }}
                 animate={{ width: index === currentIndex ? 28 : 10 }}
                 whileHover={{ scale: 1.2 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 25 }}
@@ -344,6 +300,7 @@ export function FlavorCarousel() {
           </div>
         </div>
       </div>
+      {canEdit ? <LandingEditButton onClick={edit} /> : null}
     </section>
   )
 }

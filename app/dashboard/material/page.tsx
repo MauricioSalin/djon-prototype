@@ -17,6 +17,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import {
+  canAuthorMaterials,
+  canEditMaterial,
   hasPermission,
   store,
   type Course,
@@ -32,13 +34,14 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { LockedCoverOverlay } from "@/components/locked-cover-overlay";
 import { MaterialCourseView } from "@/components/material-course-view";
 import { usePageTitle } from "@/components/page-title-manager";
+import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
 
 const DRAFTS_CATEGORY = "Rascunhos";
 const COURSES_CATEGORY = "Cursos";
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 32 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
   viewport: { once: true, amount: 0 },
   transition: { duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 });
@@ -109,6 +112,8 @@ export default function MaterialPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [coursesLoaded, setCoursesLoaded] = useState(false);
+  const [materialsLoaded, setMaterialsLoaded] = useState(false);
+  const [materialLoadError, setMaterialLoadError] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [materialCategories, setMaterialCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState("Todos");
@@ -122,15 +127,20 @@ export default function MaterialPage() {
   const [transferCategory, setTransferCategory] = useState("");
   const listScrollPosition = useRef(0);
   const selectedCourseRef = useRef<string | null>(null);
+  const refreshPromiseRef = useRef<Promise<void> | null>(null);
+  const lastRefreshAtRef = useRef(0);
 
-  const isProfessor = user?.role === "professor" || user?.role === "admin";
-  const isAdmin = user?.role === "admin";
+  const canAuthor = canAuthorMaterials(user);
   const canManageMaterials = hasPermission(user, "materials.manage");
   const selectedCourse = courses.find(
     (course) => course.id === selectedCourseId,
   );
   const courseLessons = selectedCourseId
-    ? materials.filter((material) => material.courseId === selectedCourseId)
+    ? materials.filter(
+        (material) =>
+          material.courseId === selectedCourseId &&
+          (material.status === "published" || material.authorId === user?.id),
+      )
     : [];
 
   usePageTitle(selectedCourse?.name ?? "Materiais");
@@ -144,15 +154,45 @@ export default function MaterialPage() {
         .map((category) => category.name),
     );
 
-  const loadCourseLessons = useCallback(async (courseId: string) => {
-    setMaterials(store.getMaterials());
-    try {
-      await store.listCourseMaterials(courseId);
-      setMaterials(store.getMaterials());
-    } catch {
-      // Mantém imediatamente os materiais já disponíveis no cache do portal.
-    }
-  }, []);
+  const refreshMaterialData = useCallback(
+    (currentUser: User, force = false) => {
+      if (refreshPromiseRef.current) return refreshPromiseRef.current;
+      if (!force && Date.now() - lastRefreshAtRef.current < 15_000) {
+        return Promise.resolve();
+      }
+
+      setMaterialLoadError(false);
+      const refresh = Promise.all([
+        store.listMaterials(),
+        store.listMaterialCategories(),
+        store.listCourses(!hasPermission(currentUser, "courses.manage")),
+      ])
+        .then(([nextMaterials, nextCategories, nextCourses]) => {
+          setMaterials(nextMaterials);
+          setMaterialCategories(
+            nextCategories
+              .filter((category) => category.type === "biblioteca")
+              .map((category) => category.name),
+          );
+          setCourses(nextCourses);
+          lastRefreshAtRef.current = Date.now();
+          setMaterialsLoaded(true);
+          setCoursesLoaded(true);
+        })
+        .catch(() => {
+          load();
+          loadCategories();
+          setMaterialLoadError(true);
+          setCoursesLoaded(true);
+        })
+        .finally(() => {
+          refreshPromiseRef.current = null;
+        });
+      refreshPromiseRef.current = refresh;
+      return refresh;
+    },
+    [],
+  );
 
   const restoreCourseListScroll = useCallback(() => {
     window.requestAnimationFrame(() => {
@@ -172,12 +212,11 @@ export default function MaterialPage() {
 
     if (requestedCourse) {
       setActiveCategory(COURSES_CATEGORY);
-      void loadCourseLessons(requestedCourse);
     } else if (wasViewingCourse) {
       setActiveCategory(COURSES_CATEGORY);
       restoreCourseListScroll();
     }
-  }, [loadCourseLessons, restoreCourseListScroll]);
+  }, [restoreCourseListScroll]);
 
   useEffect(() => {
     const u = store.getCurrentUser();
@@ -188,11 +227,7 @@ export default function MaterialPage() {
     setUser(u);
     load();
     loadCategories();
-    void store
-      .listCourses(!hasPermission(u, "courses.manage"))
-      .then(setCourses)
-      .catch(() => undefined)
-      .finally(() => setCoursesLoaded(true));
+    void refreshMaterialData(u, true);
     const requestedCategory = new URLSearchParams(window.location.search).get(
       "category",
     );
@@ -200,12 +235,27 @@ export default function MaterialPage() {
       setActiveCategory(COURSES_CATEGORY);
     } else if (
       requestedCategory === DRAFTS_CATEGORY &&
-      hasPermission(u, "materials.manage")
+      canAuthorMaterials(u)
     ) {
       setActiveCategory(DRAFTS_CATEGORY);
     }
     syncCourseFromUrl();
-  }, [router, syncCourseFromUrl]);
+  }, [refreshMaterialData, router, syncCourseFromUrl]);
+
+  useEffect(() => {
+    if (!user) return;
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refreshMaterialData(user);
+      }
+    };
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [refreshMaterialData, user]);
 
   useEffect(() => {
     window.addEventListener("popstate", syncCourseFromUrl);
@@ -227,32 +277,15 @@ export default function MaterialPage() {
       `${url.pathname}${url.search}${url.hash}`,
     );
     window.scrollTo({ top: 0, behavior: "auto" });
-    void loadCourseLessons(course.id);
   };
 
   const closeCourse = () => {
-    if (window.history.state?.djonMaterialCourse) {
-      window.history.back();
-      return;
-    }
-
-    const url = new URL(window.location.href);
-    url.searchParams.delete("course");
-    url.searchParams.set("category", COURSES_CATEGORY);
-    window.history.replaceState(
-      null,
-      "",
-      `${url.pathname}${url.search}${url.hash}`,
-    );
-    selectedCourseRef.current = null;
-    setSelectedCourseId(null);
-    setActiveCategory(COURSES_CATEGORY);
-    restoreCourseListScroll();
+    router.back();
   };
 
   const categories = [
     "Todos",
-    ...(canManageMaterials ? [DRAFTS_CATEGORY] : []),
+    ...(canAuthor ? [DRAFTS_CATEGORY] : []),
     COURSES_CATEGORY,
     ...materialCategories,
   ];
@@ -344,7 +377,30 @@ export default function MaterialPage() {
     (c) => c !== categoryDelete,
   );
 
-  if (!user) return <DashboardPageSkeleton variant="material" />;
+  const hasCachedMaterialData =
+    materials.length > 0 || materialCategories.length > 0 || courses.length > 0;
+
+  if (!user || (!materialsLoaded && !materialLoadError && !hasCachedMaterialData)) {
+    return <DashboardPageSkeleton variant="material" />;
+  }
+
+  if (materialLoadError && !materialsLoaded) {
+    return (
+      <main className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+        <BookOpen size={42} className="mb-4 text-djon-text/10" />
+        <p className="text-lg font-bold text-djon-text/35">
+          Não foi possível carregar os materiais.
+        </p>
+        <button
+          type="button"
+          onClick={() => void refreshMaterialData(user, true)}
+          className="mt-6 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink"
+        >
+          TENTAR NOVAMENTE
+        </button>
+      </main>
+    );
+  }
 
   if (selectedCourseId && selectedCourse) {
     return (
@@ -352,7 +408,7 @@ export default function MaterialPage() {
         course={selectedCourse}
         lessons={courseLessons}
         user={user}
-        canManage={canManageMaterials}
+        canCreate={canAuthor}
         onBack={closeCourse}
         onNewLesson={() =>
           router.push(
@@ -391,7 +447,7 @@ export default function MaterialPage() {
           onClick={closeCourse}
           className="mt-6 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink"
         >
-          VOLTAR PARA CURSOS
+          VOLTAR
         </button>
       </main>
     );
@@ -399,47 +455,23 @@ export default function MaterialPage() {
 
   return (
     <div className="bg-djon-page min-h-screen">
-      {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/material-hero.png"
-            alt=""
-            fill
-            className="object-cover opacity-25"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/85 to-djon-black/50" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 sm:px-6 sm:py-28">
-          <motion.span
-            className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4"
-            {...fadeUp(0.1)}
-          >
-            {isProfessor ? "PORTAL DO PROFESSOR" : "PORTAL DO ALUNO"}
-          </motion.span>
-          <motion.h1
-            className="djon-hero-title font-black text-djon-text"
-            {...fadeUp(0.2)}
-          >
-            Material
-          </motion.h1>
-          <motion.div
-            className="h-[3px] w-10 bg-djon-accent rounded-full mt-4"
-            {...fadeUp(0.3)}
-          />
-          <motion.p
-            className="text-djon-text/40 text-base max-w-md leading-relaxed mt-4"
-            {...fadeUp(0.35)}
-          >
-            {canManageMaterials
-              ? "Crie artigos, PDFs e imagens, salve rascunhos ou publique para seus alunos."
-              : "Acesse o material publicado pelos professores da DJ ON Academy."}
-          </motion.p>
-        </div>
-      </section>
+      <EditablePortalHero
+        heroKey="materials"
+        defaults={{
+          label: "{{portal_material}}",
+          title: "Material",
+          description: "{{descricao_material}}",
+          banner: "/images/material-hero.png",
+        }}
+        variables={{
+          portal_material: canAuthor
+            ? "PORTAL DO PROFESSOR"
+            : "PORTAL DO ALUNO",
+          descricao_material: canAuthor
+            ? "Crie artigos, PDFs e imagens, salve rascunhos ou publique para seus alunos."
+            : "Acesse o material publicado pelos professores da DJ ON Academy.",
+        }}
+      />
 
       {/* ── FILTER + ACTION ROW ─────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 mb-10 mt-4 sm:px-6 sm:mb-12">
@@ -521,7 +553,7 @@ export default function MaterialPage() {
             )}
           </motion.div>
 
-          {canManageMaterials && !showingCourses && (
+          {canAuthor && !showingCourses && (
             <motion.button
               onClick={() => router.push("/dashboard/material/novo")}
               className="cursor-pointer flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:w-auto"
@@ -602,7 +634,7 @@ export default function MaterialPage() {
             {pagination.paginatedItems.map((mat, i) => (
               <motion.div
                 key={mat.id}
-                className={`group bg-djon-text/4 border border-djon-text/8 rounded-2xl overflow-hidden transition-all flex flex-col min-h-[322px] ${mat.locked ? "cursor-not-allowed" : "cursor-pointer hover:brightness-110"}`}
+                className={`group cursor-pointer bg-djon-text/4 border border-djon-text/8 rounded-2xl overflow-hidden transition-all flex flex-col min-h-[322px] ${mat.locked ? "" : "hover:brightness-110"}`}
                 {...fadeUp(i * 0.04)}
                 whileHover={mat.locked ? undefined : { y: -4 }}
                 onClick={() =>
@@ -676,19 +708,18 @@ export default function MaterialPage() {
                         {mat.authorName || "DJ ON Academy"}
                       </span>
                     </div>
-                    {canManageMaterials &&
-                      (isAdmin || mat.authorId === user.id) && (
-                        <button
-                          aria-label={`Excluir material ${mat.title}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(mat.id);
-                          }}
-                          className="cursor-pointer opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-djon-warning-red/10 hover:brightness-110 flex items-center justify-center transition-all"
-                        >
-                          <Trash2 size={12} className="text-djon-warning-red" />
-                        </button>
-                      )}
+                    {canEditMaterial(user, mat) && (
+                      <button
+                        aria-label={`Excluir material ${mat.title}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(mat.id);
+                        }}
+                        className="cursor-pointer opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-djon-warning-red/10 hover:brightness-110 flex items-center justify-center transition-all"
+                      >
+                        <Trash2 size={12} className="text-djon-warning-red" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>

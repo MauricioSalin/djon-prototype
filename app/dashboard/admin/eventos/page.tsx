@@ -6,6 +6,11 @@ import { Plus, Trash2, Edit2, X, Music2, MapPin, Clock, Instagram, Star, Graduat
 import { store, type DJEvent } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
+import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
+import {
+  ADMIN_EVENTS_HERO,
+  EVENTS_HERO_SECTIONS,
+} from "@/lib/portal-hero-groups"
 
 const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
 
@@ -62,34 +67,36 @@ export default function AdminEventosPage() {
   const pagination = useListPagination(displayed, tab)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+    <div className="bg-djon-page">
+      <EditablePortalHero
+        heroKey="admin-events"
+        defaults={ADMIN_EVENTS_HERO}
+        bannerKey="mural"
+        editorSections={EVENTS_HERO_SECTIONS}
+        accentLines={[1]}
+      />
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-djon-accent text-xs tracking-wide font-bold mb-0.5">ADMINISTRAÇÃO</p>
-          <h1 className="text-3xl font-black text-djon-text tracking-tighter">Gerenciar Eventos</h1>
+        <div className="flex flex-wrap gap-2">
+          {(["djOn", "professor", "student"] as const).map((t) => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-wide transition-colors ${
+                tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:border-djon-accent"
+              }`}>
+              {t === "djOn"
+                ? <><Star size={11} /> EVENTOS DJ ON</>
+                : t === "professor"
+                  ? <><GraduationCap size={11} /> EVENTOS PROFESSORES</>
+                  : <><Music2 size={11} /> EVENTOS ALUNOS</>}
+            </button>
+          ))}
         </div>
         <motion.button onClick={openNew}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-wide text-djon-ink sm:w-auto"
+          className="flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-wide text-djon-ink sm:w-auto"
           whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
           <Plus size={14} />
           NOVO EVENTO
         </motion.button>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {(["djOn", "professor", "student"] as const).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black tracking-wide transition-colors ${
-              tab === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:border-djon-accent"
-            }`}>
-            {t === "djOn"
-              ? <><Star size={11} /> EVENTOS DJ ON</>
-              : t === "professor"
-                ? <><GraduationCap size={11} /> EVENTOS PROFESSORES</>
-                : <><Music2 size={11} /> EVENTOS ALUNOS</>}
-          </button>
-        ))}
       </div>
 
       {/* Modal */}
@@ -110,8 +117,8 @@ export default function AdminEventosPage() {
                   <div className="flex gap-2">
                     {(["djOn", "professor", "student"] as const).map((t) => (
                       <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
-                        className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all hover:opacity-80 ${
-                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10"
+                        className={`cursor-pointer flex-1 py-2.5 rounded-xl text-xs font-black tracking-wide transition-all ${
+                          form.type === t ? "bg-djon-accent text-djon-ink" : "bg-djon-text/5 text-djon-text/50 border border-djon-text/10 hover:opacity-80"
                         }`}>
                         {t === "djOn" ? "DJ ON" : t === "professor" ? "PROFESSOR" : "ALUNO"}
                       </button>
@@ -173,7 +180,7 @@ export default function AdminEventosPage() {
           {pagination.paginatedItems.map((ev, i) => (
             <motion.div key={ev.id}
               className={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border bg-djon-surface-2 px-4 py-4 sm:flex sm:px-5 ${ev.type === "djOn" ? "border-djon-accent/20" : "border-djon-text/8"}`}
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}>
               {ev.type === "djOn" && (
                 <div className="w-9 h-9 rounded-xl bg-djon-accent/15 flex items-center justify-center shrink-0">
                   <Star size={16} className="text-djon-accent" />
@@ -227,6 +234,7 @@ export default function AdminEventosPage() {
         onPageChange={pagination.setPage}
         onPageSizeChange={pagination.setPageSize}
       />
+      </main>
     </div>
   )
 }

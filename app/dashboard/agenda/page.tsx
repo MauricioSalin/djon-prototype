@@ -22,6 +22,9 @@ import {
   Plus,
 } from "lucide-react";
 import {
+  canManageBooking,
+  canManageBookings,
+  canReviewBookings,
   hasPermission,
   store,
   type Booking,
@@ -77,23 +80,40 @@ function parseTime(t: string) {
 
 const STATUS_META: Record<
   string,
-  { dot: string; badge: string; text: string; label: string }
+  {
+    dot: string;
+    hoverBorder: string;
+    badge: string;
+    text: string;
+    label: string;
+  }
 > = {
   confirmado: {
     dot: "bg-djon-success",
+    hoverBorder: "hover:border-djon-success",
     badge: "bg-djon-success/10 border-djon-success/20 text-djon-success",
     text: "text-djon-success",
     label: "Confirmado",
   },
   pendente: {
     dot: "bg-djon-light-purple",
+    hoverBorder: "hover:border-djon-light-purple",
     badge:
       "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
     text: "text-djon-light-purple",
     label: "Pendente",
   },
+  recusado: {
+    dot: "bg-djon-warning-red",
+    hoverBorder: "hover:border-djon-warning-red",
+    badge:
+      "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
+    text: "text-djon-warning-red",
+    label: "Recusado",
+  },
   cancelado: {
     dot: "bg-djon-warning-red",
+    hoverBorder: "hover:border-djon-warning-red",
     badge:
       "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
     text: "text-djon-warning-red",
@@ -102,7 +122,12 @@ const STATUS_META: Record<
 };
 
 type ViewMode = "month" | "week" | "list";
-type FilterStatus = "todos" | "confirmado" | "pendente" | "cancelado";
+type FilterStatus =
+  | "todos"
+  | "confirmado"
+  | "pendente"
+  | "recusado"
+  | "cancelado";
 
 interface BookingWithUser extends Booking {
   student: User | null;
@@ -220,7 +245,7 @@ function BookingPill({
   return (
     <button
       onClick={onClick}
-      className="min-h-8 w-full cursor-pointer truncate rounded-lg border border-djon-text/8 bg-djon-text/5 px-2 py-1.5 text-left text-djon-label font-bold text-djon-text/60 transition-all hover:brightness-110"
+      className={`min-h-7 w-full cursor-pointer truncate rounded-lg border border-djon-text/8 bg-djon-text/5 px-1.5 py-1 text-left text-djon-label font-bold text-djon-text/60 transition-colors min-[1440px]:min-h-8 min-[1440px]:px-2 min-[1440px]:py-1.5 ${m.hoverBorder}`}
     >
       <span
         className={`inline-block w-1.5 h-1.5 rounded-full mr-1 align-middle ${m.dot}`}
@@ -329,9 +354,7 @@ function MonthView({
   while (cells.length % 7 !== 0) cells.push(null);
 
   const rowCount = cells.length / 7;
-  const gridRef = useRef<HTMLDivElement>(null);
   const morePopoverRef = useRef<HTMLDivElement>(null);
-  const [visibleSlots, setVisibleSlots] = useState(3);
 
   // Quick popover listing every booking of an overflowing day (Teams style)
   const [moreDay, setMoreDay] = useState<{
@@ -360,23 +383,6 @@ function MonthView({
       window.removeEventListener("resize", closeOnResize);
     };
   }, [moreDay]);
-
-  useEffect(() => {
-    const el = gridRef.current;
-    if (!el) return;
-
-    const updateVisibleSlots = () => {
-      const rowHeight = el.clientHeight / rowCount;
-      const availableForItems = Math.max(0, rowHeight - 44);
-      const nextSlots = Math.max(1, Math.floor((availableForItems + 2) / 24));
-      setVisibleSlots(Math.min(8, nextSlots));
-    };
-
-    updateVisibleSlots();
-    const observer = new ResizeObserver(updateVisibleSlots);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [rowCount]);
 
   const openMore = (
     e: ReactMouseEvent<HTMLButtonElement>,
@@ -442,7 +448,6 @@ function MonthView({
           ))}
         </div>
         <div
-          ref={gridRef}
           className="grid grid-cols-7 gap-px bg-djon-text/5 rounded-2xl overflow-hidden border border-djon-text/8 flex-1"
           style={{ gridTemplateRows: `repeat(${rowCount}, 1fr)` }}
         >
@@ -453,10 +458,7 @@ function MonthView({
             const cellBks = bookings
               .filter((b) => sameDay(isoToDate(b.date), cellDate))
               .sort((a, b) => parseTime(a.time) - parseTime(b.time));
-            const hasOverflow = cellBks.length > visibleSlots;
-            const visibleCount = hasOverflow
-              ? Math.max(0, visibleSlots - 1)
-              : visibleSlots;
+            const visibleCount = Math.min(1, cellBks.length);
             const hiddenCount = cellBks.length - visibleCount;
             return (
               <div
@@ -721,6 +723,17 @@ export default function AgendaPage() {
     equipmentId: "",
     durationMinutes: 60,
   });
+
+  useEffect(() => {
+    if (!showNewForm) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [showNewForm]);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("todos");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(today.getFullYear());
@@ -736,8 +749,8 @@ export default function AgendaPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const canEdit = hasPermission(currentUser, "bookings.manage");
-  const canReview = hasPermission(currentUser, "bookings.review");
+  const canCreate = canManageBookings(currentUser);
+  const canReview = canReviewBookings(currentUser);
 
   const loadBookings = () => {
     const all = store.getBookings();
@@ -873,15 +886,18 @@ export default function AgendaPage() {
     else if (view === "week") nextWeek();
   };
 
+  /* Indicadores temporariamente ocultos no cabeçalho.
   const stats = {
     confirmado: bookings.filter((b) => b.status === "confirmado").length,
     pendente: bookings.filter((b) => b.status === "pendente").length,
   };
+  */
 
   const filterOptions: DropdownOption[] = [
     { value: "todos", label: "Todos" },
     { value: "confirmado", label: "Confirmados", dot: "bg-djon-success" },
     { value: "pendente", label: "Pendentes", dot: "bg-djon-light-purple" },
+    { value: "recusado", label: "Recusados", dot: "bg-djon-warning-red" },
     { value: "cancelado", label: "Cancelados", dot: "bg-djon-warning-red" },
   ];
 
@@ -965,7 +981,7 @@ export default function AgendaPage() {
     <div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-djon-page">
       {/* Header */}
       <div className="relative z-30 shrink-0 border-b border-djon-text/8 bg-djon-page">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6 lg:flex-nowrap">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-4 sm:px-6 xl:flex-nowrap">
           <div className="contents">
             {/* Left: title + nav */}
             <div className="order-1 flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:gap-3">
@@ -1082,6 +1098,7 @@ export default function AgendaPage() {
               )}
             </div>
 
+            {/* Indicadores temporariamente ocultos no cabeçalho.
             <div className="order-3 ml-auto flex shrink-0 items-center gap-2">
               <span className="text-djon-label font-black px-2.5 py-1 rounded-full bg-djon-success/10 text-djon-success">
                 {stats.confirmado} confirmados
@@ -1090,6 +1107,7 @@ export default function AgendaPage() {
                 {stats.pendente} pendentes
               </span>
             </div>
+            */}
           </div>
 
           {/* Actions */}
@@ -1128,7 +1146,7 @@ export default function AgendaPage() {
                 ))}
               </div>
 
-              {canEdit && (
+              {canCreate && (
                 <button
                   onClick={openNewBooking}
                   className="order-2 flex h-11 cursor-pointer items-center justify-center gap-2 rounded-lg bg-djon-accent px-4 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:order-none"
@@ -1137,6 +1155,7 @@ export default function AgendaPage() {
                   NOVO
                 </button>
               )}
+
             </div>
           </div>
         </div>
@@ -1179,7 +1198,7 @@ export default function AgendaPage() {
       <AnimatePresence>
         {showNewForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1188,10 +1207,13 @@ export default function AgendaPage() {
             }
           >
             <motion.div
-              className="djon-scroll my-4 max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:my-6 sm:p-6"
+              className="djon-scroll max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:p-6"
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
+              data-lenis-prevent="true"
+              data-lenis-prevent-wheel="true"
+              data-lenis-prevent-touch="true"
             >
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -1423,7 +1445,8 @@ export default function AgendaPage() {
         {selected && (
           <BookingDetailsDialog
             bk={selected}
-            canEdit={canEdit}
+            canEdit={canManageBooking(currentUser, selected)}
+            canRemove={hasPermission(currentUser, "bookings.manage")}
             canReview={canReview}
             units={units}
             professors={professors}

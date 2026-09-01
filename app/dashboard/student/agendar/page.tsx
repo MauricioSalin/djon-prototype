@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -28,10 +27,15 @@ import {
   useListPagination,
 } from "@/components/list-pagination";
 import { useConfirmation } from "@/components/confirmation-provider";
+import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
+import {
+  ADMIN_HOME_HERO,
+  STUDENT_BOOKINGS_HERO,
+} from "@/lib/portal-hero-groups";
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 40 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
   viewport: { once: true, amount: 0 },
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 });
@@ -42,6 +46,7 @@ function StatusBadge({ status }: { status: Booking["status"] }) {
   const map = {
     confirmado: "bg-djon-accent/15 text-djon-accent",
     pendente: "bg-djon-light-purple/15 text-djon-light-purple",
+    recusado: "bg-djon-warning-red/15 text-djon-warning-red",
     cancelado: "bg-djon-warning-red/15 text-djon-warning-red",
   };
   return (
@@ -100,6 +105,7 @@ export default function AgendarPage() {
           (booking) =>
             booking.type === "treino" &&
             booking.status !== "cancelado" &&
+            booking.status !== "recusado" &&
             new Date(`${booking.date}T00:00:00`) >= today,
         );
       const replacedBookingIds = new Set(
@@ -243,51 +249,17 @@ export default function AgendarPage() {
       year: "numeric",
     });
 
-  if (loading) return <DashboardPageSkeleton variant="booking" />;
+  if (loading) return <DashboardPageSkeleton variant="student-agenda" />;
 
   return (
     <div className="bg-djon-page">
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-20 sm:py-28 md:py-32">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/djon-hero.png"
-            alt=""
-            fill
-            className="object-cover opacity-30"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-          <div>
-            <motion.span
-              className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4"
-              {...fadeUp(0.1)}
-            >
-              PORTAL DO ALUNO
-            </motion.span>
-            <motion.h1
-              className="djon-hero-title font-black text-djon-text"
-              {...fadeUp(0.2)}
-            >
-              Agendamentos
-            </motion.h1>
-            <motion.div
-              className="h-[3px] w-10 bg-djon-accent rounded-full mt-4"
-              {...fadeUp(0.3)}
-            />
-            <motion.p
-              className="text-djon-text/40 text-base max-w-md leading-relaxed mt-4"
-              {...fadeUp(0.35)}
-            >
-              Solicite seus treinos nos horários disponíveis. Aulas são
-              agendadas diretamente pelos professores ou pela administração.
-            </motion.p>
-          </div>
-        </div>
-      </section>
+      <EditablePortalHero
+        heroKey="student-bookings"
+        defaults={STUDENT_BOOKINGS_HERO}
+        bannerKey="admin-home"
+        bannerDefaults={ADMIN_HOME_HERO}
+        editable={false}
+      />
 
       {/* ── FORM MODAL ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
@@ -544,8 +516,8 @@ export default function AgendarPage() {
                 <motion.div
                   key={b.id}
                   className="bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
                   viewport={{ once: true, amount: 0 }}
                   transition={{ delay: i * 0.07, duration: 0.6 }}
                   whileHover={{ y: -4 }}
@@ -591,7 +563,9 @@ export default function AgendarPage() {
                     </p>
                   )}
                   <div className="flex flex-wrap gap-3 mt-4">
-                    {b.type === "treino" && b.status !== "cancelado" && (
+                    {b.type === "treino" &&
+                      b.status !== "cancelado" &&
+                      b.status !== "recusado" && (
                       <button
                         onClick={() => openRequest(b)}
                         className="cursor-pointer text-djon-text/35 hover:brightness-110 transition-colors flex items-center gap-1.5 text-xs font-bold"
@@ -599,10 +573,11 @@ export default function AgendarPage() {
                         <Calendar size={12} /> Remarcar
                       </button>
                     )}
-                    {b.status !== "cancelado" && (
+                    {b.status !== "cancelado" && b.status !== "recusado" && (
                       <button
+                        type="button"
                         onClick={() => void handleCancel(b)}
-                        className="cursor-pointer text-djon-text/15 hover:brightness-110 transition-colors flex items-center gap-1.5 text-xs font-bold"
+                        className="flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-djon-warning-red/40 bg-djon-warning-red/5 px-3 py-2 text-xs font-black text-djon-warning-red transition-[background-color,color,filter] hover:bg-djon-warning-red hover:text-djon-ink hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-djon-accent/60"
                       >
                         <Trash2 size={12} /> Cancelar
                       </button>
@@ -671,7 +646,7 @@ export default function AgendarPage() {
                   <div className="shrink-0 text-djon-text/20 text-xs font-bold">
                     {fmt(b.date)}
                   </div>
-                  {b.status !== "cancelado" && (
+                  {b.status !== "cancelado" && b.status !== "recusado" && (
                     <button
                       onClick={() => void handleCancel(b)}
                       className="cursor-pointer text-djon-text opacity-10 transition-opacity hover:opacity-100"

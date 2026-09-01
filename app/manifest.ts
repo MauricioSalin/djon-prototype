@@ -36,30 +36,13 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         purpose: "any",
       },
-      {
-        src: "/icons/djon-icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "maskable",
-      },
-      {
-        src: "/icons/djon-icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
     ],
     screenshots: [
       {
-        src: "/djon-screenshot.png",
-        sizes: "1200x900",
+        src: "/djon-screenshot2.png",
+        sizes: "1280x577",
         type: "image/png",
         form_factor: "wide",
-      },
-      {
-        src: "/djon-screenshot2.png",
-        sizes: "1200x900",
-        type: "image/png",
       },
     ],
   }

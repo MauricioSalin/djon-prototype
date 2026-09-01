@@ -1,10 +1,11 @@
 "use client"
 
 import { useRef, useEffect, useCallback, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   Bold, Italic, Heading2, Heading3, List, ListOrdered,
   Quote, ImageIcon, Link2, Undo, Redo, Trash2,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify, Youtube,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, Youtube, X,
 } from "lucide-react"
 import { store, type UploadedFile } from "@/lib/store"
 
@@ -189,9 +190,79 @@ function normalizeImageLayouts(editor: HTMLDivElement) {
   })
 }
 
+function activateVideoSideEditor(video: HTMLElement) {
+  const textColumn = video.querySelector<HTMLElement>(":scope > [data-video-text]")
+  video.contentEditable = "false"
+  if (textColumn) {
+    textColumn.contentEditable = "true"
+    textColumn.tabIndex = 0
+  }
+  return textColumn
+}
+
+function ensureEditableBlockAfterVideo(video: HTMLElement) {
+  let container = video.nextElementSibling?.matches("[data-video-tail-container]")
+    ? video.nextElementSibling as HTMLElement
+    : null
+  let tail = container?.querySelector<HTMLElement>(":scope > [data-video-tail]") ?? null
+  if (!container) {
+    const nextElement = video.nextElementSibling
+    const paragraph = nextElement instanceof HTMLParagraphElement ? nextElement : emptyParagraph()
+    container = document.createElement("div")
+    container.dataset.videoTailContainer = "true"
+    tail = document.createElement("div")
+    tail.dataset.videoTail = "true"
+    video.after(container)
+    container.appendChild(tail)
+    tail.appendChild(paragraph)
+  } else if (!tail) {
+    const legacyParagraph = container.querySelector<HTMLParagraphElement>(":scope > p")
+    tail = document.createElement("div")
+    tail.dataset.videoTail = "true"
+    container.appendChild(tail)
+    tail.appendChild(legacyParagraph ?? emptyParagraph())
+  }
+  container.contentEditable = "false"
+  tail.contentEditable = "true"
+  tail.tabIndex = 0
+}
+
+function ensureVideoSideLayout(video: HTMLElement, alignment: "left" | "right") {
+  video.dataset.videoLayout = alignment
+  let textColumn = video.querySelector<HTMLElement>(":scope > [data-video-text]")
+  if (!textColumn) {
+    const nextElement = video.nextElementSibling
+    textColumn = document.createElement("div")
+    textColumn.dataset.videoText = "true"
+    if (nextElement && !nextElement.matches("img, [data-image-layout], [data-video-layout]")) {
+      textColumn.appendChild(nextElement)
+    } else {
+      textColumn.appendChild(emptyParagraph())
+    }
+    video.appendChild(textColumn)
+  }
+  activateVideoSideEditor(video)
+  ensureEditableBlockAfterVideo(video)
+}
+
+function unwrapVideoSideLayout(video: HTMLElement) {
+  const textColumn = video.querySelector<HTMLElement>(":scope > [data-video-text]")
+  if (!textColumn || !video.parentNode) return
+  const parent = video.parentNode
+  const nextSibling = video.nextSibling
+  Array.from(textColumn.childNodes).forEach((node) => parent.insertBefore(node, nextSibling))
+  textColumn.remove()
+  video.contentEditable = "false"
+}
+
 function normalizeVideoLayouts(editor: HTMLDivElement) {
   editor.querySelectorAll<HTMLElement>("[data-video-layout]").forEach((video) => {
-    video.contentEditable = "false"
+    const alignment = video.dataset.videoLayout
+    if (alignment === "left" || alignment === "right") {
+      ensureVideoSideLayout(video, alignment)
+    } else {
+      video.contentEditable = "false"
+    }
   })
 }
 
@@ -209,6 +280,9 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
   const [selectedImageWidth, setSelectedImageWidth] = useState("auto")
   const [selectedImageAlignment, setSelectedImageAlignment] = useState<ImageAlignment>("block")
   const [activeFormats, setActiveFormats] = useState<ActiveFormats>(emptyActiveFormats)
+  const [youtubeModalOpen, setYoutubeModalOpen] = useState(false)
+  const [youtubeUrl, setYoutubeUrl] = useState("")
+  const [youtubeError, setYoutubeError] = useState("")
 
   const rememberSelection = useCallback(() => {
     const editor = editorRef.current
@@ -301,14 +375,33 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     return () => document.removeEventListener("selectionchange", updateToolbarState)
   }, [updateToolbarState])
 
+  useEffect(() => {
+    if (!youtubeModalOpen) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      setYoutubeModalOpen(false)
+      setYoutubeUrl("")
+      setYoutubeError("")
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [youtubeModalOpen])
+
   const emit = useCallback(() => {
     if (!editorRef.current) return
     const clone = editorRef.current.cloneNode(true) as HTMLDivElement
     clone.querySelectorAll("[data-editor-selected]").forEach((element) => {
       element.removeAttribute("data-editor-selected")
     })
-    clone.querySelectorAll<HTMLElement>("[data-video-layout]").forEach((element) => {
+    clone.querySelectorAll<HTMLElement>("[data-video-tail-container]").forEach((container) => {
+      const tail = container.querySelector<HTMLElement>(":scope > [data-video-tail]")
+      Array.from(tail?.childNodes ?? container.childNodes).forEach((node) => container.before(node))
+      container.remove()
+    })
+    clone.querySelectorAll("[data-video-layout], [data-video-text], [data-video-tail]").forEach((element) => {
       element.removeAttribute("contenteditable")
+      element.removeAttribute("tabindex")
+      element.removeAttribute("data-video-tail")
     })
     clone.querySelectorAll<HTMLElement>("[data-image-tail-container]").forEach((container) => {
       const tail = container.querySelector<HTMLElement>(":scope > [data-image-tail]")
@@ -367,7 +460,9 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     const target = event.target
     const image = target instanceof HTMLImageElement ? target : null
     const targetElement = target instanceof Element ? target : null
-    const video = targetElement?.closest<HTMLElement>("[data-video-layout]") ?? null
+    const video = targetElement?.closest("[data-video-text]")
+      ? null
+      : targetElement?.closest<HTMLElement>("[data-video-layout]") ?? null
     selectImage(image)
     selectVideo(video)
     if (image || video) setActiveFormats(emptyActiveFormats)
@@ -447,10 +542,14 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     video.dataset.videoWidth = width === "auto" ? "100%" : width
     if (width === "100%" || width === "auto") {
       video.dataset.videoLayout = "block"
+      unwrapVideoSideLayout(video)
       setSelectedVideoAlignment("block")
     } else if (selectedVideoAlignment === "block") {
       video.dataset.videoLayout = "left"
+      ensureVideoSideLayout(video, "left")
       setSelectedVideoAlignment("left")
+    } else {
+      ensureVideoSideLayout(video, selectedVideoAlignment)
     }
     setSelectedVideoWidth(width === "auto" ? "100%" : width)
     emit()
@@ -464,6 +563,11 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
       video.dataset.videoWidth = "50%"
       setSelectedVideoWidth("50%")
     }
+    if (alignment === "block") {
+      unwrapVideoSideLayout(video)
+    } else {
+      ensureVideoSideLayout(video, alignment)
+    }
     setSelectedVideoAlignment(alignment)
     emit()
   }
@@ -471,6 +575,11 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
   const removeSelectedVideo = () => {
     const video = selectedVideoRef.current
     if (!video?.isConnected) return selectVideo(null)
+    const textColumn = video.querySelector<HTMLElement>(":scope > [data-video-text]")
+    if (textColumn && video.parentNode) {
+      const parent = video.parentNode
+      Array.from(textColumn.childNodes).forEach((node) => parent.insertBefore(node, video))
+    }
     video.remove()
     selectVideo(null)
     emit()
@@ -546,25 +655,40 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     }
   }
 
-  const insertYoutube = () => {
-    const raw = window.prompt("Cole o link público ou privado do YouTube:")
-    if (!raw) return
-    const src = youtubeEmbedUrl(raw)
+  const openYoutubeModal = () => {
+    setYoutubeUrl("")
+    setYoutubeError("")
+    setYoutubeModalOpen(true)
+  }
+
+  const closeYoutubeModal = () => {
+    setYoutubeModalOpen(false)
+    setYoutubeUrl("")
+    setYoutubeError("")
+  }
+
+  const insertYoutube = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const src = youtubeEmbedUrl(youtubeUrl)
     if (!src) {
-      window.alert("Link do YouTube inválido.")
+      setYoutubeError("Insira um link válido do YouTube.")
       return
     }
-    restoreSelection()
-    document.execCommand(
-      "insertHTML",
-      false,
-      `<div data-video-layout="block" data-video-width="100%" contenteditable="false"><iframe src="${src}" title="Vídeo do YouTube" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><p><br></p>`,
-    )
-    const videos = editorRef.current?.querySelectorAll<HTMLElement>("[data-video-layout]")
-    const video = videos?.item((videos?.length ?? 1) - 1) ?? null
-    selectImage(null)
-    selectVideo(video)
-    emit()
+
+    closeYoutubeModal()
+    requestAnimationFrame(() => {
+      restoreSelection()
+      document.execCommand(
+        "insertHTML",
+        false,
+        `<div data-video-layout="block" data-video-width="100%" contenteditable="false"><iframe src="${src}" title="Vídeo do YouTube" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><p><br></p>`,
+      )
+      const videos = editorRef.current?.querySelectorAll<HTMLElement>("[data-video-layout]")
+      const video = videos?.item((videos?.length ?? 1) - 1) ?? null
+      selectImage(null)
+      selectVideo(video)
+      emit()
+    })
   }
 
   const isEmpty = !value || value === "<br>" || value === "<div><br></div>"
@@ -580,7 +704,8 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
   }
 
   return (
-    <div className="border border-djon-text/10 rounded-xl overflow-hidden bg-djon-text/5 focus-within:border-djon-accent/40 transition-colors">
+    <>
+      <div className="border border-djon-text/10 rounded-xl overflow-hidden bg-djon-text/5 focus-within:border-djon-accent/40 transition-colors">
       {/* Toolbar */}
       <div className="flex items-center gap-0.5 flex-wrap px-2 py-2 border-b border-djon-text/10 bg-djon-calendar-empty">
         <button type="button" onMouseDown={preserveSelection} onClick={() => exec("bold")} className={btn(activeFormats.bold)} title="Negrito" aria-label="Negrito" aria-pressed={activeFormats.bold}><Bold size={15} /></button>
@@ -610,7 +735,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
         <div className="w-px h-5 bg-djon-text/10 mx-1" />
         <button type="button" onMouseDown={preserveSelection} onClick={addLink} className={btn(activeFormats.link)} title="Link" aria-label="Link" aria-pressed={activeFormats.link}><Link2 size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => imageRef.current?.click()} className={btn(imageSelected)} title="Imagem" aria-label="Imagem" aria-pressed={imageSelected}><ImageIcon size={15} /></button>
-        <button type="button" onMouseDown={preserveSelection} onClick={insertYoutube} className={btn(videoSelected)} title="Vídeo do YouTube" aria-label="Vídeo do YouTube" aria-pressed={videoSelected}><Youtube size={16} /></button>
+        <button type="button" onMouseDown={preserveSelection} onClick={openYoutubeModal} className={btn(videoSelected)} title="Vídeo do YouTube" aria-label="Vídeo do YouTube" aria-pressed={videoSelected}><Youtube size={16} /></button>
         <div className="w-px h-5 bg-djon-text/10 mx-1" />
         <button type="button" onMouseDown={preserveSelection} onClick={() => exec("undo")} className={btn()} title="Desfazer" aria-label="Desfazer"><Undo size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => exec("redo")} className={btn()} title="Refazer" aria-label="Refazer"><Redo size={15} /></button>
@@ -714,6 +839,105 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
           className="material-editor djon-scroll h-full overflow-y-auto overscroll-contain px-4 py-4 text-djon-text/80 text-sm leading-relaxed focus:outline-none"
         />
       </div>
-    </div>
+      </div>
+
+      <AnimatePresence>
+        {youtubeModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) closeYoutubeModal()
+            }}
+          >
+            <motion.section
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="youtube-modal-title"
+              aria-describedby="youtube-modal-description"
+              className="djon-scroll my-4 max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 shadow-2xl sm:my-6 sm:p-6"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              data-lenis-prevent
+              data-lenis-prevent-wheel
+              data-lenis-prevent-touch
+            >
+              <form onSubmit={insertYoutube}>
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-djon-accent/15 text-djon-accent">
+                      <Youtube size={18} />
+                    </span>
+                    <div>
+                      <p className="mb-1 text-xs font-black uppercase tracking-widest text-djon-accent">
+                        VÍDEO DO YOUTUBE
+                      </p>
+                      <h2 id="youtube-modal-title" className="text-xl font-black tracking-tighter text-djon-text">
+                        Inserir vídeo
+                      </h2>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Fechar inserção de vídeo"
+                    onClick={closeYoutubeModal}
+                    className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <p id="youtube-modal-description" className="mb-5 text-sm leading-relaxed text-djon-text/50">
+                  Cole o link público ou privado do YouTube.
+                </p>
+
+                <label htmlFor="youtube-video-url" className="mb-2 block text-xs font-bold uppercase tracking-widest text-djon-text/50">
+                  Link do YouTube
+                </label>
+                <input
+                  id="youtube-video-url"
+                  type="text"
+                  inputMode="url"
+                  autoFocus
+                  value={youtubeUrl}
+                  onChange={(event) => {
+                    setYoutubeUrl(event.target.value)
+                    if (youtubeError) setYoutubeError("")
+                  }}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  aria-invalid={Boolean(youtubeError)}
+                  aria-describedby={youtubeError ? "youtube-video-error" : undefined}
+                  className="w-full rounded-xl border border-djon-text/15 bg-djon-text/5 px-4 py-3 text-sm text-djon-text outline-none transition-colors placeholder:text-djon-text/25 focus:border-djon-accent"
+                />
+                {youtubeError && (
+                  <p id="youtube-video-error" role="alert" className="mt-2 text-xs font-bold text-djon-warning-red">
+                    {youtubeError}
+                  </p>
+                )}
+
+                <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={closeYoutubeModal}
+                    className="cursor-pointer flex-1 rounded-full border border-djon-text/15 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70"
+                  >
+                    CANCELAR
+                  </button>
+                  <button
+                    type="submit"
+                    className="cursor-pointer flex-1 rounded-full bg-djon-accent py-3 text-xs font-black tracking-widest text-djon-ink transition-colors hover:brightness-110"
+                  >
+                    INSERIR VÍDEO
+                  </button>
+                </div>
+              </form>
+            </motion.section>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

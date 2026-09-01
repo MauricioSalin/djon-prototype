@@ -25,7 +25,7 @@ function roleLabelFor(role: User["role"]) {
 function UserIdentity({ user }: { user: User }) {
   return (
     <>
-      <div className="djon-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-djon-accent">
+      <div className="djon-avatar-fallback flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full">
         {user.avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatar} alt="" className="h-full w-full object-cover" />
@@ -299,8 +299,8 @@ export function Navigation() {
               ) : user ? (
                 <motion.div
                   className="mt-2 rounded-2xl border border-djon-text/12 bg-djon-text/5 p-2"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   transition={{ delay: 0.35 }}
                 >
                   <div className="flex items-center gap-2.5 px-2 py-2">

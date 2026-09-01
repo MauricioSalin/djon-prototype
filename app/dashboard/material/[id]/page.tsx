@@ -15,7 +15,7 @@ import {
   Edit2,
 } from "lucide-react";
 import {
-  hasPermission,
+  canEditMaterial,
   store,
   type Material,
   type MaterialAttachment,
@@ -25,8 +25,8 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { usePageTitle } from "@/components/page-title-manager";
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 28 },
-  animate: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
   transition: { duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 });
 
@@ -246,7 +246,7 @@ export default function MaterialDetailPage() {
   return (
     <div className="bg-djon-page min-h-screen">
       {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[62vh] flex items-end overflow-hidden">
+      <section className="djon-portal-hero relative flex items-end overflow-hidden">
         <div className="absolute inset-0 z-0">
           {cover && !coverError ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -320,18 +320,17 @@ export default function MaterialDetailPage() {
                 <p className="text-xs text-djon-text/40">{date}</p>
               </div>
             </div>
-            {hasPermission(user, "materials.manage") &&
-              (user.role === "admin" || material.authorId === user.id) && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(`/dashboard/material/novo?edit=${material.id}`)
-                  }
-                  className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
-                >
-                  <Edit2 size={13} /> EDITAR
-                </button>
-              )}
+            {canEditMaterial(user, material) && (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(`/dashboard/material/novo?edit=${material.id}`)
+                }
+                className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full bg-djon-accent px-5 py-2.5 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
+              >
+                <Edit2 size={13} /> EDITAR
+              </button>
+            )}
           </motion.div>
         </div>
       </section>

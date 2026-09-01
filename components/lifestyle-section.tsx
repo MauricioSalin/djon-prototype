@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { LandingEditButton } from "@/components/landing/landing-edit-button"
+import { useLandingSection } from "@/components/landing/landing-content-provider"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -12,16 +14,18 @@ const containerVariants = {
 }
 
 const imageVariants = {
-  hidden: { opacity: 0, scale: 0.9, y: 30 },
+  hidden: { opacity: 0, scale: 0.9 },
   visible: {
     opacity: 1,
     scale: 1,
-    y: 0,
     transition: { type: "spring" as const, stiffness: 100, damping: 20 },
   },
 }
 
 export function LifestyleSection() {
+  const { data, canEdit, edit } = useLandingSection("lifestyle")
+  const titleWords = data.title.trim().split(/\s+/)
+  const accentWord = titleWords.pop() ?? ""
   return (
     <section className="relative py-16 bg-djon-text overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -34,19 +38,14 @@ export function LifestyleSection() {
             whileInView="visible"
             viewport={{ once: true, amount: 0 }}
           >
-            {[
-              { src: "/images/djon-course-dj.png", label: "Formação DJ", alt: "Formação DJ" },
-              { src: "/images/djon-course-producao.png", label: "Produção Musical", alt: "Produção Musical" },
-              { src: "/images/djon-course-marketing.png", label: "Marketing", alt: "Marketing" },
-              { src: "/images/djon-showcase.png", label: "Mentoria", alt: "Mentoria" },
-            ].map((item) => (
+            {data.images.map((item) => (
               <motion.div
                 key={item.label}
                 variants={imageVariants}
                 whileHover={{ scale: 1.03 }}
                 className="relative aspect-square rounded-2xl overflow-hidden"
               >
-                <Image src={item.src} alt={`${item.alt} — DJ ON Academy`} fill className="object-cover" />
+                <Image loader={({ src }) => src} unoptimized src={item.image} alt={`${item.label} — DJ ON Academy`} fill sizes="(max-width: 1024px) 50vw, 25vw" className="object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-djon-black/80 to-transparent" />
                 <div className="absolute bottom-3 left-3">
                   <span className="text-djon-text font-black text-xs tracking-wide">{item.label}</span>
@@ -75,7 +74,7 @@ export function LifestyleSection() {
                 animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
                 transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
               />
-              BEM-VINDO!
+              {data.badge}
             </motion.div>
 
             <motion.h2
@@ -85,7 +84,7 @@ export function LifestyleSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const, delay: 0.15 }}
             >
-              A FRONTEIRA ENTRE O SONHO E A{" "}
+              {titleWords.join(" ")}{" "}
               <span
                 style={{
                   color: "var(--djon-color-accent)",
@@ -93,7 +92,7 @@ export function LifestyleSection() {
                   paintOrder: "stroke fill",
                 }}
               >
-                REALIZAÇÃO
+                {accentWord}
               </span>
             </motion.h2>
 
@@ -104,7 +103,7 @@ export function LifestyleSection() {
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              Nós somos a fronteira entre o sonho e a realização! Se o seu sonho é ser DJ ou Produtor Musical, a DJ ON Academy vai descomplicar tudo para você chegar cada vez mais perto dos seus objetivos!
+              {data.description}
             </motion.p>
 
             <motion.div
@@ -114,12 +113,7 @@ export function LifestyleSection() {
               viewport={{ once: true }}
               transition={{ delay: 0.4 }}
             >
-              {[
-                "Aprenda com profissionais da cena eletrônica",
-                "Metodologia prática e teórica completa",
-                "Turmas pequenas com atenção individualizada",
-                "Comunidade ativa após a formação",
-              ].map((item, i) => (
+              {data.items.map((item, i) => (
                 <motion.div
                   key={item}
                   className="flex items-center gap-3 text-sm text-djon-ink/70"
@@ -149,6 +143,7 @@ export function LifestyleSection() {
           </motion.div>
         </div>
       </div>
+      {canEdit ? <LandingEditButton onClick={edit} /> : null}
     </section>
   )
 }

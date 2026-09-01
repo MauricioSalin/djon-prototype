@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import {
   Select,
   SelectContent,
@@ -12,13 +13,14 @@ import { cn } from "@/lib/utils"
 export type DjonSelectOption = {
   value: string
   label: string
+  preview?: ReactNode
   disabled?: boolean
 }
 
 type DjonSelectProps = {
   value: string
   onChange: (value: string) => void
-  options: DjonSelectOption[]
+  options: readonly DjonSelectOption[]
   placeholder?: string
   ariaLabel?: string
   className?: string
@@ -53,8 +55,22 @@ export function DjonSelect({
         data-lenis-prevent-touch="true"
       >
         {options.map((option) => (
-          <SelectItem key={option.value} value={option.value} disabled={option.disabled}>
-            {option.label}
+          <SelectItem
+            key={option.value}
+            value={option.value}
+            textValue={option.label}
+            disabled={option.disabled}
+          >
+            {option.preview ? (
+              <span
+                data-slot="select-option-preview"
+                aria-hidden="true"
+                className="flex shrink-0 items-center justify-center"
+              >
+                {option.preview}
+              </span>
+            ) : null}
+            <span>{option.label}</span>
           </SelectItem>
         ))}
       </SelectContent>

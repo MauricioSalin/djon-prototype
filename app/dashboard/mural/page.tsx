@@ -1,15 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
-import Link from "next/link"
-import { MapPin, Clock, Instagram, Music2, Search, Star } from "lucide-react"
+import { Music2, RefreshCw, Search } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
+import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
+import { MuralEventCard } from "@/components/portal/mural-event-card"
+import { EVENTS_HERO_SECTIONS, MURAL_HERO } from "@/lib/portal-hero-groups"
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 40 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
   viewport: { once: true, amount: 0 },
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 })
@@ -35,96 +38,54 @@ function normalizeSearchText(value: string) {
     .replace(/[\u0300-\u036f]/g, "")
 }
 
-function EventCard({ ev, index }: { ev: DJEvent; index: number }) {
-  const isDJOn = ev.type === "djOn"
-  const isPast = new Date(ev.date + "T00:00:00") < new Date()
-
-  return (
-    <motion.article
-      className={`relative rounded-2xl overflow-hidden border transition-colors hover:border-djon-accent group ${
-        isDJOn ? "border-djon-accent/40 bg-djon-accent/5" : "border-djon-text/8 bg-djon-surface-2"
-      } ${isPast ? "opacity-40" : ""}`}
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: isPast ? 0.4 : 1, y: 0 }}
-      transition={{ delay: index * 0.06, duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const }}
-    >
-      {isDJOn && (
-        <div className="bg-djon-accent px-5 py-2 flex items-center gap-2">
-          <Star size={11} className="text-djon-ink" fill="var(--djon-color-ink)" />
-          <span className="text-djon-ink text-djon-caption font-black tracking-[0.25em] uppercase">Evento Oficial DJ ON</span>
-        </div>
-      )}
-
-      <div className="p-6">
-        {/* Author row */}
-        <div className="flex items-center justify-between mb-5">
-          <Link href={`/dashboard/perfil/${ev.createdBy}`} className="flex items-center gap-3 group/author">
-            <div className="djon-avatar-fallback w-10 h-10 rounded-full flex items-center justify-center text-djon-accent font-black text-sm shrink-0 overflow-hidden">
-              {ev.createdByAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={ev.createdByAvatar} alt={ev.createdByName} className="w-full h-full object-cover" />
-              ) : ev.createdByName.charAt(0)}
-            </div>
-            <div>
-              <p className="text-djon-text text-xs font-black transition-colors group-hover/author:text-djon-accent">{ev.createdByName}</p>
-              <p className={`text-djon-caption font-black tracking-widest uppercase ${isDJOn ? "text-djon-accent" : ev.type === "professor" ? "text-djon-text/50" : "text-djon-text/30"}`}>
-                {isDJOn ? "DJ ON Academy" : ev.type === "professor" ? "Professor" : "Aluno"}
-              </p>
-            </div>
-          </Link>
-          {isPast && (
-            <span className="text-djon-caption text-djon-text/30 font-black tracking-widest bg-djon-text/5 px-3 py-1 rounded-full">PASSADO</span>
-          )}
-        </div>
-
-        {/* Title */}
-        <h3 className="text-djon-text font-black text-xl md:text-2xl tracking-tight leading-tight mb-4">{ev.title}</h3>
-
-        {/* Meta */}
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-djon-text/50 text-xs font-medium">
-            <Clock size={12} />
-            {new Date(ev.date + "T00:00:00").toLocaleDateString("pt-BR", {
-              weekday: "long", day: "2-digit", month: "long", year: "numeric",
-            })} às {ev.time}
-          </div>
-          <div className="flex items-center gap-2 text-djon-text/50 text-xs font-medium">
-            <MapPin size={12} />
-            {ev.location}
-          </div>
-          {ev.instagram && (
-            <a
-              href={`https://instagram.com/${ev.instagram}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
-            >
-              <Instagram size={12} />
-              @{ev.instagram}
-            </a>
-          )}
-        </div>
-
-        {ev.description && (
-          <p className="text-djon-text/40 text-xs leading-relaxed pt-4 border-t border-djon-text/8">{ev.description}</p>
-        )}
-      </div>
-    </motion.article>
-  )
-}
-
 export default function MuralPage() {
-  const [djOnEvents, setDJOnEvents] = useState<DJEvent[]>([])
-  const [studentEvents, setStudentEvents] = useState<DJEvent[]>([])
-  const [professorEvents, setProfessorEvents] = useState<DJEvent[]>([])
+  const [djOnEvents, setDJOnEvents] = useState<DJEvent[]>(() =>
+    sortUpcomingFirst(store.getDJOnEvents()),
+  )
+  const [studentEvents, setStudentEvents] = useState<DJEvent[]>(() =>
+    sortUpcomingFirst(store.getStudentEvents()),
+  )
+  const [professorEvents, setProfessorEvents] = useState<DJEvent[]>(() =>
+    sortUpcomingFirst(store.getProfessorEvents()),
+  )
   const [filter, setFilter] = useState<"todos" | "djOn" | "alunos" | "professores">("todos")
   const [search, setSearch] = useState("")
+  const [eventsLoaded, setEventsLoaded] = useState(() => store.hasLoadedPortalData())
+  const [eventLoadError, setEventLoadError] = useState(false)
+  const [reloadVersion, setReloadVersion] = useState(0)
+  const hasLoadedEvents = useRef(store.hasLoadedPortalData())
 
   useEffect(() => {
-    setDJOnEvents(sortUpcomingFirst(store.getDJOnEvents()))
-    setStudentEvents(sortUpcomingFirst(store.getStudentEvents()))
-    setProfessorEvents(sortUpcomingFirst(store.getProfessorEvents()))
-  }, [])
+    let active = true
+    const syncEvents = async (initialLoad = false) => {
+      if (initialLoad && !hasLoadedEvents.current) setEventLoadError(false)
+      try {
+        const events = await store.refreshEvents()
+        if (!active) return
+        setDJOnEvents(sortUpcomingFirst(events.filter((event) => event.type === "djOn")))
+        setStudentEvents(sortUpcomingFirst(events.filter((event) => event.type === "student")))
+        setProfessorEvents(sortUpcomingFirst(events.filter((event) => event.type === "professor")))
+        hasLoadedEvents.current = true
+        setEventsLoaded(true)
+        setEventLoadError(false)
+      } catch {
+        // Uma falha nunca pode ser interpretada visualmente como uma lista vazia.
+        if (active && !hasLoadedEvents.current) setEventLoadError(true)
+      }
+    }
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void syncEvents()
+    }
+
+    if (!hasLoadedEvents.current) void syncEvents(true)
+    window.addEventListener("focus", refreshWhenVisible)
+    document.addEventListener("visibilitychange", refreshWhenVisible)
+    return () => {
+      active = false
+      window.removeEventListener("focus", refreshWhenVisible)
+      document.removeEventListener("visibilitychange", refreshWhenVisible)
+    }
+  }, [reloadVersion])
 
   const allEvents = sortUpcomingFirst([...djOnEvents, ...studentEvents, ...professorEvents])
   const eventsByType =
@@ -140,40 +101,41 @@ export default function MuralPage() {
     : eventsByType
   const pagination = useListPagination(displayed, `${filter}:${normalizedSearch}`)
 
+  if (!eventsLoaded && !eventLoadError) return <DashboardPageSkeleton variant="events" />
+
+  if (eventLoadError && !eventsLoaded) {
+    return (
+      <main className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+        <Music2 size={42} className="mb-4 text-djon-text/10" />
+        <p className="text-lg font-bold text-djon-text/35">
+          Não foi possível carregar os eventos.
+        </p>
+        <p className="mt-2 max-w-md text-sm text-djon-text/25">
+          A lista não será exibida como vazia enquanto a consulta não for concluída.
+        </p>
+        <button
+          type="button"
+          onClick={() => setReloadVersion((version) => version + 1)}
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink transition-opacity hover:opacity-80"
+        >
+          <RefreshCw size={14} />
+          TENTAR NOVAMENTE
+        </button>
+      </main>
+    )
+  }
+
   return (
     <div className="bg-djon-page">
 
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
-        {/* Background image + overlay */}
-        <div className="absolute inset-0 z-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/mural-hero.png"
-            alt=""
-            className="w-full h-full object-cover opacity-30"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 w-full sm:px-6 sm:py-24">
-          <motion.span className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4" {...fadeUp(0.1)}>
-            COMUNIDADE
-          </motion.span>
-          <motion.h1
-            className="djon-hero-title font-black text-djon-text mb-4"
-            {...fadeUp(0.2)}
-          >
-            Mural de<br />
-            <span style={{ color: "var(--djon-color-accent)", WebkitTextStroke: "2px var(--djon-color-page)", paintOrder: "stroke fill", letterSpacing: "0.04em" }}>
-              Eventos.
-            </span>
-          </motion.h1>
-          <motion.p className="text-djon-text/40 text-base max-w-md leading-relaxed" {...fadeUp(0.3)}>
-            Veja o que está acontecendo na comunidade DJ ON — shows, formaturas e eventos dos seus colegas.
-          </motion.p>
-        </div>
-      </section>
+      <EditablePortalHero
+        heroKey="mural"
+        defaults={MURAL_HERO}
+        bannerKey="mural"
+        editorSections={EVENTS_HERO_SECTIONS}
+        accentLines={[1]}
+        showDivider={false}
+      />
 
       {/* ── FILTER + GRID ──────────────────────────────────────────────────── */}
       <section className="py-14 sm:py-16">
@@ -227,7 +189,7 @@ export default function MuralPage() {
           ) : (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
               {pagination.paginatedItems.map((ev, i) => (
-                <EventCard key={ev.id} ev={ev} index={i} />
+                <MuralEventCard key={ev.id} event={ev} index={i} />
               ))}
             </div>
           )}

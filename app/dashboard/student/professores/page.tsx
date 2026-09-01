@@ -26,7 +26,6 @@ export default function StudentProfessoresPage() {
       <div>
         <p className="text-djon-accent text-xs tracking-widest font-black uppercase mb-1">ACADEMY</p>
         <h1 className="text-3xl font-black text-djon-text tracking-tighter">Equipe de Professores</h1>
-        <p className="text-djon-text/30 text-sm mt-1">Conheça quem vai guiar sua jornada na DJ ON Academy.</p>
       </div>
 
       {professors.length === 0 ? (
@@ -40,8 +39,8 @@ export default function StudentProfessoresPage() {
             <motion.div
               key={u.id}
               className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: i * 0.07 }}
             >
               {/* Header */}

@@ -6,6 +6,11 @@ import {
   notifyUndoable,
 } from "@/lib/feedback";
 import { formatPhone, phoneDigits } from "@/lib/phone";
+import type {
+  LandingSectionContent,
+  LandingSectionDataMap,
+  LandingSectionKey,
+} from "@/lib/landing-content";
 
 export type Role = "admin" | "professor" | "student";
 
@@ -30,7 +35,9 @@ export interface LatestRelease {
 }
 
 export type Permission =
+  | "admin.access"
   | "users.manage"
+  | "permissions.manage"
   | "leads.manage"
   | "bookings.manage"
   | "bookings.review"
@@ -39,7 +46,66 @@ export type Permission =
   | "materials.manage"
   | "units.manage"
   | "equipments.manage"
-  | "audit.read";
+  | "events.manage"
+  | "notifications.manage"
+  | "portal.edit"
+  | "site.edit";
+
+export const ALL_PERMISSIONS: readonly Permission[] = [
+  "admin.access",
+  "users.manage",
+  "permissions.manage",
+  "leads.manage",
+  "bookings.manage",
+  "bookings.review",
+  "courses.manage",
+  "attendance.manage",
+  "materials.manage",
+  "units.manage",
+  "equipments.manage",
+  "events.manage",
+  "notifications.manage",
+  "portal.edit",
+  "site.edit",
+];
+
+export type PortalHeroKey =
+  | "admin-home"
+  | "professor-home"
+  | "student-home"
+  | "mural"
+  | "materials"
+  | "student-courses"
+  | "staff-courses"
+  | "student-bookings"
+  | "student-events"
+  | "professor-events"
+  | "admin-events";
+
+export interface PortalHeroContent {
+  key: PortalHeroKey;
+  label: string;
+  title: string;
+  description: string;
+  banner: string | null;
+}
+
+export const ADMIN_ROUTE_PERMISSIONS: readonly {
+  prefix: string;
+  permission: Permission;
+}[] = [
+  { prefix: "/dashboard/admin/alunos", permission: "users.manage" },
+  { prefix: "/dashboard/admin/professores", permission: "users.manage" },
+  { prefix: "/dashboard/admin/eventos", permission: "events.manage" },
+  { prefix: "/dashboard/admin/leads", permission: "leads.manage" },
+  { prefix: "/dashboard/admin/unidades", permission: "units.manage" },
+  {
+    prefix: "/dashboard/admin/equipamentos",
+    permission: "equipments.manage",
+  },
+  { prefix: "/dashboard/admin/config", permission: "admin.access" },
+  { prefix: "/dashboard/admin", permission: "admin.access" },
+];
 
 export interface User {
   id: string;
@@ -60,6 +126,7 @@ export interface User {
   trainingHoursLimit?: number;
   permissions?: Permission[];
   showAcademicProgress?: boolean;
+  profileCourseIds?: string[];
   passwordChangeRequired?: boolean;
   active?: boolean;
   createdAt: string;
@@ -73,6 +140,49 @@ export function hasPermission(
     user && (user.role === "admin" || user.permissions?.includes(permission)),
   );
 }
+
+export function hasAllPermissions(
+  user: Pick<User, "role" | "permissions"> | null | undefined,
+) {
+  return Boolean(
+    user &&
+      (user.role === "admin" ||
+        ALL_PERMISSIONS.every((permission) =>
+          user.permissions?.includes(permission),
+        )),
+  );
+}
+
+export function getRequiredAdminPermission(pathname: string) {
+  return ADMIN_ROUTE_PERMISSIONS.find(({ prefix }) =>
+    pathname.startsWith(prefix),
+  )?.permission;
+}
+
+export function getDashboardHome(
+  user: Pick<User, "role" | "permissions">,
+) {
+  if (user.role === "admin" || hasAllPermissions(user)) {
+    return "/dashboard/admin";
+  }
+  return user.role === "professor"
+    ? "/dashboard/professor"
+    : "/dashboard/student";
+}
+
+export function canAuthorMaterials(
+  user: Pick<User, "role"> | null | undefined,
+) {
+  return user?.role === "admin" || user?.role === "professor";
+}
+
+export function canManageBookings(
+  user: Pick<User, "role"> | null | undefined,
+) {
+  return user?.role === "admin" || user?.role === "professor";
+}
+
+export const canReviewBookings = canManageBookings;
 
 export interface DJEvent {
   id: string;
@@ -104,7 +214,7 @@ export interface Booking {
   time: string;
   type: "aula" | "treino";
   notes?: string;
-  status: "confirmado" | "pendente" | "cancelado";
+  status: "confirmado" | "pendente" | "recusado" | "cancelado";
   unitId?: string;
   unitLabel?: string;
   professorId?: string;
@@ -145,6 +255,11 @@ export interface Unit {
   address: string;
   mapSrc?: string;
   mapsHref?: string;
+  phone?: string;
+  email?: string;
+  instagram?: string;
+  facebook?: string;
+  openingHours?: string;
   timezone: string;
   active: boolean;
 }
@@ -165,7 +280,8 @@ export interface Lead {
   id: string;
   firstName?: string;
   lastName?: string;
-  email: string;
+  email?: string;
+  whatsapp?: string;
   message?: string;
   unitKey?: string;
   status: "novo" | "contatado" | "convertido" | "arquivado";
@@ -226,6 +342,31 @@ export interface LessonAttendance {
   studentName?: string;
   present: boolean;
   materialReleased: boolean;
+  observation?: string;
+}
+
+export interface StudentCourseProgress {
+  id: string;
+  name: string;
+  description?: string;
+  coverImage?: string;
+  completed: number;
+  total: number;
+  percent: number;
+  visible: boolean;
+}
+
+export interface StudentObservation {
+  id: string;
+  courseName: string;
+  cohortName: string;
+  lessonId: string;
+  lessonOrder: number;
+  lessonTitle?: string;
+  date: string;
+  time: string;
+  observation: string;
+  professorName?: string;
 }
 
 export interface CourseLesson {
@@ -299,6 +440,34 @@ export interface Notification {
   createdAt: string;
 }
 
+export function canManageBooking(
+  user: Pick<User, "id" | "role" | "permissions"> | null | undefined,
+  booking: Pick<Booking, "isClassLesson" | "professorId">,
+) {
+  if (!user || !canManageBookings(user)) return false;
+  if (
+    user.role === "admin" ||
+    hasPermission(user, "bookings.manage") ||
+    !booking.isClassLesson
+  )
+    return true;
+  return booking.professorId === user.id;
+}
+
+export function canEditMaterial(
+  user: Pick<User, "id" | "role" | "permissions"> | null | undefined,
+  material: Pick<Material, "authorId" | "courseId" | "status">,
+) {
+  if (!user || !canAuthorMaterials(user)) return false;
+  if (material.status === "draft") return material.authorId === user.id;
+  return Boolean(
+    user.role === "admin" ||
+      hasPermission(user, "materials.manage") ||
+      material.authorId === user.id ||
+      (user.role === "professor" && material.courseId),
+  );
+}
+
 export interface AuditLogEntry {
   id: string;
   actorName: string;
@@ -308,6 +477,9 @@ export interface AuditLogEntry {
   path: string;
   statusCode: number;
   targetId?: string;
+  ip?: string;
+  userAgent?: string;
+  requestBody?: unknown;
   durationMs: number;
   createdAt: string;
 }
@@ -386,6 +558,31 @@ function assetUrl(value?: string) {
   return `${new URL(apiBase()).origin}${value}`;
 }
 
+function apiAssetPath(value: string | null | undefined) {
+  if (!value) return value ?? null;
+  const match = value.match(/\/api\/v1\/files\/[a-f\d]{24}(?:[?#].*)?$/i);
+  return match?.[0] ?? value;
+}
+
+function mapLandingAssets(value: unknown, toApi: boolean): unknown {
+  if (typeof value === "string") {
+    if (toApi) return apiAssetPath(value);
+    return /^\/api\/v1\/files\//i.test(value) ? assetUrl(value) : value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => mapLandingAssets(item, toApi));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        mapLandingAssets(item, toApi),
+      ]),
+    );
+  }
+  return value;
+}
+
 function assetHtml(value?: string) {
   if (!value) return value;
   return value.replace(
@@ -448,6 +645,9 @@ function normalizeUser(raw: ApiRecord): User {
       ? (raw.permissions as Permission[])
       : [],
     showAcademicProgress: raw.showAcademicProgress !== false,
+    profileCourseIds: Array.isArray(raw.profileCourseIds)
+      ? raw.profileCourseIds.map(referenceId).filter(Boolean)
+      : undefined,
     passwordChangeRequired: raw.passwordChangeRequired === true,
     active: raw.active as boolean | undefined,
     createdAt: asString(raw.createdAt),
@@ -591,6 +791,7 @@ function normalizeLesson(raw: ApiRecord): CourseLesson {
             undefined,
           present: record.present === true,
           materialReleased: record.materialReleased === true,
+          observation: asString(record.observation) || undefined,
         };
       })
     : undefined;
@@ -665,6 +866,11 @@ function normalizeUnit(raw: ApiRecord): Unit {
     address: asString(raw.address),
     mapSrc: asString(raw.mapSrc) || undefined,
     mapsHref: asString(raw.mapsHref) || undefined,
+    phone: formatPhone(asString(raw.phone)) || undefined,
+    email: asString(raw.email) || undefined,
+    instagram: asString(raw.instagram) || undefined,
+    facebook: asString(raw.facebook) || undefined,
+    openingHours: asString(raw.openingHours) || undefined,
     timezone: asString(raw.timezone, "America/Sao_Paulo"),
     active: raw.active !== false,
   };
@@ -676,7 +882,8 @@ function normalizeLead(raw: ApiRecord): Lead {
     id: asString(raw.id),
     firstName: asString(raw.firstName) || undefined,
     lastName: asString(raw.lastName) || undefined,
-    email: asString(raw.email),
+    email: asString(raw.email) || undefined,
+    whatsapp: formatPhone(asString(raw.whatsapp)) || undefined,
     message: asString(raw.message) || undefined,
     unitKey: asString(raw.unitKey) || undefined,
     status: raw.status as Lead["status"],
@@ -689,6 +896,23 @@ function normalizeLead(raw: ApiRecord): Lead {
         }
       : undefined,
     createdAt: asString(raw.createdAt),
+  };
+}
+
+function normalizePortalHero(raw: ApiRecord): PortalHeroContent {
+  const rawBanner = raw.banner;
+  const banner =
+    typeof rawBanner === "string"
+      ? rawBanner.startsWith("/api/")
+        ? (assetUrl(rawBanner) ?? null)
+        : rawBanner
+      : null;
+  return {
+    key: asString(raw.key) as PortalHeroKey,
+    label: asString(raw.label),
+    title: asString(raw.title),
+    description: asString(raw.description),
+    banner,
   };
 }
 
@@ -767,12 +991,20 @@ class ApiStore {
   private units: Unit[] = [];
   private equipments: Equipment[] = [];
   private leads: Lead[] = [];
+  private portalHeroes = new Map<PortalHeroKey, PortalHeroContent>();
   private bootstrapPromise: Promise<User | null> | null = null;
   private restoreSessionPromise: Promise<User | null> | null = null;
   private publicUnitsPromise: Promise<Unit[]> | null = null;
   private adminUsersPromise: Promise<User[]> | null = null;
   private notificationsPromise: Promise<Notification[]> | null = null;
   private bookingsPromise: Promise<Booking[]> | null = null;
+  private eventsPromise: Promise<DJEvent[]> | null = null;
+  private materialsPromise: Promise<Material[]> | null = null;
+  private materialCategoriesPromise: Promise<CategoryRecord[]> | null = null;
+  private portalHeroPromises = new Map<
+    PortalHeroKey,
+    Promise<PortalHeroContent>
+  >();
   private hasBootstrapData = false;
   private bootstrapLoadedAt = 0;
   private notificationsLoadedAt = 0;
@@ -885,7 +1117,7 @@ class ApiStore {
       request<ApiRecord[]>("/notifications"),
       request<ApiRecord[]>("/units"),
       request<ApiRecord[]>("/equipments"),
-      me.role === "admin"
+      hasPermission(me, "leads.manage")
         ? request<ApiRecord[]>("/leads")
         : Promise.resolve<ApiRecord[]>([]),
     ]);
@@ -916,12 +1148,44 @@ class ApiStore {
   }
 
   getCurrentUser = () => this.currentUser;
+  hasLoadedPortalData = () => this.hasBootstrapData;
   getUsers = () => [...this.users];
   getStudents = () => this.users.filter((user) => user.role === "student");
   getProfessors = () => this.users.filter((user) => user.role === "professor");
   getUserById = (id: string) =>
     this.users.find((user) => user.id === id) ?? null;
   getEvents = () => [...this.events];
+
+  async refreshEvents() {
+    if (this.eventsPromise) return this.eventsPromise;
+    const load = this.fetchAllPages("/events").then((items) => {
+      this.events = items.map(normalizeEvent);
+      return this.getEvents();
+    });
+    this.eventsPromise = load.finally(() => {
+      this.eventsPromise = null;
+    });
+    return this.eventsPromise;
+  }
+
+  async requestPasswordReset(email: string) {
+    const result = await request<{ message: string }>(
+      "/auth/password/forgot",
+      json("POST", { email }),
+    );
+    notifySuccess("Confira seu e-mail", result.message);
+    return result;
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const result = await request<{ message: string }>(
+      "/auth/password/reset",
+      json("POST", { token, newPassword }),
+    );
+    notifySuccess("Senha atualizada", result.message);
+    return result;
+  }
+
   getStudentEvents = () =>
     this.events.filter((event) => event.type === "student");
   getDJOnEvents = () => this.events.filter((event) => event.type === "djOn");
@@ -944,15 +1208,35 @@ class ApiStore {
     this.categories.map((category) => category.name);
   getMaterialCategoryRecords = () => [...this.categories];
 
+  async listMaterials() {
+    if (this.materialsPromise) return this.materialsPromise;
+    const load = this.fetchAllPages("/materials").then((items) => {
+      this.materials = items.map(normalizeMaterial);
+      return this.getMaterials();
+    });
+    this.materialsPromise = load.finally(() => {
+      this.materialsPromise = null;
+    });
+    return this.materialsPromise;
+  }
+
   async listMaterialCategories() {
-    const categories = await request<ApiRecord[]>("/materials/categories");
-    this.categories = categories.map((item) => ({
-      id: asString(item.id),
-      name: asString(item.name),
-      type: item.type === "curso" ? "curso" : "biblioteca",
-      systemKey: asString(item.systemKey) || undefined,
-    }));
-    return this.getMaterialCategoryRecords();
+    if (this.materialCategoriesPromise) return this.materialCategoriesPromise;
+    const load = request<ApiRecord[]>("/materials/categories").then(
+      (categories) => {
+        this.categories = categories.map((item) => ({
+          id: asString(item.id),
+          name: asString(item.name),
+          type: item.type === "curso" ? "curso" : "biblioteca",
+          systemKey: asString(item.systemKey) || undefined,
+        }));
+        return this.getMaterialCategoryRecords();
+      },
+    );
+    this.materialCategoriesPromise = load.finally(() => {
+      this.materialCategoriesPromise = null;
+    });
+    return this.materialCategoriesPromise;
   }
 
   async listCourseMaterials(courseId: string) {
@@ -999,13 +1283,20 @@ class ApiStore {
         const actor = reference(raw.actorId);
         return {
           id: asString(raw.id),
-          actorName: asString(actor?.name, "Sistema"),
-          actorEmail: asString(actor?.email) || undefined,
-          actorRole: actor?.role as Role | undefined,
+          actorName: asString(
+            raw.actorName,
+            asString(actor?.name, "Sistema"),
+          ),
+          actorEmail:
+            asString(raw.actorEmail, asString(actor?.email)) || undefined,
+          actorRole: (raw.actorRole ?? actor?.role) as Role | undefined,
           method: asString(raw.method),
           path: asString(raw.path),
           statusCode: Number(raw.statusCode),
           targetId: asString(raw.targetId) || undefined,
+          ip: asString(raw.ip) || undefined,
+          userAgent: asString(raw.userAgent) || undefined,
+          requestBody: raw.requestBody,
           durationMs: Number(raw.durationMs),
           createdAt: asString(raw.createdAt),
         };
@@ -1290,6 +1581,25 @@ class ApiStore {
     });
   }
 
+  async permanentlyDeleteUser(
+    id: string,
+    options: MutationFeedbackOptions = {},
+  ) {
+    const previous = this.users.find((user) => user.id === id);
+    await request(`/users/${id}/permanent`, json("DELETE"));
+    this.users = this.users.filter((user) => user.id !== id);
+    options.onChange?.();
+    const subject = previous?.role === "professor" ? "Professor" : "Aluno";
+    notifySuccess(
+      `${subject} excluído`,
+      previous
+        ? previous.role === "professor"
+          ? `${previous.name} foi removido permanentemente. Os registros vinculados agora pertencem ao Devito.`
+          : `${previous.name} foi removido permanentemente.`
+        : "O cadastro foi removido permanentemente.",
+    );
+  }
+
   async addEvent(data: Omit<DJEvent, "id" | "createdAt">) {
     const event = normalizeEvent(
       await request<ApiRecord>(
@@ -1413,7 +1723,7 @@ class ApiStore {
     } else if (
       statusOnly &&
       current?.status === "pendente" &&
-      data.status === "cancelado"
+      data.status === "recusado"
     ) {
       raw = await request<ApiRecord>(
         `/bookings/${id}/reject`,
@@ -1448,7 +1758,7 @@ class ApiStore {
     const success =
       data.status === "confirmado" && current?.status === "pendente"
         ? ["Solicitação aprovada", "O aluno receberá a confirmação."]
-        : data.status === "cancelado" &&
+        : data.status === "recusado" &&
             current?.status === "pendente" &&
             this.currentUser?.role !== "student"
           ? ["Solicitação recusada", "O aluno será informado da decisão."]
@@ -1470,14 +1780,8 @@ class ApiStore {
     );
     options.onChange?.();
     notifyUndoable({
-      title:
-        previous.status === "pendente" && this.currentUser?.role !== "student"
-          ? "Solicitação recusada"
-          : "Agendamento cancelado",
-      description:
-        previous.status === "pendente" && this.currentUser?.role !== "student"
-          ? "O aluno será informado após o prazo para desfazer."
-          : "O horário será liberado após o prazo para desfazer.",
+      title: "Agendamento cancelado",
+      description: "O horário será liberado após o prazo para desfazer.",
       commit: async () => {
         await this.updateBooking(
           id,
@@ -1491,10 +1795,7 @@ class ApiStore {
         );
         options.onChange?.();
       },
-      undoDescription:
-        previous.status === "pendente"
-          ? "A solicitação voltou para análise."
-          : "O agendamento foi restaurado.",
+      undoDescription: "O agendamento foi restaurado.",
     });
     return { ...previous, status: "cancelado" as const };
   }
@@ -1547,9 +1848,11 @@ class ApiStore {
   }
 
   async addMaterial(data: Omit<Material, "id" | "createdAt">) {
-    const categoryId = data.category
-      ? this.categoryId(data.category)
-      : undefined;
+    const categoryId = data.courseId
+      ? undefined
+      : data.category
+        ? this.categoryId(data.category)
+        : undefined;
     const material = normalizeMaterial(
       await request<ApiRecord>(
         "/materials",
@@ -1596,9 +1899,11 @@ class ApiStore {
           title: data.title,
           description: data.description,
           status: data.status,
-          categoryId: data.category
-            ? this.categoryId(data.category)
-            : undefined,
+          categoryId: data.courseId
+            ? undefined
+            : data.category
+              ? this.categoryId(data.category)
+              : undefined,
           courseId: data.courseId,
           coverImage: data.coverImage
             ? this.relativeAsset(data.coverImage)
@@ -1811,6 +2116,46 @@ class ApiStore {
     return normalizeCohort(await request<ApiRecord>(`/courses/cohorts/${id}`));
   }
 
+  async updateCohort(id: string, data: { name: string }) {
+    const cohort = normalizeCohort(
+      await request<ApiRecord>(
+        `/courses/cohorts/${id}`,
+        json("PATCH", data),
+      ),
+    );
+    notifySuccess("Turma atualizada", "O nome da turma foi salvo.");
+    return cohort;
+  }
+
+  async deleteCohort(id: string) {
+    await request(`/courses/cohorts/${id}`, json("DELETE"));
+    notifySuccess("Turma excluída", "A turma e sua agenda foram removidas.");
+  }
+
+  async listStudentObservations(studentId: string) {
+    return request<StudentObservation[]>(
+      `/courses/students/${studentId}/observations`,
+    );
+  }
+
+  async listStudentCourseProgress(studentId: string) {
+    const items = await request<ApiRecord[]>(
+      `/courses/students/${studentId}/progress`,
+    );
+    return items.map(
+      (item): StudentCourseProgress => ({
+        id: asString(item.id),
+        name: asString(item.name, "Curso"),
+        description: asString(item.description) || undefined,
+        coverImage: assetUrl(asString(item.coverImage)) || undefined,
+        completed: Number(item.completed ?? 0),
+        total: Number(item.total ?? 0),
+        percent: Number(item.percent ?? 0),
+        visible: item.visible !== false,
+      }),
+    );
+  }
+
   async createCohort(data: {
     name: string;
     courseId: string;
@@ -1892,6 +2237,7 @@ class ApiStore {
       studentId: string;
       present?: boolean;
       materialReleased?: boolean;
+      observation?: string;
     },
   ) {
     return normalizeCohort(
@@ -1921,7 +2267,8 @@ class ApiStore {
     const body = new FormData();
     body.append("file", file);
     body.append("purpose", purpose);
-    const uploaded = await request<UploadedFile>("/files", {
+    const uploadPath = purpose === "rich-text" ? "/files/rich-text" : "/files";
+    const uploaded = await request<UploadedFile>(uploadPath, {
       method: "POST",
       body,
     });
@@ -1975,6 +2322,11 @@ class ApiStore {
       ...data,
       mapSrc: data.mapSrc || undefined,
       mapsHref: data.mapsHref || undefined,
+      phone: data.phone || undefined,
+      email: data.email?.trim() || undefined,
+      instagram: data.instagram?.trim() || undefined,
+      facebook: data.facebook?.trim() || undefined,
+      openingHours: data.openingHours?.trim() || undefined,
     };
     const raw = await request<ApiRecord>(
       id ? `/units/${id}` : "/units",
@@ -2061,12 +2413,12 @@ class ApiStore {
   async submitLead(
     data: Pick<
       Lead,
-      "firstName" | "lastName" | "email" | "message" | "unitKey"
+      "firstName" | "lastName" | "whatsapp" | "message" | "unitKey"
     >,
   ) {
     const result = await request<{ id: string; received: boolean }>(
       "/leads",
-      json("POST", data),
+      json("POST", { ...data, whatsapp: phoneDigits(data.whatsapp) }),
     );
     notifySuccess(
       "Mensagem enviada",
@@ -2314,6 +2666,88 @@ class ApiStore {
     this.adminUsersPromise = null;
     this.notificationsPromise = null;
     this.bookingsPromise = null;
+    this.eventsPromise = null;
+    this.materialsPromise = null;
+    this.materialCategoriesPromise = null;
+  }
+
+  getPortalHeroContent(key: PortalHeroKey) {
+    return this.portalHeroes.get(key);
+  }
+
+  async fetchPortalHeroContent(
+    key: PortalHeroKey,
+    force = false,
+  ): Promise<PortalHeroContent> {
+    const cached = this.portalHeroes.get(key);
+    if (cached && !force) return cached;
+    const pending = this.portalHeroPromises.get(key);
+    if (pending) return pending;
+    const promise = request<ApiRecord>(`/portal-content/${key}`)
+      .then((raw) => {
+        const content = normalizePortalHero(raw);
+        this.portalHeroes.set(key, content);
+        return content;
+      })
+      .finally(() => this.portalHeroPromises.delete(key));
+    this.portalHeroPromises.set(key, promise);
+    return promise;
+  }
+
+  async updatePortalHeroContent(
+    key: PortalHeroKey,
+    changes: Partial<Pick<
+      PortalHeroContent,
+      "label" | "title" | "description" | "banner"
+    >>,
+    options: { silent?: boolean } = {},
+  ) {
+    const payload = {
+      ...changes,
+      ...(Object.hasOwn(changes, "banner")
+        ? { banner: apiAssetPath(changes.banner ?? null) }
+        : {}),
+    };
+    const content = normalizePortalHero(
+      await request<ApiRecord>(
+        `/portal-content/${key}`,
+        json("PATCH", payload),
+      ),
+    );
+    this.portalHeroes.set(key, content);
+    if (!options.silent) {
+      notifySuccess(
+        "Hero atualizado",
+        "O conteúdo desta página foi salvo.",
+      );
+    }
+    return content;
+  }
+
+  async listLandingContent(): Promise<LandingSectionContent[]> {
+    const records = await request<ApiRecord[]>("/landing-content");
+    return records.map((record) => ({
+      key: asString(record.key) as LandingSectionKey,
+      data: mapLandingAssets(record.data, false) as LandingSectionDataMap[LandingSectionKey],
+    }));
+  }
+
+  async updateLandingContent<K extends LandingSectionKey>(
+    key: K,
+    data: LandingSectionDataMap[K],
+  ): Promise<LandingSectionContent<K>> {
+    const record = await request<ApiRecord>(
+      `/landing-content/${key}`,
+      json("PATCH", { data: mapLandingAssets(data, true) }),
+    );
+    notifySuccess(
+      "Seção atualizada",
+      "O conteúdo do site principal foi salvo.",
+    );
+    return {
+      key,
+      data: mapLandingAssets(record.data, false) as LandingSectionDataMap[K],
+    };
   }
 }
 

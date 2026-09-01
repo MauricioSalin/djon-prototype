@@ -15,13 +15,19 @@ import {
   MapPin,
   ShieldCheck,
 } from "lucide-react";
-import { store, type Permission, type Unit, type User } from "@/lib/store";
+import {
+  ALL_PERMISSIONS,
+  hasPermission,
+  store,
+  type Permission,
+  type Unit,
+  type User,
+} from "@/lib/store";
 import { formatPhone, phoneMatchesSearch } from "@/lib/phone";
 import {
   ListPagination,
   useListPagination,
 } from "@/components/list-pagination";
-import { useConfirmation } from "@/components/confirmation-provider";
 import { DjonSelect } from "@/components/djon-select";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 
@@ -32,31 +38,120 @@ type FormState = {
   name: string;
   email: string;
   whatsapp: string;
-  password: string;
   unitId: string;
 };
 const emptyForm: FormState = {
   name: "",
   email: "",
   whatsapp: "",
-  password: "",
   unitId: "",
 };
-const permissionOptions: { value: Permission; label: string }[] = [
-  { value: "users.manage", label: "Gerenciar usuários" },
-  { value: "leads.manage", label: "Gerenciar contatos" },
-  { value: "bookings.manage", label: "Gerenciar agenda" },
-  { value: "bookings.review", label: "Aprovar treinos" },
-  { value: "courses.manage", label: "Gerenciar cursos e turmas" },
-  { value: "attendance.manage", label: "Marcar presença" },
-  { value: "materials.manage", label: "Gerenciar materiais" },
-  { value: "units.manage", label: "Gerenciar unidades" },
-  { value: "equipments.manage", label: "Gerenciar equipamentos" },
-  { value: "audit.read", label: "Consultar auditoria" },
+const permissionOptions: {
+  value: Permission;
+  label: string;
+  description: string;
+  group: "Administração" | "Acadêmico" | "Estrutura" | "Controle";
+}[] = [
+  {
+    value: "admin.access",
+    label: "Painel administrativo",
+    description: "Acessar a visão geral, indicadores e atalhos da administração.",
+    group: "Administração",
+  },
+  {
+    value: "users.manage",
+    label: "Gerenciar alunos e professores",
+    description: "Cadastrar, editar, desativar e restaurar usuários.",
+    group: "Administração",
+  },
+  {
+    value: "permissions.manage",
+    label: "Delegar privilégios",
+    description: "Configurar acessos de outros professores, exceto os próprios.",
+    group: "Administração",
+  },
+  {
+    value: "leads.manage",
+    label: "Gerenciar contatos",
+    description: "Acessar e administrar os contatos comerciais.",
+    group: "Administração",
+  },
+  {
+    value: "events.manage",
+    label: "Gerenciar eventos oficiais",
+    description: "Criar eventos DJ ON e editar ou remover eventos de qualquer autor.",
+    group: "Administração",
+  },
+  {
+    value: "bookings.manage",
+    label: "Gerenciar toda a agenda",
+    description: "Operar agendamentos de todas as unidades e responsáveis.",
+    group: "Acadêmico",
+  },
+  {
+    value: "bookings.review",
+    label: "Revisar treinos globalmente",
+    description: "Aprovar ou recusar solicitações de qualquer unidade.",
+    group: "Acadêmico",
+  },
+  {
+    value: "courses.manage",
+    label: "Gerenciar todos os cursos e turmas",
+    description: "Administrar cursos, turmas e responsáveis em todas as unidades.",
+    group: "Acadêmico",
+  },
+  {
+    value: "attendance.manage",
+    label: "Gerenciar presença global",
+    description: "Registrar frequência em turmas de qualquer professor.",
+    group: "Acadêmico",
+  },
+  {
+    value: "materials.manage",
+    label: "Gerenciar todo o acervo",
+    description: "Administrar materiais de outros autores e categorias do acervo.",
+    group: "Acadêmico",
+  },
+  {
+    value: "units.manage",
+    label: "Gerenciar unidades",
+    description: "Cadastrar, editar e desativar unidades.",
+    group: "Estrutura",
+  },
+  {
+    value: "equipments.manage",
+    label: "Gerenciar equipamentos",
+    description: "Cadastrar, editar e desativar equipamentos.",
+    group: "Estrutura",
+  },
+  {
+    value: "notifications.manage",
+    label: "Enviar notificações",
+    description: "Criar comunicações administrativas para usuários do portal.",
+    group: "Controle",
+  },
+  {
+    value: "portal.edit",
+    label: "Edição do portal",
+    description: "Editar os textos e banners dos heroes do portal.",
+    group: "Controle",
+  },
+  {
+    value: "site.edit",
+    label: "Edição do site principal",
+    description: "Editar as seções públicas da landing page e suas imagens.",
+    group: "Controle",
+  },
 ];
 
+const permissionGroups = [
+  "Administração",
+  "Acadêmico",
+  "Estrutura",
+  "Controle",
+] as const;
+
 export default function ProfessoresAdminPage() {
-  const { confirm } = useConfirmation();
   const [professors, setProfessors] = useState<User[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -67,6 +162,13 @@ export default function ProfessoresAdminPage() {
   const [permissionTarget, setPermissionTarget] = useState<User | null>(null);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const hasTotalAccess = ALL_PERMISSIONS.every((permission) =>
+    permissions.includes(permission),
+  );
+  const [removingUser, setRemovingUser] = useState<User | null>(null);
+  const [removalAction, setRemovalAction] = useState<
+    "deactivate" | "delete" | null
+  >(null);
 
   const load = () => setProfessors(store.getProfessors());
 
@@ -80,6 +182,15 @@ export default function ProfessoresAdminPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!removingUser || removalAction) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRemovingUser(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [removalAction, removingUser]);
+
   const openNew = () => {
     setForm(emptyForm);
     setEditingId(null);
@@ -91,7 +202,6 @@ export default function ProfessoresAdminPage() {
       name: u.name,
       email: u.email,
       whatsapp: formatPhone(u.whatsapp),
-      password: "",
       unitId: u.unitId ?? "",
     });
     setEditingId(u.id);
@@ -112,7 +222,6 @@ export default function ProfessoresAdminPage() {
         name: form.name,
         email: form.email,
         whatsapp: form.whatsapp,
-        password: form.password,
         role: "professor",
         unitId: form.unitId,
       });
@@ -121,13 +230,27 @@ export default function ProfessoresAdminPage() {
     load();
   };
 
-  const handleDelete = async (user: User) => {
-    const confirmed = await confirm({
-      title: "Desativar professor?",
-      description: `${user.name} perderá o acesso à plataforma. Você poderá desfazer pelo aviso exibido em seguida.`,
-      confirmLabel: "DESATIVAR",
-    });
-    if (confirmed) await store.deleteUser(user.id, { onChange: load });
+  const handleDeactivate = async () => {
+    if (!removingUser || removalAction) return;
+    setRemovalAction("deactivate");
+    try {
+      await store.deleteUser(removingUser.id, { onChange: load });
+      setRemovingUser(null);
+    } finally {
+      setRemovalAction(null);
+    }
+  };
+  const handlePermanentDelete = async () => {
+    if (!removingUser || removalAction) return;
+    setRemovalAction("delete");
+    try {
+      await store.permanentlyDeleteUser(removingUser.id, { onChange: load });
+      setRemovingUser(null);
+    } catch {
+      // A camada de API já apresenta a mensagem de erro ao usuário.
+    } finally {
+      setRemovalAction(null);
+    }
   };
   const handleRestore = async (id: string) => {
     await store.restoreUser(id);
@@ -136,12 +259,37 @@ export default function ProfessoresAdminPage() {
 
   const openPermissions = (user: User) => {
     setPermissionTarget(user);
-    setPermissions(user.permissions ?? []);
+    setPermissions(
+      (user.permissions ?? []).filter((permission) =>
+        ALL_PERMISSIONS.includes(permission),
+      ),
+    );
+  };
+
+  const togglePermission = (permission: Permission) => {
+    setPermissions((items) => {
+      const selected = items.includes(permission);
+      let next = selected
+        ? items.filter((item) => item !== permission)
+        : [...items, permission];
+      if (permission === "users.manage" && selected) {
+        next = next.filter((item) => item !== "permissions.manage");
+      }
+      if (permission === "permissions.manage" && !selected) {
+        next = [...new Set([...next, "users.manage" as Permission])];
+      }
+      return next;
+    });
   };
 
   const savePermissions = async () => {
     if (!permissionTarget) return;
-    await store.updateProfessorPermissions(permissionTarget.id, permissions);
+    await store.updateProfessorPermissions(
+      permissionTarget.id,
+      permissions.filter((permission) =>
+        ALL_PERMISSIONS.includes(permission),
+      ),
+    );
     setPermissionTarget(null);
     load();
   };
@@ -286,26 +434,9 @@ export default function ProfessoresAdminPage() {
                   />
                 </div>
                 {!editingId && (
-                  <div>
-                    <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">
-                      SENHA INICIAL
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      value={form.password}
-                      onChange={(e) =>
-                        setForm({ ...form, password: e.target.value })
-                      }
-                      autoComplete="new-password"
-                      placeholder="Mínimo de 8 caracteres"
-                      className={inp}
-                    />
-                    <p className="mt-1 text-djon-text/25 text-xs">
-                      Informe esta senha ao professor por um canal seguro.
-                    </p>
-                  </div>
+                  <p className="rounded-xl border border-djon-light-purple/20 bg-djon-light-purple/8 p-3 text-xs leading-relaxed text-djon-text/55">
+                    Uma senha temporária será criada e enviada automaticamente para o e-mail do professor.
+                  </p>
                 )}
                 <p className="text-djon-text/25 text-xs leading-relaxed border-t border-djon-text/8 pt-3">
                   Bio e redes sociais são editadas pelo próprio usuário no
@@ -320,6 +451,102 @@ export default function ProfessoresAdminPage() {
                   {editingId ? "SALVAR ALTERAÇÕES" : "CADASTRAR PROFESSOR"}
                 </motion.button>
               </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {removingUser && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(event) =>
+              event.target === event.currentTarget &&
+              !removalAction &&
+              setRemovingUser(null)
+            }
+          >
+            <motion.div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="remove-professor-title"
+              aria-describedby="remove-professor-description"
+              className="my-4 w-full max-w-md rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 shadow-2xl sm:my-6 sm:p-6"
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+            >
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-djon-warning-red/10 text-djon-warning-red">
+                    <Trash2 size={18} />
+                  </span>
+                  <div>
+                    <p className="mb-1 text-xs font-black uppercase tracking-widest text-djon-warning-red">
+                      REMOVER PROFESSOR
+                    </p>
+                    <h2
+                      id="remove-professor-title"
+                      className="text-xl font-black tracking-tighter text-djon-text"
+                    >
+                      O que deseja fazer?
+                    </h2>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Fechar remoção"
+                  onClick={() => setRemovingUser(null)}
+                  disabled={Boolean(removalAction)}
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p
+                id="remove-professor-description"
+                className="mb-5 text-sm leading-relaxed text-djon-text/50"
+              >
+                {removingUser.active === false
+                  ? `${removingUser.name} já está desativado. A exclusão apaga definitivamente o cadastro e transfere todos os registros vinculados para o Devito.`
+                  : `Escolha como remover ${removingUser.name}. Desativar bloqueia o acesso e pode ser desfeito. Excluir apaga definitivamente o cadastro e transfere todos os registros vinculados para o Devito.`}
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={() => setRemovingUser(null)}
+                  disabled={Boolean(removalAction)}
+                  className="cursor-pointer flex-1 rounded-full border border-djon-text/15 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  CANCELAR
+                </button>
+                {removingUser.active !== false && (
+                  <button
+                    type="button"
+                    onClick={() => void handleDeactivate()}
+                    disabled={Boolean(removalAction)}
+                    className="cursor-pointer flex-1 rounded-full border border-djon-warning-red/20 py-3 text-xs font-black tracking-widest text-djon-warning-red/70 transition-[filter,opacity] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {removalAction === "deactivate"
+                      ? "DESATIVANDO..."
+                      : "DESATIVAR"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void handlePermanentDelete()}
+                  disabled={Boolean(removalAction)}
+                  className="cursor-pointer flex-1 rounded-full border border-transparent bg-djon-warning-red/80 py-3 text-xs font-black tracking-widest text-djon-text transition-[filter,opacity] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {removalAction === "delete" ? "EXCLUINDO..." : "EXCLUIR"}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -341,8 +568,8 @@ export default function ProfessoresAdminPage() {
             <motion.div
               key={u.id}
               className={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 px-4 py-4 sm:flex sm:items-center ${u.active === false ? "opacity-55" : ""}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: i * 0.04 }}
             >
               <div className="djon-avatar-fallback w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden">
@@ -382,7 +609,8 @@ export default function ProfessoresAdminPage() {
                 )}
               </div>
               <div className="col-span-2 flex w-full items-center justify-end gap-2 border-t border-djon-text/8 pt-3 sm:w-auto sm:border-t-0 sm:pt-0">
-                {currentUser?.role === "admin" && u.active !== false && (
+                {hasPermission(currentUser, "users.manage") &&
+                  u.active !== false && (
                   <button
                     onClick={() => openEdit(u)}
                     className="cursor-pointer p-1.5 text-djon-text opacity-30 transition-opacity hover:opacity-100"
@@ -393,7 +621,9 @@ export default function ProfessoresAdminPage() {
                     <Edit2 size={14} />
                   </button>
                 )}
-                {u.active !== false && (
+                {hasPermission(currentUser, "permissions.manage") &&
+                  currentUser?.id !== u.id &&
+                  u.active !== false && (
                   <button
                     onClick={() => openPermissions(u)}
                     className="cursor-pointer p-1.5 text-djon-accent opacity-60 transition-opacity hover:opacity-100"
@@ -406,22 +636,35 @@ export default function ProfessoresAdminPage() {
                 )}
                 {u.active !== false ? (
                   <button
-                    onClick={() => void handleDelete(u)}
+                    onClick={() => setRemovingUser(u)}
                     className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                     type="button"
+                    title="Remover"
+                    aria-label={`Remover ${u.name}`}
                   >
                     <Trash2 size={14} />
                   </button>
                 ) : (
-                  <button
-                    onClick={() => void handleRestore(u.id)}
-                    type="button"
-                    title="Restaurar"
-                    aria-label={`Restaurar ${u.name}`}
-                    className="cursor-pointer p-1.5 text-djon-accent transition-[filter] hover:brightness-110"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setRemovingUser(u)}
+                      className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
+                      type="button"
+                      title="Excluir"
+                      aria-label={`Excluir ${u.name}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => void handleRestore(u.id)}
+                      type="button"
+                      title="Restaurar"
+                      aria-label={`Restaurar ${u.name}`}
+                      className="cursor-pointer p-1.5 text-djon-accent transition-[filter] hover:brightness-110"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  </>
                 )}
               </div>
             </motion.div>
@@ -436,9 +679,15 @@ export default function ProfessoresAdminPage() {
         onPageChange={pagination.setPage}
         onPageSizeChange={pagination.setPageSize}
       />
-      {currentUser?.role === "admin" && permissionTarget && (
+      {hasPermission(currentUser, "permissions.manage") &&
+        permissionTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-djon-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6">
+          <div
+            className="max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            data-lenis-prevent
+            data-lenis-prevent-wheel
+            data-lenis-prevent-touch
+          >
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black text-djon-accent">
@@ -447,8 +696,9 @@ export default function ProfessoresAdminPage() {
                 <h2 className="mt-1 text-xl font-black text-djon-text">
                   {permissionTarget.name}
                 </h2>
-                <p className="mt-2 text-xs text-djon-text/40">
-                  Somente administradores podem alterar estas permissões.
+                <p className="mt-2 max-w-md text-xs leading-relaxed text-djon-text/40">
+                  As permissões nativas do professor permanecem sempre ativas.
+                  Somente administradores podem conceder acessos adicionais.
                 </p>
               </div>
               <button
@@ -460,30 +710,66 @@ export default function ProfessoresAdminPage() {
                 <X size={18} />
               </button>
             </div>
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {permissionOptions.map((option) => {
-                const checked = permissions.includes(option.value);
-                return (
-                  <label
-                    key={option.value}
-                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-xs font-bold ${checked ? "border-djon-accent/35 bg-djon-accent/10 text-djon-accent" : "border-djon-text/10 bg-djon-text/5 text-djon-text/55"}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() =>
-                        setPermissions((items) =>
-                          checked
-                            ? items.filter((item) => item !== option.value)
-                            : [...items, option.value],
-                        )
-                      }
-                    />
-                    {option.label}
-                  </label>
-                );
-              })}
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[10px] font-bold text-djon-accent">
+                {permissions.filter((item) =>
+                  ALL_PERMISSIONS.includes(item),
+                ).length}
+                /{ALL_PERMISSIONS.length} ativos
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPermissions([])}
+                  className="inline-flex h-7 items-center justify-center rounded-full border border-djon-text/10 px-3 text-[9px] font-black uppercase leading-none tracking-wider text-djon-text/45 hover:text-djon-text"
+                >
+                  Limpar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPermissions([...ALL_PERMISSIONS])}
+                  aria-pressed={hasTotalAccess}
+                  className={`inline-flex h-7 items-center justify-center rounded-full border px-3 text-[9px] font-black uppercase leading-none tracking-wider ${hasTotalAccess ? "border-djon-accent/25 bg-djon-accent/10 text-djon-accent hover:bg-djon-accent/15" : "border-djon-text/10 text-djon-text/45 hover:text-djon-text"}`}
+                >
+                  Acesso total
+                </button>
+              </div>
             </div>
+            {permissionGroups.map((group) => (
+              <div key={group} className="mt-4">
+                <p className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-djon-text/30">
+                  {group}
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {permissionOptions
+                    .filter((option) => option.group === group)
+                    .map((option) => {
+                      const checked = permissions.includes(option.value);
+                      return (
+                        <label
+                          key={option.value}
+                          className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 ${checked ? "border-djon-accent/35 bg-djon-accent/10 text-djon-accent" : "border-djon-text/10 bg-djon-text/5 text-djon-text/55"}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            className="mt-0.5 accent-djon-accent"
+                            onChange={() => togglePermission(option.value)}
+                          />
+                          <span className="min-w-0">
+                            <span className="block text-xs font-bold">
+                              {option.label}
+                            </span>
+                            <span className="mt-1 block text-[10px] font-medium leading-relaxed text-djon-text/40">
+                              {option.description}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+            ))}
             <button
               type="button"
               onClick={() => void savePermissions()}

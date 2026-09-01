@@ -3,33 +3,12 @@
 import type React from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 import { useRef, useState } from "react"
-import { Music, Users, Trophy } from "lucide-react"
+import { LandingEditButton } from "@/components/landing/landing-edit-button"
+import { useLandingSection } from "@/components/landing/landing-content-provider"
+import { LandingIconView } from "@/components/landing/landing-options"
+import { landingColor, type StatsLandingData } from "@/lib/landing-content"
 
-const features = [
-  {
-    icon: Music,
-    title: "3",
-    subtitle: "Módulos de Curso",
-    description: "DJ, Produção Musical e Marketing",
-    accent: "var(--djon-color-accent)",
-  },
-  {
-    icon: Users,
-    title: "+1000",
-    subtitle: "Alunos Formados",
-    description: "DJs e produtores prontos para o mercado",
-    accent: "var(--djon-color-light-purple)",
-  },
-  {
-    icon: Trophy,
-    title: "2018",
-    subtitle: "Fundada em",
-    description: "8 anos de experiência formando talentos",
-    accent: "var(--djon-color-warning-red)",
-  },
-]
-
-function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index: number }) {
+function FeatureCard({ feature, index }: { feature: StatsLandingData["items"][number]; index: number }) {
   const ref = useRef<HTMLDivElement>(null)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -41,6 +20,7 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
 
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["8deg", "-8deg"])
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-8deg", "8deg"])
+  const accent = landingColor(feature.color).color
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!ref.current) return
@@ -58,8 +38,8 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: index * 0.1, ease: [0.25, 0.4, 0.25, 1] as const }}
       onMouseMove={handleMouseMove}
@@ -71,7 +51,7 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
       <motion.div
         className="absolute -inset-[1px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
-          background: `linear-gradient(135deg, color-mix(in srgb, ${feature.accent} 25%, transparent), transparent, color-mix(in srgb, ${feature.accent} 25%, transparent))`,
+          background: `linear-gradient(135deg, color-mix(in srgb, ${accent} 25%, transparent), transparent, color-mix(in srgb, ${accent} 25%, transparent))`,
           filter: "blur(8px)",
         }}
       />
@@ -94,18 +74,18 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
         <div className="relative z-10 flex flex-col h-full min-h-[140px]">
           <motion.div
             className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 relative"
-            style={{ backgroundColor: `color-mix(in srgb, ${feature.accent} 12%, transparent)` }}
+            style={{ backgroundColor: `color-mix(in srgb, ${accent} 12%, transparent)` }}
             whileHover={{ scale: 1.1 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
           >
             <motion.div
               className="absolute inset-0 rounded-xl"
-              style={{ backgroundColor: feature.accent }}
+              style={{ backgroundColor: accent }}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={isHovered ? { opacity: [0.2, 0.4, 0.2], scale: [1, 1.2, 1] } : { opacity: 0, scale: 0.8 }}
               transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
             />
-            <feature.icon className="w-5 h-5 relative z-10" style={{ color: feature.accent }} />
+            <LandingIconView name={feature.icon} className="relative z-10 h-5 w-5" style={{ color: accent }} />
           </motion.div>
           <div className="flex-1">
             <motion.div
@@ -115,14 +95,14 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
               viewport={{ once: true }}
               transition={{ type: "spring" as const, stiffness: 200, damping: 20, delay: 0.2 + index * 0.1 }}
             >
-              <span style={{ color: feature.accent }}>{feature.title}</span>
+              <span style={{ color: accent }}>{feature.value}</span>
             </motion.div>
-            <h3 className="text-sm font-semibold text-djon-text mt-1">{feature.subtitle}</h3>
+            <h3 className="text-sm font-semibold text-djon-text mt-1">{feature.title}</h3>
             <p className="text-xs text-djon-text/50 mt-1">{feature.description}</p>
           </div>
           <motion.div
             className="h-[2px] rounded-full mt-4"
-            style={{ backgroundColor: feature.accent }}
+            style={{ backgroundColor: accent }}
             initial={{ scaleX: 0, originX: 0 }}
             whileInView={{ scaleX: 1 }}
             viewport={{ once: true }}
@@ -135,6 +115,7 @@ function FeatureCard({ feature, index }: { feature: (typeof features)[0]; index:
 }
 
 export function BentoGrid() {
+  const { data, canEdit, edit } = useLandingSection("stats")
   return (
     <section id="formula" className="relative py-16 bg-djon-page overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-djon-ink via-djon-page to-djon-ink" />
@@ -147,7 +128,7 @@ export function BentoGrid() {
             viewport={{ once: true, amount: 0 }}
             transition={{ delay: 0.1 }}
           >
-            A ACADEMIA
+            {data.label}
           </motion.span>
           <motion.h2
             className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2"
@@ -156,7 +137,7 @@ export function BentoGrid() {
             viewport={{ once: true, amount: 0 }}
             transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const, delay: 0.15 }}
           >
-            DJ ON em Números
+            {data.title}
           </motion.h2>
           <motion.div
             className="h-[3px] w-10 bg-djon-accent mx-auto mt-3 rounded-full"
@@ -167,11 +148,12 @@ export function BentoGrid() {
           />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {features.map((feature, index) => (
-            <FeatureCard key={feature.title} feature={feature} index={index} />
+          {data.items.map((feature, index) => (
+            <FeatureCard key={feature.id} feature={feature} index={index} />
           ))}
         </div>
       </div>
+      {canEdit ? <LandingEditButton onClick={edit} /> : null}
     </section>
   )
 }

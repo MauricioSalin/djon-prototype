@@ -57,7 +57,7 @@ export default function AdminConfigPage() {
 
       {/* Profile card with banner */}
       <motion.div className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl overflow-hidden"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <div
           className="h-28 relative cursor-pointer group"
           style={{ background: user.banner ? `url(${user.banner}) center/cover` : "var(--djon-gradient-config-banner)" }}
@@ -105,7 +105,7 @@ export default function AdminConfigPage() {
           { label: "Agendamentos", value: totalBookings, color: "var(--djon-color-light-purple)" },
         ].map((s, i) => (
           <motion.div key={s.label} className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-4 text-center"
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}>
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 + i * 0.07 }}>
             <p className="text-2xl font-black" style={{ color: s.color }}>{s.value}</p>
             <p className="text-djon-text/40 text-djon-label font-bold tracking-wide mt-1">{s.label}</p>
           </motion.div>
@@ -114,7 +114,7 @@ export default function AdminConfigPage() {
 
       {/* Edit form */}
       <motion.div className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-5"
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
         <p className="text-djon-accent text-xs tracking-wide font-bold mb-1">PERFIL DA ACADEMIA</p>
         <h2 className="text-xl font-black text-djon-text tracking-tighter mb-4">Editar dados</h2>
 

@@ -6,6 +6,7 @@ import { store, type Unit } from "@/lib/store";
 import { ListPagination, useListPagination } from "@/components/list-pagination";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { formatPhone } from "@/lib/phone";
 
 const field =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none focus:border-djon-accent/50";
@@ -17,6 +18,11 @@ const empty: UnitForm = {
   address: "",
   mapSrc: "",
   mapsHref: "",
+  phone: "",
+  email: "",
+  instagram: "",
+  facebook: "",
+  openingHours: "Segunda à sexta das 9h às 18h",
   timezone: "America/Sao_Paulo",
   active: true,
 };
@@ -201,6 +207,49 @@ export default function UnitsAdminPage() {
               placeholder="URL para abrir no mapa"
               className={field}
             />
+            <div className="border-t border-djon-text/8 pt-4">
+              <p className="mb-3 text-xs font-black tracking-widest text-djon-accent">
+                CONTATO NO SITE
+              </p>
+              <div className="space-y-4">
+                <input
+                  value={form.phone ?? ""}
+                  onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })}
+                  placeholder="Telefone público"
+                  inputMode="numeric"
+                  maxLength={15}
+                  className={field}
+                />
+                <input
+                  type="email"
+                  value={form.email ?? ""}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="E-mail da unidade e destino dos contatos"
+                  className={field}
+                />
+                <input
+                  type="url"
+                  value={form.instagram ?? ""}
+                  onChange={(e) => setForm({ ...form, instagram: e.target.value })}
+                  placeholder="URL do Instagram"
+                  className={field}
+                />
+                <input
+                  type="url"
+                  value={form.facebook ?? ""}
+                  onChange={(e) => setForm({ ...form, facebook: e.target.value })}
+                  placeholder="URL do Facebook"
+                  className={field}
+                />
+                <input
+                  value={form.openingHours ?? ""}
+                  onChange={(e) => setForm({ ...form, openingHours: e.target.value })}
+                  placeholder="Horário de atendimento"
+                  maxLength={120}
+                  className={field}
+                />
+              </div>
+            </div>
             <input
               required
               value={form.timezone}

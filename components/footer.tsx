@@ -12,6 +12,7 @@ import {
   isAcademyLocationKey,
   type AcademyLocationKey,
 } from "@/lib/locations"
+import { formatPhone, phoneDigits } from "@/lib/phone"
 import { store, type Unit } from "@/lib/store"
 
 
@@ -33,7 +34,7 @@ const itemVariants = {
 }
 
 export function Footer() {
-  const [formData, setFormData] = useState({ nome: "", sobrenome: "", email: "", mensagem: "" })
+  const [formData, setFormData] = useState({ nome: "", sobrenome: "", whatsapp: "", mensagem: "" })
   const [selectedLocation, setSelectedLocation] = useState<AcademyLocationKey>("poa")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [units, setUnits] = useState<Unit[]>([])
@@ -42,6 +43,11 @@ export function Footer() {
   const unit = units.find((item) => item.key === selectedLocation)
   const fallbackLocation = academyLocations[selectedLocation] ?? academyLocations.poa
   const location = { ...fallbackLocation, ...(unit ?? {}), lines: unit ? [unit.address, ""] : fallbackLocation.lines }
+  const phone = unit?.phone ?? "(51) 99700-7846"
+  const email = unit?.email ?? "contato@djonacademy.com"
+  const instagram = unit?.instagram ?? "https://www.instagram.com/djonacademy"
+  const facebook = unit?.facebook ?? "https://www.facebook.com/djonacademy"
+  const openingHours = unit?.openingHours ?? "Segunda à sexta das 9h às 18h"
 
   useEffect(() => {
     store.getPublicUnits().then(setUnits).catch(() => undefined)
@@ -78,13 +84,13 @@ export function Footer() {
     setIsSubmitting(true)
     try {
       await store.submitLead({
-        firstName: formData.nome.trim() || undefined,
+        firstName: formData.nome.trim(),
         lastName: formData.sobrenome.trim() || undefined,
-        email: formData.email.trim(),
+        whatsapp: phoneDigits(formData.whatsapp),
         message: formData.mensagem.trim() || undefined,
         unitKey: selectedLocation,
       })
-      setFormData({ nome: "", sobrenome: "", email: "", mensagem: "" })
+      setFormData({ nome: "", sobrenome: "", whatsapp: "", mensagem: "" })
     } catch {
       // O cliente HTTP já apresenta o erro de forma padronizada.
     } finally {
@@ -149,8 +155,8 @@ export function Footer() {
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 <Phone className="w-4 h-4 text-djon-accent shrink-0" />
-                <a href="tel:+5551997007846" className="text-djon-text/60 text-sm hover:brightness-110 transition-colors">
-                  (51) 99700-7846
+                <a href={`tel:+55${phoneDigits(phone)}`} className="text-djon-text/60 text-sm hover:brightness-110 transition-colors">
+                  {phone}
                 </a>
               </motion.div>
               <motion.div
@@ -159,15 +165,15 @@ export function Footer() {
                 transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
               >
                 <Mail className="w-4 h-4 text-djon-accent shrink-0" />
-                <a href="mailto:contato@djonacademy.com" className="text-djon-text/60 text-sm hover:brightness-110 transition-colors">
-                  contato@djonacademy.com
+                <a href={`mailto:${email}`} className="text-djon-text/60 text-sm hover:brightness-110 transition-colors">
+                  {email}
                 </a>
               </motion.div>
             </div>
 
             <div className="flex gap-3 pt-2">
               <motion.a
-                href="https://www.instagram.com/djonacademy"
+                href={instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-djon-text/10 flex items-center justify-center text-djon-text hover:brightness-110 transition-colors"
@@ -177,7 +183,7 @@ export function Footer() {
                 <Instagram className="w-4 h-4" />
               </motion.a>
               <motion.a
-                href="https://www.facebook.com/djonacademy"
+                href={facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-djon-text/10 flex items-center justify-center text-djon-text hover:brightness-110 transition-colors"
@@ -191,7 +197,7 @@ export function Footer() {
             {/* Visit info */}
             <div className="bg-djon-text/5 border border-djon-text/10 rounded-2xl p-5 space-y-2">
               <p className="text-djon-accent font-black text-xs tracking-widest">VISITE</p>
-              <p className="text-djon-text/60 text-sm">Segunda à sexta das 9h às 18h</p>
+              <p className="text-djon-text/60 text-sm">{openingHours}</p>
               <p className="text-djon-text/60 text-sm">{location.lines[0]}</p>
               <p className="text-djon-text/60 text-sm">{location.lines[1]}</p>
             </div>
@@ -215,9 +221,10 @@ export function Footer() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <motion.div whileFocus={{ scale: 1.01 }}>
-                    <label className="block text-xs text-djon-text/50 mb-1">Nome</label>
+                    <label className="block text-xs text-djon-text/50 mb-1">Nome *</label>
                     <input
                       type="text"
+                      required
                       value={formData.nome}
                       onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                       placeholder="Seu nome"
@@ -236,13 +243,17 @@ export function Footer() {
                   </motion.div>
                 </div>
                 <div>
-                  <label className="block text-xs text-djon-text/50 mb-1">Email *</label>
+                  <label className="block text-xs text-djon-text/50 mb-1">WhatsApp *</label>
                   <input
-                    type="email"
+                    type="tel"
                     required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="seu@email.com"
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: formatPhone(e.target.value) })}
+                    placeholder="(51) 99999-0000"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    minLength={14}
+                    maxLength={15}
                     className="w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text placeholder:text-djon-text/30 text-sm focus:outline-none focus:border-djon-accent transition-all duration-300"
                   />
                 </div>
@@ -303,8 +314,8 @@ export function Footer() {
           </p>
 
           <div className="flex gap-4">
-            <a href="https://www.instagram.com/djonacademy" target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:brightness-110 text-xs transition-colors">Instagram</a>
-            <a href="https://www.facebook.com/djonacademy" target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:brightness-110 text-xs transition-colors">Facebook</a>
+            <a href={instagram} target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:brightness-110 text-xs transition-colors">Instagram</a>
+            <a href={facebook} target="_blank" rel="noopener noreferrer" className="text-djon-text/40 hover:brightness-110 text-xs transition-colors">Facebook</a>
           </div>
         </motion.div>
       </div>

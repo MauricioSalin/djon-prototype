@@ -1,16 +1,21 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Trash2, MapPin, Clock, Instagram, Music2, X, Edit2 } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
+import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
+import {
+  EVENTS_HERO_SECTIONS,
+  PROFESSOR_EVENTS_HERO,
+  STUDENT_EVENTS_HERO,
+} from "@/lib/portal-hero-groups"
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 40 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
   viewport: { once: true, amount: 0 },
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 })
@@ -78,40 +83,22 @@ export default function StudentEventPage() {
 
   const fmt = (date: string) =>
     new Date(date + "T00:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "long", year: "numeric" })
+  const professorView = store.getCurrentUser()?.role === "professor"
+  const heroKey = professorView ? "professor-events" : "student-events"
+  const heroDefaults = professorView
+    ? PROFESSOR_EVENTS_HERO
+    : STUDENT_EVENTS_HERO
 
   return (
     <div className="bg-djon-page">
 
-      {/* ── HERO ───────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-20 sm:py-28 md:py-32">
-        <div className="absolute inset-0 z-0">
-          <Image src="/images/mural-hero.png" alt="" fill className="object-cover opacity-30" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
-          <div className="absolute inset-0 bg-gradient-to-t from-djon-black via-transparent to-transparent" />
-        </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
-          <div>
-            <div>
-              <motion.span className="block text-djon-accent text-xs tracking-[0.25em] font-black uppercase mb-4" {...fadeUp(0.1)}>
-                MEUS EVENTOS
-              </motion.span>
-              <motion.h1
-                className="djon-hero-title font-black text-djon-text"
-                {...fadeUp(0.2)}
-              >
-                Onde Você<br />
-                <span style={{ color: "var(--djon-color-accent)", WebkitTextStroke: "2px var(--djon-color-page)", paintOrder: "stroke fill", letterSpacing: "0.04em" }}>
-                  Vai Tocar.
-                </span>
-              </motion.h1>
-              <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-4" {...fadeUp(0.3)} />
-              <motion.p className="text-djon-text/40 text-base max-w-md leading-relaxed mt-4" {...fadeUp(0.35)}>
-                Divulgue seus shows no mural da comunidade e marque sua presença na cena.
-              </motion.p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <EditablePortalHero
+        heroKey={heroKey}
+        defaults={heroDefaults}
+        bannerKey="mural"
+        editorSections={EVENTS_HERO_SECTIONS}
+        accentLines={[1]}
+      />
 
       {/* ── FORM MODAL ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
@@ -229,8 +216,8 @@ export default function StudentEventPage() {
               {upcomingPagination.paginatedItems.map((ev, i) => (
                 <motion.div key={ev.id}
                   className="bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all group"
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
                   viewport={{ once: true, amount: 0 }}
                   transition={{ delay: i * 0.07, duration: 0.6 }}
                   whileHover={{ y: -4 }}

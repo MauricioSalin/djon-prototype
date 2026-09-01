@@ -1,7 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Edit2, Headphones, Plus, Power, Save, X } from "lucide-react";
+import {
+  Edit2,
+  Headphones,
+  Plus,
+  Power,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
+import { useConfirmation } from "@/components/confirmation-provider";
 import { DjonSelect } from "@/components/djon-select";
 import {
   ListPagination,
@@ -41,6 +50,7 @@ const formatAvailabilityDateTime = (value: string) => {
 };
 
 export default function EquipmentsAdminPage() {
+  const { confirm } = useConfirmation();
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [form, setForm] = useState<EquipmentForm>(empty);
@@ -96,6 +106,17 @@ export default function EquipmentsAdminPage() {
     setEditingId(null);
     setForm(empty);
     await load();
+  };
+
+  const remove = async (equipment: Equipment) => {
+    const confirmed = await confirm({
+      title: "Remover equipamento?",
+      description: `${equipment.name} deixará de aparecer para novos agendamentos. Você poderá desfazer pelo aviso exibido em seguida.`,
+      confirmLabel: "REMOVER",
+    });
+    if (confirmed) {
+      await store.deactivateEquipment(equipment.id, { onChange: sync });
+    }
   };
 
   const openAvailability = (equipment: Equipment) => {
@@ -189,10 +210,21 @@ export default function EquipmentsAdminPage() {
                 <button
                   onClick={() => openAvailability(equipment)}
                   aria-label={`Configurar indisponibilidade de ${equipment.name}`}
+                  title="Configurar indisponibilidade"
                   className="p-2 text-djon-warning-red opacity-60 transition-opacity hover:opacity-100"
                 >
                   <Power size={15} />
                 </button>
+                {equipment.active && (
+                  <button
+                    onClick={() => void remove(equipment)}
+                    aria-label={`Remover ${equipment.name}`}
+                    title="Remover equipamento"
+                    className="p-2 text-djon-warning-red opacity-60 transition-opacity hover:opacity-100"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
               <footer className="mt-4 border-t border-djon-text/8 pt-4">
                 <span

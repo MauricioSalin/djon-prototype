@@ -4,6 +4,8 @@ import { motion, useScroll, useTransform, useSpring } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { SplineScene } from "@/components/spline-scene"
+import { LandingEditButton } from "@/components/landing/landing-edit-button"
+import { useLandingSection } from "@/components/landing/landing-content-provider"
 
 
 const springConfig = { stiffness: 100, damping: 30, restDelta: 0.001 }
@@ -23,6 +25,7 @@ const fadeUpVariants = {
 
 
 export function HeroSection() {
+  const { data, canEdit, edit } = useLandingSection("hero")
   const ref = useRef(null)
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [splineLoaded, setSplineLoaded] = useState(false)
@@ -67,6 +70,7 @@ export function HeroSection() {
           alt="DJ ON Academy"
           fill
           className="object-cover opacity-30"
+          sizes="100vw"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
@@ -79,34 +83,17 @@ export function HeroSection() {
           {/* Text Content */}
           <motion.div className="space-y-6 relative z-20">
             <div className="space-y-1 overflow-hidden">
-              <motion.h1
-                style={{ x: textX1 }}
-                className="djon-hero-title font-black text-djon-text"
-              >
-                <motion.span
-                  variants={fadeUpVariants}
-                  initial="hidden"
-                  animate="visible"
-                  custom={1}
-                  className="inline-block"
+              {data.title.split("\n").map((line, index) => (
+                <motion.h1
+                  key={`${index}:${line}`}
+                  style={{ x: index % 2 === 0 ? textX1 : textX2 }}
+                  className={`djon-hero-title font-black ${index === 0 ? "text-djon-text" : "text-djon-accent"}`}
                 >
-                  SEU SONHO
-                </motion.span>
-              </motion.h1>
-              <motion.h1
-                style={{ x: textX2 }}
-                className="djon-hero-title font-black"
-              >
-                <motion.span
-                  variants={fadeUpVariants}
-                  initial="hidden"
-                  animate="visible"
-                  custom={2}
-                  className="inline-block text-djon-accent"
-                >
-                  COMEÇA AQUI!
-                </motion.span>
-              </motion.h1>
+                  <motion.span variants={fadeUpVariants} initial="hidden" animate="visible" custom={index + 1} className="inline-block">
+                    {line}
+                  </motion.span>
+                </motion.h1>
+              ))}
               <motion.p
                 variants={fadeUpVariants}
                 initial="hidden"
@@ -114,7 +101,7 @@ export function HeroSection() {
                 custom={3}
                 className="text-base md:text-lg text-djon-text/60 tracking-tight pt-3 max-w-md leading-relaxed"
               >
-                Nós somos a fronteira entre o sonho e a realização. Se o seu sonho é ser DJ ou Produtor Musical, a DJ ON Academy vai descomplicar tudo para você.
+                {data.description}
               </motion.p>
             </div>
 
@@ -171,7 +158,7 @@ export function HeroSection() {
               custom={5}
               className="flex flex-wrap gap-4 pt-2"
             >
-              {["Formação DJ", "Produção Musical", "Mentoria de Marketing", "Evento Showcase"].map((benefit, i) => (
+              {data.tags.map((benefit, i) => (
                 <motion.div
                   key={benefit}
                   className="flex items-center gap-2 text-xs text-djon-text/50"
@@ -228,6 +215,7 @@ export function HeroSection() {
 
 
       </div>
+      {canEdit ? <LandingEditButton onClick={edit} /> : null}
     </section>
   )
 }

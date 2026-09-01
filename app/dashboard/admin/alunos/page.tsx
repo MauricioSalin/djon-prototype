@@ -19,14 +19,12 @@ import {
   Building2,
 } from "lucide-react";
 import { store, type Unit, type User as AppUser } from "@/lib/store";
-import { SoundCloudIcon } from "@/components/social-icons";
 import { DjonSelect } from "@/components/djon-select";
 import {
   ListPagination,
   useListPagination,
 } from "@/components/list-pagination";
-import { formatPhone, phoneMatchesSearch } from "@/lib/phone";
-import { useConfirmation } from "@/components/confirmation-provider";
+import { formatPhone, phoneMatchesSearch, whatsappUrl } from "@/lib/phone";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 
 const inp =
@@ -55,7 +53,6 @@ const emptyForm: FormState = {
 };
 
 export default function AlunosPage() {
-  const { confirm } = useConfirmation();
   const [students, setStudents] = useState<AppUser[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,6 +60,10 @@ export default function AlunosPage() {
   const [search, setSearch] = useState("");
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [removingUser, setRemovingUser] = useState<AppUser | null>(null);
+  const [removalAction, setRemovalAction] = useState<
+    "deactivate" | "delete" | null
+  >(null);
 
   const load = () =>
     setStudents(store.getUsers().filter((u) => u.role === "student"));
@@ -75,6 +76,15 @@ export default function AlunosPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!removingUser || removalAction) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRemovingUser(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [removalAction, removingUser]);
 
   const openNew = () => {
     setForm({ ...emptyForm, unitId: units[0]?.id ?? "" });
@@ -127,13 +137,25 @@ export default function AlunosPage() {
     load();
   };
 
-  const handleDelete = async (user: AppUser) => {
-    const confirmed = await confirm({
-      title: "Desativar aluno?",
-      description: `${user.name} perderá o acesso à plataforma. Você poderá desfazer pelo aviso exibido em seguida.`,
-      confirmLabel: "DESATIVAR",
-    });
-    if (confirmed) await store.deleteUser(user.id, { onChange: load });
+  const handleDeactivate = async () => {
+    if (!removingUser || removalAction) return;
+    setRemovalAction("deactivate");
+    try {
+      await store.deleteUser(removingUser.id, { onChange: load });
+      setRemovingUser(null);
+    } finally {
+      setRemovalAction(null);
+    }
+  };
+  const handlePermanentDelete = async () => {
+    if (!removingUser || removalAction) return;
+    setRemovalAction("delete");
+    try {
+      await store.permanentlyDeleteUser(removingUser.id, { onChange: load });
+      setRemovingUser(null);
+    } finally {
+      setRemovalAction(null);
+    }
   };
   const handleRestore = async (id: string) => {
     await store.restoreUser(id);
@@ -393,6 +415,102 @@ export default function AlunosPage() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {removingUser && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(event) =>
+              event.target === event.currentTarget &&
+              !removalAction &&
+              setRemovingUser(null)
+            }
+          >
+            <motion.div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="remove-student-title"
+              aria-describedby="remove-student-description"
+              className="my-4 w-full max-w-md rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 shadow-2xl sm:my-6 sm:p-6"
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+            >
+              <div className="mb-5 flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-djon-warning-red/10 text-djon-warning-red">
+                    <Trash2 size={18} />
+                  </span>
+                  <div>
+                    <p className="mb-1 text-xs font-black uppercase tracking-widest text-djon-warning-red">
+                      REMOVER ALUNO
+                    </p>
+                    <h2
+                      id="remove-student-title"
+                      className="text-xl font-black tracking-tighter text-djon-text"
+                    >
+                      O que deseja fazer?
+                    </h2>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Fechar remoção"
+                  onClick={() => setRemovingUser(null)}
+                  disabled={Boolean(removalAction)}
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100 disabled:cursor-not-allowed"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <p
+                id="remove-student-description"
+                className="mb-5 text-sm leading-relaxed text-djon-text/50"
+              >
+                {removingUser.active === false
+                  ? `${removingUser.name} já está desativado. A exclusão apaga definitivamente o cadastro e só é permitida quando não há histórico vinculado.`
+                  : `Escolha como remover ${removingUser.name}. Desativar bloqueia o acesso e pode ser desfeito. Excluir apaga definitivamente um cadastro criado por engano e só é permitido quando não há histórico vinculado.`}
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  autoFocus
+                  onClick={() => setRemovingUser(null)}
+                  disabled={Boolean(removalAction)}
+                  className="cursor-pointer flex-1 rounded-full border border-djon-text/15 py-3 text-xs font-black tracking-widest text-djon-text/60 transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  CANCELAR
+                </button>
+                {removingUser.active !== false && (
+                  <button
+                    type="button"
+                    onClick={() => void handleDeactivate()}
+                    disabled={Boolean(removalAction)}
+                    className="cursor-pointer flex-1 rounded-full border border-djon-warning-red/20 py-3 text-xs font-black tracking-widest text-djon-warning-red/70 transition-[filter,opacity] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {removalAction === "deactivate"
+                      ? "DESATIVANDO..."
+                      : "DESATIVAR"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => void handlePermanentDelete()}
+                  disabled={Boolean(removalAction)}
+                  className="cursor-pointer flex-1 rounded-full border border-transparent bg-djon-warning-red/80 py-3 text-xs font-black tracking-widest text-djon-text transition-[filter,opacity] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {removalAction === "delete" ? "EXCLUINDO..." : "EXCLUIR"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* List */}
       {filtered.length === 0 ? (
         <div className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-10 text-center">
@@ -407,8 +525,8 @@ export default function AlunosPage() {
             <motion.div
               key={u.id}
               className={`grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 px-4 py-4 sm:flex sm:items-center ${u.active === false ? "opacity-55" : ""}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: i * 0.04 }}
             >
               {/* Avatar */}
@@ -441,9 +559,15 @@ export default function AlunosPage() {
                   <span className="truncate">{u.email}</span>
                 </p>
                 {u.whatsapp && (
-                  <p className="text-djon-text/30 text-xs flex items-center gap-1.5 mt-1">
+                  <a
+                    href={whatsappUrl(u.whatsapp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Conversar com ${u.name} pelo WhatsApp`}
+                    className="mt-1 flex w-fit items-center gap-1.5 text-xs font-bold text-djon-text/30 transition-[filter] hover:brightness-110"
+                  >
                     <Phone size={10} /> {formatPhone(u.whatsapp)}
-                  </p>
+                  </a>
                 )}
                 {u.unitLabel && (
                   <p className="mt-1 flex items-center gap-1.5 text-xs text-djon-text/30">
@@ -451,28 +575,16 @@ export default function AlunosPage() {
                     {u.unitLabel}
                   </p>
                 )}
-                {(u.socials?.instagram || u.socials?.soundcloud) && (
+                {u.socials?.instagram && (
                   <div className="flex items-center gap-3 flex-wrap mt-2 pt-2 border-t border-djon-text/8">
-                    {u.socials?.instagram && (
-                      <a
-                        href={`https://instagram.com/${u.socials.instagram}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
-                      >
-                        <Instagram size={16} /> @{u.socials.instagram}
-                      </a>
-                    )}
-                    {u.socials?.soundcloud && (
-                      <a
-                        href={`https://soundcloud.com/${u.socials.soundcloud}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
-                      >
-                        <SoundCloudIcon size={20} /> {u.socials.soundcloud}
-                      </a>
-                    )}
+                    <a
+                      href={`https://instagram.com/${u.socials.instagram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-djon-text/30 text-xs font-bold transition-colors hover:text-djon-text"
+                    >
+                      <Instagram size={16} /> @{u.socials.instagram}
+                    </a>
                   </div>
                 )}
               </div>
@@ -500,7 +612,7 @@ export default function AlunosPage() {
                 </Link>
                 {u.active !== false ? (
                   <button
-                    onClick={() => void handleDelete(u)}
+                    onClick={() => setRemovingUser(u)}
                     className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
                     type="button"
                     title="Remover"
@@ -509,15 +621,26 @@ export default function AlunosPage() {
                     <Trash2 size={14} />
                   </button>
                 ) : (
-                  <button
-                    onClick={() => void handleRestore(u.id)}
-                    type="button"
-                    title="Restaurar"
-                    aria-label={`Restaurar ${u.name}`}
-                    className="cursor-pointer p-1.5 text-djon-accent transition-[filter] hover:brightness-110"
-                  >
-                    <RotateCcw size={14} />
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setRemovingUser(u)}
+                      className="cursor-pointer p-1.5 text-djon-text opacity-20 transition-opacity hover:opacity-100"
+                      type="button"
+                      title="Excluir"
+                      aria-label={`Excluir ${u.name}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => void handleRestore(u.id)}
+                      type="button"
+                      title="Restaurar"
+                      aria-label={`Restaurar ${u.name}`}
+                      className="cursor-pointer p-1.5 text-djon-accent transition-[filter] hover:brightness-110"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                  </>
                 )}
               </div>
             </motion.div>

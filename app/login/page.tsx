@@ -3,9 +3,10 @@
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, LogIn } from "lucide-react"
-import { store } from "@/lib/store"
+import { getDashboardHome, store } from "@/lib/store"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -23,11 +24,7 @@ export default function LoginPage() {
         : `/dashboard/perfil/${user.id}`
       const destination = user.passwordChangeRequired
         ? `${profileDestination}?changePassword=required`
-        : user.role === "admin"
-          ? "/dashboard/admin"
-          : user.role === "professor"
-            ? "/dashboard/professor"
-            : "/dashboard/student"
+        : getDashboardHome(user)
       router.push(destination)
     } catch {
       // O cliente HTTP já apresenta o erro de forma padronizada.
@@ -39,13 +36,13 @@ export default function LoginPage() {
   const fieldClass = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:brightness-110 transition-all"
 
   return (
-    <div className="min-h-svh flex flex-col items-center justify-[safe_center] px-4 py-8 sm:py-10 relative overflow-x-clip noise-overlay bg-djon-page">
+    <div className="min-h-svh flex flex-col items-center justify-center px-4 py-8 sm:py-10 relative overflow-x-clip noise-overlay bg-djon-page">
       <div className="absolute inset-0 z-0">
         <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-25" priority />
         <div className="absolute inset-0 bg-djon-black/75" />
       </div>
 
-      <button type="button" onClick={() => router.back()} className="absolute top-4 left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-6 sm:left-6">
+      <button type="button" onClick={() => router.push("/")} className="absolute top-4 left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-6 sm:left-6">
         <ArrowLeft size={14} />
         VOLTAR
       </button>
@@ -76,6 +73,11 @@ export default function LoginPage() {
             <div>
               <label className="text-djon-text/50 text-xs font-bold tracking-wide mb-2 block">SENHA</label>
               <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Sua senha" required minLength={8} autoComplete="current-password" className={fieldClass} />
+              <div className="mt-2 text-right">
+                <Link href="/recuperar-senha" className="text-xs font-bold text-djon-accent transition-opacity hover:opacity-70">
+                  ESQUECI MINHA SENHA
+                </Link>
+              </div>
             </div>
 
             <motion.button type="submit" disabled={loading} className="w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>

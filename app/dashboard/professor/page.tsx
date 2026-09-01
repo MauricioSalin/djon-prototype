@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { Calendar, Users, GraduationCap, Clock, Music2 } from "lucide-react";
 import {
+  canManageBooking,
+  canReviewBookings,
   hasPermission,
   store,
   type Booking,
@@ -19,10 +20,16 @@ import {
   type BookingWithUser,
 } from "@/components/booking-details-dialog";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
+import { UpcomingEventsSection } from "@/components/portal/upcoming-events-section";
+import {
+  HOME_HERO_SECTIONS,
+  PROFESSOR_HOME_HERO,
+} from "@/lib/portal-hero-groups";
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 40 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
   viewport: { once: true, amount: 0 },
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 });
@@ -38,6 +45,12 @@ const bookingStatusMeta = {
       "bg-djon-light-purple/10 border-djon-light-purple/20 text-djon-light-purple",
     dot: "bg-djon-light-purple",
     label: "Pendente",
+  },
+  recusado: {
+    badge:
+      "bg-djon-warning-red/10 border-djon-warning-red/20 text-djon-warning-red",
+    dot: "bg-djon-warning-red",
+    label: "Recusado",
   },
   cancelado: {
     badge:
@@ -113,7 +126,7 @@ export default function ProfessorHomePage() {
     .filter(
       (b) =>
         new Date(`${b.date}T${b.time}`) >= new Date() &&
-        b.status !== "cancelado",
+        b.status !== "cancelado" && b.status !== "recusado",
     )
     .sort(
       (a, b) =>
@@ -170,58 +183,19 @@ export default function ProfessorHomePage() {
 
   return (
     <div className="bg-djon-page">
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[70vh] flex items-center overflow-hidden">
-        {/* Background image + overlay */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/images/djon-showcase.png"
-            alt=""
-            fill
-            className="object-cover opacity-30"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 py-20 w-full sm:px-6 sm:py-24">
-          <div className="max-w-3xl">
-            <motion.span
-              className="inline-block text-djon-accent text-xs tracking-[0.2em] font-black uppercase mb-4"
-              {...fadeUp(0.1)}
-            >
-              PROFESSOR
-            </motion.span>
-
-            <motion.h1
-              className="djon-hero-title font-black text-djon-text mb-6"
-              {...fadeUp(0.2)}
-            >
-              {user.name.split(" ")[0]},<br />
-              <span
-                style={{
-                  color: "var(--djon-color-accent)",
-                  WebkitTextStroke: "2px var(--djon-color-page)",
-                  paintOrder: "stroke fill",
-                }}
-              >
-                pronto pra
-              </span>
-              <br />
-              ensinar?
-            </motion.h1>
-
-            <motion.p
-              className="text-djon-text/50 text-base leading-relaxed max-w-lg mb-8"
-              {...fadeUp(0.3)}
-            >
-              {upcoming.length > 0
-                ? `Você tem ${upcoming.length} agendamento${upcoming.length > 1 ? "s" : ""} próximo${upcoming.length > 1 ? "s" : ""}. Confira sua agenda.`
-                : "Nenhum agendamento próximo. Tudo tranquilo por enquanto."}
-            </motion.p>
-
-            <motion.div className="flex flex-wrap gap-3" {...fadeUp(0.4)}>
-              <Link href="/dashboard/agenda" className="w-full sm:w-auto">
+      <EditablePortalHero
+        heroKey="professor-home"
+        defaults={PROFESSOR_HOME_HERO}
+        bannerKey="admin-home"
+        editorSections={HOME_HERO_SECTIONS}
+        variables={{
+          nome: user.name.split(" ")[0],
+        }}
+        accentLines={[1]}
+        showDivider={false}
+      >
+        <div className="flex flex-wrap gap-3">
+          <Link href="/dashboard/agenda" className="w-full sm:w-auto">
                 <motion.div
                   className="relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-djon-accent px-6 py-3 text-sm font-black tracking-widest text-djon-ink group"
                   whileHover={{ scale: 1.03 }}
@@ -235,11 +209,11 @@ export default function ProfessorHomePage() {
                   <Calendar size={15} className="relative z-10" />
                   <span className="relative z-10">VER AGENDA</span>
                 </motion.div>
-              </Link>
-              <Link
-                href="/dashboard/professor/alunos"
-                className="w-full sm:w-auto"
-              >
+          </Link>
+          <Link
+            href="/dashboard/professor/alunos"
+            className="w-full sm:w-auto"
+          >
                 <motion.div
                   className="flex items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-6 py-3 text-sm font-black tracking-widest text-djon-text transition-[filter] hover:brightness-110"
                   whileHover={{ scale: 1.03 }}
@@ -248,11 +222,9 @@ export default function ProfessorHomePage() {
                   <Users size={15} />
                   MEUS ALUNOS
                 </motion.div>
-              </Link>
-            </motion.div>
-          </div>
+          </Link>
         </div>
-      </section>
+      </EditablePortalHero>
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
       <section className="py-16 bg-djon-muted-panel sm:py-20">
@@ -283,8 +255,8 @@ export default function ProfessorHomePage() {
               <motion.div
                 key={s.label}
                 className="bg-djon-surface-2 border border-djon-text/8 rounded-2xl p-6 hover:brightness-110 transition-all"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true, amount: 0 }}
                 transition={{ delay: i * 0.08, duration: 0.6 }}
                 whileHover={{ y: -4 }}
@@ -326,8 +298,8 @@ export default function ProfessorHomePage() {
             {quickLinks.map((q, i) => (
               <motion.div
                 key={q.href}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true, amount: 0 }}
                 transition={{ delay: i * 0.08, duration: 0.6 }}
               >
@@ -406,8 +378,8 @@ export default function ProfessorHomePage() {
                     onClick={() => setSelected({ ...b, student })}
                     aria-label={`Ver detalhes de ${b.title}`}
                     className="group cursor-pointer rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 text-left transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-djon-accent/70"
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
                     viewport={{ once: true, amount: 0 }}
                     transition={{
                       delay: i * 0.07,
@@ -456,12 +428,15 @@ export default function ProfessorHomePage() {
         </div>
       </section>
 
+      <UpcomingEventsSection />
+
       <AnimatePresence>
         {selected && (
           <BookingDetailsDialog
             bk={selected}
-            canEdit
-            canReview={hasPermission(user, "bookings.review")}
+            canEdit={canManageBooking(user, selected)}
+            canRemove={hasPermission(user, "bookings.manage")}
+            canReview={canReviewBookings(user)}
             units={units}
             professors={professors}
             equipments={equipments}

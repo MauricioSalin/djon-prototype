@@ -27,7 +27,7 @@ import {
   type NotificationKind,
 } from "@/lib/notification-kinds";
 import {
-  hasPermission,
+  canReviewBookings,
   store,
   type Booking,
   type Notification as PortalNotification,
@@ -57,14 +57,14 @@ export default function NotificationsPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const canReviewRequests = hasPermission(user, "bookings.review");
+  const canReviewRequests = canReviewBookings(user);
 
   const load = useCallback(async () => {
     const currentUser = store.getCurrentUser();
     setUser(currentUser);
     const [notificationItems, bookingItems] = await Promise.all([
       store.refreshNotifications(),
-      hasPermission(currentUser, "bookings.review")
+      canReviewBookings(currentUser)
         ? store.refreshBookings()
         : Promise.resolve(store.getBookings()),
     ]);
@@ -136,13 +136,11 @@ export default function NotificationsPage() {
   ) => {
     const confirmed = await confirm({
       title: "Recusar solicitação?",
-      description: `${request.title} será recusada e o aluno será informado. Você poderá desfazer pelo aviso exibido em seguida.`,
+      description: `${request.title} será recusada, permanecerá na agenda para histórico e o aluno será informado.`,
       confirmLabel: "RECUSAR",
     });
     if (!confirmed) return;
-    await store.cancelBooking(request.id, {
-      onChange: () => setBookings(store.getBookings()),
-    });
+    await store.updateBooking(request.id, { status: "recusado" });
     await markRead(notification);
     setBookings(store.getBookings());
   };
@@ -254,8 +252,8 @@ export default function NotificationsPage() {
                 <motion.div
                   key={notification.id}
                   layout
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0, x: 120 }}
                 >
                   <NotificationItem

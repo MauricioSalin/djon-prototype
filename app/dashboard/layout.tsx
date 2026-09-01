@@ -28,8 +28,14 @@ import {
   Headphones,
   Inbox,
   ArrowRight,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
 import {
+  canReviewBookings,
+  getDashboardHome,
+  getRequiredAdminPermission,
+  hasAllPermissions,
   hasPermission,
   store,
   SESSION_EXPIRED_EVENT,
@@ -38,7 +44,6 @@ import {
   type DJEvent,
   type Booking,
   type Material,
-  type Permission,
   type Notification as PortalNotification,
 } from "@/lib/store";
 import { useConfirmation } from "@/components/confirmation-provider";
@@ -46,12 +51,12 @@ import {
   NotificationItem,
   TrainingRequestActions,
 } from "@/components/notification-item";
-import { DashboardShellSkeleton } from "@/components/loading-skeletons";
 
 const studentNav = [
   { label: "Início", href: "/dashboard/student", icon: Home },
   { label: "Agenda", href: "/dashboard/student/agendar", icon: CalendarPlus },
   { label: "Meus Eventos", href: "/dashboard/student/evento", icon: Music2 },
+  { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
   {
     label: "Professores",
     href: "/dashboard/student/professores",
@@ -59,7 +64,6 @@ const studentNav = [
   },
   { label: "Material", href: "/dashboard/material", icon: BookOpen },
   { label: "Cursos", href: "/dashboard/turmas", icon: GraduationCap },
-  { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
 ];
 
 const adminNav = [
@@ -71,6 +75,7 @@ const adminNav = [
     icon: GraduationCap,
   },
   { label: "Eventos", href: "/dashboard/admin/eventos", icon: Music2 },
+  { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
   { label: "Contatos", href: "/dashboard/admin/leads", icon: Inbox },
   { label: "Unidades", href: "/dashboard/admin/unidades", icon: Building2 },
   {
@@ -82,13 +87,13 @@ const adminNav = [
   { label: "Material", href: "/dashboard/material", icon: BookOpen },
   { label: "Cursos", href: "/dashboard/cursos", icon: GraduationCap },
   { label: "Turmas", href: "/dashboard/turmas", icon: Users },
-  { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
 ];
 
 const professorNav = [
   { label: "Início", href: "/dashboard/professor", icon: Home },
   { label: "Agenda", href: "/dashboard/agenda", icon: Calendar },
   { label: "Meus Eventos", href: "/dashboard/professor/evento", icon: Music2 },
+  { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
   { label: "Alunos", href: "/dashboard/professor/alunos", icon: Users },
   {
     label: "Professores",
@@ -98,11 +103,10 @@ const professorNav = [
   { label: "Material", href: "/dashboard/material", icon: BookOpen },
   { label: "Cursos", href: "/dashboard/cursos", icon: GraduationCap },
   { label: "Turmas", href: "/dashboard/turmas", icon: Users },
-  { label: "Mural", href: "/dashboard/mural", icon: Newspaper },
 ];
 
 function getNav(user: StoreUser) {
-  if (user.role === "admin") return adminNav;
+  if (user.role === "admin" || hasAllPermissions(user)) return adminNav;
   if (user.role === "professor") {
     const managesUsers = hasPermission(user, "users.manage");
     const baseNavigation = professorNav.filter((item) => {
@@ -113,15 +117,12 @@ function getNav(user: StoreUser) {
       ) {
         return false;
       }
-      if (
-        item.href === "/dashboard/cursos" &&
-        !hasPermission(user, "courses.manage")
-      ) {
-        return false;
-      }
       return true;
     });
     const privileged = [
+      hasPermission(user, "admin.access")
+        ? { label: "Administração", href: "/dashboard/admin", icon: Home }
+        : null,
       managesUsers
         ? { label: "Alunos", href: "/dashboard/admin/alunos", icon: Users }
         : null,
@@ -132,15 +133,15 @@ function getNav(user: StoreUser) {
             icon: GraduationCap,
           }
         : null,
-      hasPermission(user, "bookings.manage")
-        ? {
-            label: "Novo Agendamento",
-            href: "/dashboard/admin/agendar",
-            icon: CalendarPlus,
-          }
-        : null,
       hasPermission(user, "leads.manage")
         ? { label: "Contatos", href: "/dashboard/admin/leads", icon: Inbox }
+        : null,
+      hasPermission(user, "events.manage")
+        ? {
+            label: "Eventos oficiais",
+            href: "/dashboard/admin/eventos",
+            icon: Music2,
+          }
         : null,
       hasPermission(user, "units.manage")
         ? {
@@ -182,6 +183,8 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { confirm } = useConfirmation();
   const [user, setUser] = useState<StoreUser | null>(null);
+  const [portalReady, setPortalReady] = useState(false);
+  const [bootstrapVersion, setBootstrapVersion] = useState(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -268,6 +271,7 @@ export default function DashboardLayout({
     const handleSessionExpired = () => {
       store.logout();
       setUser(null);
+      setPortalReady(false);
       setSessionError("Sua sessão expirou. Entre novamente.");
       router.replace("/login");
     };
@@ -285,8 +289,9 @@ export default function DashboardLayout({
 
   useEffect(() => {
     let active = true;
+    setSessionError("");
     store
-      .restoreSession(true)
+      .bootstrap(true)
       .then((authenticatedUser) => {
         if (!active) return;
         if (!authenticatedUser) {
@@ -294,21 +299,21 @@ export default function DashboardLayout({
           return;
         }
         setUser(authenticatedUser);
+        setPortalReady(true);
       })
       .catch((error) => {
         if (!active) return;
+        setPortalReady(false);
         setSessionError(
           error instanceof Error
             ? error.message
             : "Não foi possível carregar o portal.",
         );
-        store.logout();
-        router.replace("/login");
       });
     return () => {
       active = false;
     };
-  }, [pathname, router]);
+  }, [bootstrapVersion, router]);
 
   useEffect(() => {
     let active = true;
@@ -334,41 +339,28 @@ export default function DashboardLayout({
       router.replace(`${requiredProfilePath}?changePassword=required`);
       return;
     }
-    const delegatedAdminRoutes: Array<[string, Permission]> = [
-      ["/dashboard/admin/alunos", "users.manage"],
-      ["/dashboard/admin/professores", "users.manage"],
-      ["/dashboard/admin/leads", "leads.manage"],
-      ["/dashboard/admin/unidades", "units.manage"],
-      ["/dashboard/admin/equipamentos", "equipments.manage"],
-      ["/dashboard/admin/agendar", "bookings.manage"],
-      ["/dashboard/admin/auditoria", "audit.read"],
-    ];
-    const delegatedPermission = delegatedAdminRoutes.find(([prefix]) =>
-      pathname.startsWith(prefix),
-    )?.[1];
+    const delegatedPermission = getRequiredAdminPermission(pathname);
     if (
       pathname.startsWith("/dashboard/admin") &&
       user.role !== "admin" &&
       (!delegatedPermission || !hasPermission(user, delegatedPermission))
     ) {
       router.replace(
-        user.role === "professor"
-          ? "/dashboard/professor"
-          : "/dashboard/student",
+        getDashboardHome(user),
       );
     } else if (
       pathname.startsWith("/dashboard/professor") &&
       user.role !== "professor"
     ) {
       router.replace(
-        user.role === "admin" ? "/dashboard/admin" : "/dashboard/student",
+        getDashboardHome(user),
       );
     } else if (
       pathname.startsWith("/dashboard/student") &&
       user.role !== "student"
     ) {
       router.replace(
-        user.role === "admin" ? "/dashboard/admin" : "/dashboard/professor",
+        getDashboardHome(user),
       );
     } else if (pathname === "/dashboard/agenda" && user.role === "student") {
       router.replace("/dashboard/student/agendar");
@@ -707,12 +699,22 @@ export default function DashboardLayout({
     }, 250);
   }, []);
 
-  if (!user) {
-    if (!sessionError) return <DashboardShellSkeleton />;
+  if (!user || !portalReady) {
+    if (!sessionError) return <div className="min-h-svh bg-djon-page" />;
 
     return (
-      <div className="min-h-screen bg-djon-page flex items-center justify-center text-djon-text/50 text-sm">
-        {sessionError}
+      <div className="flex min-h-screen flex-col items-center justify-center bg-djon-page px-4 text-center">
+        <p className="max-w-md text-sm font-bold text-djon-text/50">
+          {sessionError}
+        </p>
+        <button
+          type="button"
+          onClick={() => setBootstrapVersion((version) => version + 1)}
+          className="mt-6 inline-flex items-center gap-2 rounded-full bg-djon-accent px-5 py-3 text-xs font-black text-djon-ink transition-opacity hover:opacity-80"
+        >
+          <RefreshCw size={14} />
+          TENTAR NOVAMENTE
+        </button>
       </div>
     );
   }
@@ -749,11 +751,12 @@ export default function DashboardLayout({
     if (!request) return;
     const confirmed = await confirm({
       title: "Recusar solicitação?",
-      description: `${request.title} será recusada e o aluno será informado. Você poderá desfazer pelo aviso exibido em seguida.`,
+      description: `${request.title} será recusada, permanecerá na agenda para histórico e o aluno será informado.`,
       confirmLabel: "RECUSAR",
     });
     if (confirmed) {
-      await store.cancelBooking(id, { onChange: syncPendingRequests });
+      await store.updateBooking(id, { status: "recusado" });
+      syncPendingRequests();
       if (notification) await handleReadNotification(notification);
     }
   };
@@ -798,7 +801,7 @@ export default function DashboardLayout({
       : user.role === "professor"
         ? "Professor"
         : "Aluno";
-  const canReviewRequests = hasPermission(user, "bookings.review");
+  const canReviewRequests = canReviewBookings(user);
   const unreadNotifications = notifications.filter(
     (notification) => !notification.readAt,
   );
@@ -919,7 +922,7 @@ export default function DashboardLayout({
                       .catch(() => undefined);
                     if (canReviewRequests) void loadPendingRequests();
                   }}
-                  className={`relative flex size-11 cursor-pointer items-center justify-center rounded-full transition-all ${notificationsOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
+                  className="relative flex size-11 cursor-pointer items-center justify-center rounded-full text-djon-text transition-all hover:opacity-40"
                   aria-label="Notificações"
                 >
                   <Bell size={16} />
@@ -1267,7 +1270,7 @@ export default function DashboardLayout({
                   className="flex size-11 cursor-pointer items-center justify-center gap-0 rounded-full border border-djon-text/10 bg-djon-text/6 p-0 transition-all hover:brightness-110 min-[360px]:h-auto min-[360px]:min-h-11 min-[360px]:w-auto min-[360px]:gap-2 min-[360px]:py-1.5 min-[360px]:pl-1.5 min-[360px]:pr-2 sm:gap-2.5 sm:pr-3"
                   whileTap={{ scale: 0.97 }}
                 >
-                  <div className="djon-avatar-fallback w-8 h-8 rounded-full border border-djon-accent flex items-center justify-center overflow-hidden shrink-0">
+                  <div className="djon-avatar-fallback w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
                     {user.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -1313,12 +1316,20 @@ export default function DashboardLayout({
                         </p>
                       </div>
                       <Link
+                        href="/"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-djon-text opacity-60 text-xs font-bold tracking-wide transition-opacity hover:opacity-100"
+                      >
+                        <ExternalLink size={13} />
+                        Acessar site
+                      </Link>
+                      <Link
                         href={perfilHref}
                         onClick={() => setDropdownOpen(false)}
                         className="flex items-center gap-3 px-4 py-2.5 text-djon-text opacity-60 text-xs font-bold tracking-wide transition-opacity hover:opacity-100"
                       >
                         <User size={13} />
-                        Editar Perfil
+                        Meu perfil
                       </Link>
                       <button
                         onClick={handleLogout}

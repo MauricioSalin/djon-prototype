@@ -16,7 +16,8 @@ import {
   X,
 } from "lucide-react";
 import {
-  hasPermission,
+  canAuthorMaterials,
+  canEditMaterial,
   store,
   type Material,
   type MaterialAttachment,
@@ -31,8 +32,8 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { usePageTitle } from "@/components/page-title-manager";
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 28 },
-  animate: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
   transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 });
 
@@ -112,7 +113,7 @@ export default function NovoMaterialPage() {
       router.replace("/login");
       return;
     }
-    if (!hasPermission(currentUser, "materials.manage")) {
+    if (!canAuthorMaterials(currentUser)) {
       router.replace("/dashboard/material");
       return;
     }
@@ -139,10 +140,7 @@ export default function NovoMaterialPage() {
       store
         .fetchMaterialById(materialId)
         .then((material) => {
-          if (
-            currentUser.role !== "admin" &&
-            material.authorId !== currentUser.id
-          ) {
+          if (!canEditMaterial(currentUser, material)) {
             router.replace("/dashboard/material");
             return;
           }
@@ -215,6 +213,9 @@ export default function NovoMaterialPage() {
   const primaryStatus: Material["status"] = isEditingDraft
     ? "published"
     : editingStatus;
+  const hasRequiredPublishingData = Boolean(
+    title.trim() && (courseId || category),
+  );
 
   useEffect(() => {
     dirtyRef.current = isDirty;
@@ -395,7 +396,7 @@ export default function NovoMaterialPage() {
     destination?: string | "back",
   ) => {
     if (!user) return false;
-    if (status === "published" && (!title.trim() || !category)) {
+    if (status === "published" && !hasRequiredPublishingData) {
       notifyError(
         "Preencha os dados obrigatórios",
         "Informe o título e a categoria antes de publicar o material.",
@@ -524,7 +525,7 @@ export default function NovoMaterialPage() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 sm:pb-24">
+      <main className="mx-auto max-w-7xl px-4 pt-6 pb-20 sm:px-6 sm:pb-24">
         <motion.div
           className="grid gap-6 items-start lg:grid-cols-[minmax(0,1fr)_320px]"
           {...fadeUp(0.2)}
@@ -656,7 +657,7 @@ export default function NovoMaterialPage() {
                   disabled={
                     saving ||
                     (primaryStatus === "published" &&
-                      (!title.trim() || !category))
+                      !hasRequiredPublishingData)
                   }
                   className="cursor-pointer w-full bg-djon-accent disabled:opacity-40 disabled:cursor-not-allowed text-djon-ink font-black text-sm tracking-widest py-3.5 rounded-full transition-[filter] hover:brightness-90"
                 >
@@ -844,7 +845,7 @@ export default function NovoMaterialPage() {
                     saving ||
                     (editingStatus === "published" &&
                       Boolean(editingId) &&
-                      (!title.trim() || !category))
+                      !hasRequiredPublishingData)
                   }
                   className="cursor-pointer rounded-full bg-djon-accent px-4 py-3 text-xs font-black tracking-wider text-djon-ink transition-[filter] hover:brightness-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >

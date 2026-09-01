@@ -1,20 +1,36 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   CalendarDays,
   Check,
   ChevronLeft,
+  Pencil,
+  GraduationCap,
   Search,
+  Save,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
-import { CohortDetailDialog } from "@/components/cohort-detail-dialog";
+import {
+  canManageCohort,
+  CohortDetailView,
+} from "@/components/cohort-detail-dialog";
 import { DjonSelect } from "@/components/djon-select";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
+import {
+  COURSES_HERO_SECTIONS,
+  STAFF_COURSES_HERO,
+  STUDENT_COURSES_HERO,
+} from "@/lib/portal-hero-groups";
 import {
   ApiError,
+  hasPermission,
   store,
   type Cohort,
   type CohortScheduleConflict,
@@ -32,6 +48,17 @@ const durationOptions = [
   { value: "90", label: "1h30" },
 ];
 
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
+  viewport: { once: true, amount: 0.15 },
+  transition: {
+    duration: 0.55,
+    ease: [0.25, 0.4, 0.25, 1] as const,
+    delay,
+  },
+});
+
 type CohortForm = {
   name: string;
   courseId: string;
@@ -45,6 +72,7 @@ type CohortForm = {
 
 type LessonForm = { materialId: string; date: string; time: string };
 type StudentFilter = "all" | "selected" | "unselected";
+type CohortStatusFilter = "all" | Cohort["status"];
 
 const emptyCohort: CohortForm = {
   name: "",
@@ -66,6 +94,129 @@ function formatConflictDate(date: string) {
   return year && month && day ? `${day}/${month}/${year}` : date;
 }
 
+function CourseArtwork({ course }: { course?: Course }) {
+  const [imageError, setImageError] = useState(false);
+
+  if (course?.coverImage && !imageError) {
+    return (
+      <Image
+        loader={({ src }) => src}
+        unoptimized
+        src={course.coverImage}
+        alt={`Capa do curso ${course.name}`}
+        fill
+        sizes="(max-width: 768px) 100vw, 50vw"
+        className="object-cover transition-transform duration-500 group-hover:scale-105"
+        onError={() => setImageError(true)}
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-djon-surface to-djon-muted-panel">
+      <div className="flex size-14 items-center justify-center rounded-2xl bg-djon-accent/10">
+        <GraduationCap size={27} className="text-djon-accent" />
+      </div>
+    </div>
+  );
+}
+
+function CohortCard({
+  cohort,
+  course,
+  showProgress,
+  index,
+  canManage,
+  onOpen,
+  onEdit,
+  onDelete,
+}: {
+  cohort: Cohort;
+  course?: Course;
+  showProgress: boolean;
+  index: number;
+  canManage?: boolean;
+  onOpen: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}) {
+  const statusLabel =
+    cohort.status === "ativa"
+      ? "ATIVA"
+      : cohort.status === "concluida"
+        ? "CONCLUÍDA"
+        : "EM CONFIGURAÇÃO";
+
+  return (
+    <motion.article
+      className="group relative overflow-hidden rounded-2xl border border-djon-text/8 bg-djon-surface-2 text-left transition-all hover:border-djon-accent/30 hover:brightness-105 focus-within:ring-2 focus-within:ring-djon-accent/70"
+      {...fadeUp(index * 0.05)}
+      whileHover={{ y: -4 }}
+    >
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Abrir turma ${cohort.name}`}
+        className="absolute inset-0 z-10 cursor-pointer focus-visible:outline-none"
+      />
+      <div className="relative h-40 overflow-hidden bg-djon-muted-panel">
+        <CourseArtwork course={course} />
+        <div className="absolute inset-0 bg-gradient-to-t from-djon-black/75 via-transparent to-transparent" />
+        <div className="absolute left-4 top-4 z-20 flex items-center gap-1.5">
+          {canManage ? (
+            <>
+              <button
+                type="button"
+                onClick={onEdit}
+                aria-label={`Editar turma ${cohort.name}`}
+                title="Editar turma"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-djon-page/80 text-djon-accent backdrop-blur-sm transition-[filter] hover:brightness-110"
+              >
+                <Pencil size={12} />
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                aria-label={`Excluir turma ${cohort.name}`}
+                title="Excluir turma"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-djon-page/80 text-djon-warning-red backdrop-blur-sm transition-[filter] hover:brightness-110"
+              >
+                <Trash2 size={12} />
+              </button>
+            </>
+          ) : null}
+          <span className="rounded-full border border-djon-text/10 bg-djon-page/80 px-2.5 py-1 text-djon-caption font-black tracking-widest text-djon-text/60 backdrop-blur-sm">
+            {statusLabel}
+          </span>
+        </div>
+      </div>
+      <div className="p-5">
+        <p className="text-xs font-black text-djon-accent">
+          {cohort.courseName ?? course?.name ?? "Curso"}
+        </p>
+        <h3 className="mt-1 text-xl font-black tracking-tight text-djon-text">
+          {cohort.name}
+        </h3>
+        <p className="mt-2 text-xs text-djon-text/40">
+          {[cohort.professorName, cohort.unitLabel].filter(Boolean).join(" · ")}
+        </p>
+        <div className="mt-5 h-2 overflow-hidden rounded-full bg-djon-text/8">
+          <div
+            className="h-full rounded-full bg-djon-accent"
+            style={{ width: `${cohort.progress.percent}%` }}
+          />
+        </div>
+        <div className="mt-2 flex justify-between gap-3 text-[11px] font-bold text-djon-text/35">
+          <span>
+            {cohort.lessonCount} aulas · {cohort.durationMinutes} min
+          </span>
+          {showProgress ? <span>{cohort.progress.percent}%</span> : null}
+        </div>
+      </div>
+    </motion.article>
+  );
+}
+
 export function CohortManagementPage() {
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -77,6 +228,9 @@ export function CohortManagementPage() {
   const [cohortForm, setCohortForm] = useState<CohortForm>(emptyCohort);
   const [studentSearch, setStudentSearch] = useState("");
   const [studentFilter, setStudentFilter] = useState<StudentFilter>("all");
+  const [cohortSearch, setCohortSearch] = useState("");
+  const [cohortStatus, setCohortStatus] =
+    useState<CohortStatusFilter>("all");
   const [newCohort, setNewCohort] = useState<CohortForm | null>(null);
   const [configuring, setConfiguring] = useState<Cohort | null>(null);
   const [lessonForms, setLessonForms] = useState<LessonForm[]>([]);
@@ -84,9 +238,13 @@ export function CohortManagementPage() {
     CohortScheduleConflict[]
   >([]);
   const [detail, setDetail] = useState<Cohort | null>(null);
+  const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [deletingCohort, setDeletingCohort] = useState<Cohort | null>(null);
   const [saving, setSaving] = useState(false);
 
   const canCreateCohort = user?.role === "admin" || user?.role === "professor";
+  const canManageAllCourses = hasPermission(user, "courses.manage");
   const users = store.getUsers();
   const units = store.getUnits().filter((unit) => unit.active);
   const equipments = store
@@ -116,14 +274,15 @@ export function CohortManagementPage() {
   const openCohort = () => {
     if (!user) return;
     const unitId =
-      user.role === "professor"
+      user.role === "professor" && !canManageAllCourses
         ? (user.unitId ?? "")
         : (units.find((unit) => unit.key === "poa")?.id ?? units[0]?.id ?? "");
     setCohortForm({
       ...emptyCohort,
       courseId: courses.find((course) => course.active)?.id ?? "",
       unitId,
-      professorId: user.role === "professor" ? user.id : "",
+      professorId:
+        user.role === "professor" && !canManageAllCourses ? user.id : "",
       equipmentId:
         equipments.find((equipment) => equipment.unitId === unitId)?.id ?? "",
     });
@@ -180,6 +339,49 @@ export function CohortManagementPage() {
           material.status === "published",
       ),
     [lessonConfiguration?.courseId, materials],
+  );
+  const courseById = useMemo(
+    () => new Map(courses.map((course) => [course.id, course])),
+    [courses],
+  );
+  const enrolledCourseIds = useMemo(
+    () => new Set(cohorts.map((cohort) => cohort.courseId)),
+    [cohorts],
+  );
+  const inProgressCohorts = useMemo(
+    () => cohorts.filter((cohort) => cohort.status !== "concluida"),
+    [cohorts],
+  );
+  const completedCohorts = useMemo(
+    () => cohorts.filter((cohort) => cohort.status === "concluida"),
+    [cohorts],
+  );
+  const visibleManagedCohorts = useMemo(() => {
+    const search = cohortSearch.trim().toLocaleLowerCase("pt-BR");
+    return cohorts.filter((cohort) => {
+      const matchesStatus =
+        cohortStatus === "all" || cohort.status === cohortStatus;
+      const matchesSearch =
+        !search ||
+        [
+          cohort.name,
+          cohort.courseName,
+          cohort.professorName,
+          cohort.unitLabel,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("pt-BR")
+          .includes(search);
+      return matchesStatus && matchesSearch;
+    });
+  }, [cohortSearch, cohortStatus, cohorts]);
+  const possibleCourses = useMemo(
+    () =>
+      courses.filter(
+        (course) => course.active && !enrolledCourseIds.has(course.id),
+      ),
+    [courses, enrolledCourseIds],
   );
 
   const saveCohort = (event: React.FormEvent) => {
@@ -288,81 +490,436 @@ export function CohortManagementPage() {
     setDetail(await store.fetchCohort(cohort.id));
   };
 
+  const openEditCohort = (cohort: Cohort) => {
+    setEditingCohort(cohort);
+    setEditingName(cohort.name);
+  };
+
+  const saveEditedCohort = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingCohort || !editingName.trim()) return;
+    setSaving(true);
+    try {
+      const updated = await store.updateCohort(editingCohort.id, {
+        name: editingName.trim(),
+      });
+      setCohorts((items) =>
+        items.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setDetail((current) =>
+        current?.id === updated.id ? updated : current,
+      );
+      setEditingCohort(null);
+    } catch (error) {
+      notifyRequestError(error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmDeleteCohort = async () => {
+    if (!deletingCohort) return;
+    setSaving(true);
+    try {
+      await store.deleteCohort(deletingCohort.id);
+      setCohorts((items) =>
+        items.filter((item) => item.id !== deletingCohort.id),
+      );
+      setDetail((current) =>
+        current?.id === deletingCohort.id ? null : current,
+      );
+      setDeletingCohort(null);
+    } catch (error) {
+      notifyRequestError(error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <DashboardPageSkeleton variant="cohorts" rows={4} />;
+  const overview = !detail;
+  const studentOverview = user?.role === "student" && overview;
+  const heroKey = user?.role === "student" ? "student-courses" : "staff-courses";
+  const heroDefaults =
+    user?.role === "student" ? STUDENT_COURSES_HERO : STAFF_COURSES_HERO;
 
   return (
-    <main className="mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 sm:py-10">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-bold text-djon-accent">DJ ON ACADEMY</p>
-          <h1 className="text-3xl font-black tracking-tighter text-djon-text">
-            {user?.role === "student" ? "Cursos" : "Turmas"}
-          </h1>
-        </div>
-        {canCreateCohort && (
-          <button
-            type="button"
-            onClick={openCohort}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-djon-accent px-5 text-xs font-black text-djon-ink transition-[filter] hover:brightness-90"
-          >
-            <Users size={13} /> NOVA TURMA
-          </button>
-        )}
-      </header>
+    <div className="min-h-screen bg-djon-page">
+      {overview && user ? (
+        <EditablePortalHero
+          heroKey={heroKey}
+          defaults={heroDefaults}
+          bannerKey="student-courses"
+          editorSections={COURSES_HERO_SECTIONS}
+        />
+      ) : null}
 
-      <section>
-        {user?.role === "student" ? (
-          <h2 className="mb-3 text-lg font-black text-djon-text">Andamento</h2>
-        ) : null}
-        <div className="grid gap-4 md:grid-cols-2">
-          {cohorts.map((cohort) => (
-            <button
-              key={cohort.id}
-              type="button"
-              onClick={() => void openDetail(cohort)}
-              className="rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 text-left transition-colors hover:border-djon-accent/25"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-black text-djon-accent">
-                    {cohort.courseName}
+      <main
+        className={
+          studentOverview
+            ? "mx-auto max-w-7xl space-y-12 px-4 py-12 sm:px-6 sm:py-16"
+            : "mx-auto max-w-6xl space-y-8 px-4 py-8 sm:px-6 sm:py-10"
+        }
+      >
+        {detail ? (
+          <>
+            <header>
+              <p className="text-xs font-black text-djon-accent">
+                {detail.courseName}
+              </p>
+              <h1 className="mt-1 text-3xl font-black tracking-tighter text-djon-text">
+                {detail.name}
+              </h1>
+              <p className="mt-2 text-sm text-djon-text/40">
+                {[
+                  detail.professorName,
+                  detail.unitLabel,
+                  detail.equipmentName,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </header>
+            <CohortDetailView
+              cohort={detail}
+              currentUser={user}
+              onBack={() => setDetail(null)}
+              onUpdated={(updated) => {
+                setDetail(updated);
+                setCohorts((items) =>
+                  items.map((item) =>
+                    item.id === updated.id ? updated : item,
+                  ),
+                );
+              }}
+              onConfigure={(cohort) => {
+                setNewCohort(null);
+                setConfiguring(cohort);
+                setLessonForms(
+                  Array.from({ length: cohort.lessonCount }, () => ({
+                    materialId: "",
+                    date: "",
+                    time: "",
+                  })),
+                );
+                setScheduleConflicts([]);
+                setDetail(null);
+              }}
+              onEdit={openEditCohort}
+              onDelete={setDeletingCohort}
+            />
+          </>
+        ) : user?.role === "student" ? (
+          <>
+            <section>
+              <motion.div className="mb-7" {...fadeUp()}>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-djon-accent">
+                  SUA JORNADA
+                </p>
+                <h2 className="mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl">
+                  Em andamento
+                </h2>
+                <div className="mt-3 h-[3px] w-10 rounded-full bg-djon-accent" />
+              </motion.div>
+              <div className="grid gap-5 md:grid-cols-2">
+                {inProgressCohorts.map((cohort, index) => (
+                  <CohortCard
+                    key={cohort.id}
+                    cohort={cohort}
+                    course={courseById.get(cohort.courseId)}
+                    showProgress
+                    index={index}
+                    onOpen={() => void openDetail(cohort)}
+                  />
+                ))}
+                {!inProgressCohorts.length ? (
+                  <div className="rounded-2xl border-2 border-dashed border-djon-text/10 p-10 text-center text-sm text-djon-text/35 md:col-span-2">
+                    Você ainda não possui um curso em andamento.
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="border-t border-djon-text/8 pt-12">
+              <motion.div className="mb-7" {...fadeUp()}>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-djon-accent">
+                  CONTINUE EVOLUINDO
+                </p>
+                <h2 className="mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl">
+                  Outros cursos
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-djon-text/40">
+                  Conheça as formações ativas configuradas pela equipe da DJ ON
+                  Academy que ainda não fazem parte da sua jornada.
+                </p>
+              </motion.div>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {possibleCourses.map((course, index) => (
+                  <motion.article
+                    key={course.id}
+                    className="group relative cursor-pointer overflow-hidden rounded-2xl border border-djon-text/8 bg-djon-surface-2 outline-none transition-all focus-within:border-djon-accent/50"
+                    {...fadeUp(index * 0.05)}
+                    whileHover={{ y: -4 }}
+                  >
+                    <Link
+                      href={`/dashboard/material?category=Cursos&course=${encodeURIComponent(course.id)}`}
+                      aria-label={`Acessar materiais do curso ${course.name}`}
+                      className="absolute inset-0 z-10 cursor-pointer"
+                    />
+                    <div className="relative h-44 overflow-hidden bg-djon-muted-panel">
+                      <CourseArtwork course={course} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-djon-black/70 via-transparent to-transparent" />
+                      <span className="absolute left-4 top-4 rounded-full border border-djon-accent/25 bg-djon-page/80 px-2.5 py-1 text-djon-caption font-black tracking-widest text-djon-accent backdrop-blur-sm">
+                        DISPONÍVEL
+                      </span>
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-xl font-black tracking-tight text-djon-text">
+                        {course.name}
+                      </h3>
+                      <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-djon-text/40">
+                        {course.description ||
+                          "Uma nova possibilidade para continuar sua formação na DJ ON Academy."}
+                      </p>
+                    </div>
+                  </motion.article>
+                ))}
+                {!possibleCourses.length ? (
+                  <div className="rounded-2xl border-2 border-dashed border-djon-text/10 p-10 text-center text-sm text-djon-text/35 sm:col-span-2 lg:col-span-3">
+                    Você já está matriculado em todos os cursos disponíveis.
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
+            {completedCohorts.length ? (
+              <section className="border-t border-djon-text/8 pt-12">
+                <motion.div className="mb-7" {...fadeUp()}>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-djon-accent">
+                    HISTÓRICO
                   </p>
-                  <h3 className="mt-1 text-lg font-black text-djon-text">
-                    {cohort.name}
-                  </h3>
-                  <p className="mt-2 text-xs text-djon-text/40">
-                    {cohort.professorName} · {cohort.unitLabel}
-                  </p>
+                  <h2 className="mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl">
+                    Concluídos
+                  </h2>
+                </motion.div>
+                <div className="grid gap-5 md:grid-cols-2">
+                  {completedCohorts.map((cohort, index) => (
+                    <CohortCard
+                      key={cohort.id}
+                      cohort={cohort}
+                      course={courseById.get(cohort.courseId)}
+                      showProgress
+                      index={index}
+                      onOpen={() => void openDetail(cohort)}
+                    />
+                  ))}
                 </div>
-                <span
-                  className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${cohort.status === "ativa" ? "border-djon-accent/25 bg-djon-accent/10 text-djon-accent" : "border-djon-yellow/25 bg-djon-yellow/10 text-djon-yellow"}`}
-                >
-                  {cohort.status.toUpperCase()}
-                </span>
-              </div>
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-djon-text/8">
-                <div
-                  className="h-full rounded-full bg-djon-accent"
-                  style={{ width: `${cohort.progress.percent}%` }}
+              </section>
+            ) : null}
+          </>
+        ) : (
+          <section>
+            <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center">
+              <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-djon-text/10 bg-djon-text/5 px-4 transition-colors focus-within:border-djon-accent/50">
+                <Search size={16} className="shrink-0 text-djon-text/30" />
+                <input
+                  type="search"
+                  value={cohortSearch}
+                  onChange={(event) => setCohortSearch(event.target.value)}
+                  placeholder="Buscar por turma, curso, professor ou unidade"
+                  aria-label="Buscar turmas"
+                  className="min-w-0 flex-1 bg-transparent text-sm text-djon-text outline-none placeholder:text-djon-text/25"
                 />
-              </div>
-              <div className="mt-2 flex justify-between text-[11px] font-bold text-djon-text/35">
-                <span>
-                  {cohort.lessonCount} aulas · {cohort.durationMinutes} min
-                </span>
-                {user?.role === "student" && (
-                  <span>{cohort.progress.percent}%</span>
-                )}
-              </div>
-            </button>
-          ))}
-          {!cohorts.length && (
-            <div className="rounded-2xl border-2 border-dashed border-djon-text/10 p-10 text-center text-sm text-djon-text/35">
-              Nenhuma turma disponível.
+              </label>
+              <DjonSelect
+                value={cohortStatus}
+                onChange={(value) =>
+                  setCohortStatus(value as CohortStatusFilter)
+                }
+                ariaLabel="Filtrar turmas por status"
+                className="h-11 lg:w-52"
+                options={[
+                  { value: "all", label: "Todos os status" },
+                  { value: "configuracao", label: "Em configuração" },
+                  { value: "ativa", label: "Ativas" },
+                  { value: "concluida", label: "Concluídas" },
+                ]}
+              />
+              {canCreateCohort ? (
+                <button
+                  type="button"
+                  onClick={openCohort}
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-djon-accent px-5 text-xs font-black text-djon-ink transition-[filter] hover:brightness-90"
+                >
+                  <Users size={13} /> NOVA TURMA
+                </button>
+              ) : null}
             </div>
-          )}
+            <div className="grid gap-4 md:grid-cols-2">
+              {visibleManagedCohorts.map((cohort) => {
+                const mayManageCohort = canManageCohort(user, cohort);
+                return (
+                <article
+                  key={cohort.id}
+                  className="relative rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 text-left transition-colors hover:border-djon-accent/25 focus-within:ring-2 focus-within:ring-djon-accent/70"
+                >
+                  <button
+                    type="button"
+                    onClick={() => void openDetail(cohort)}
+                    aria-label={`Abrir turma ${cohort.name}`}
+                    className="absolute inset-0 z-10 cursor-pointer rounded-2xl focus-visible:outline-none"
+                  />
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-black text-djon-accent">
+                        {cohort.courseName}
+                      </p>
+                      <h3 className="mt-1 text-lg font-black text-djon-text">
+                        {cohort.name}
+                      </h3>
+                      <p className="mt-2 text-xs text-djon-text/40">
+                        {cohort.professorName} · {cohort.unitLabel}
+                      </p>
+                    </div>
+                    <div className="relative z-20 flex shrink-0 items-center gap-1.5">
+                      {mayManageCohort ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openEditCohort(cohort)}
+                            aria-label={`Editar turma ${cohort.name}`}
+                            title="Editar turma"
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-djon-accent/10 text-djon-accent transition-[filter] hover:brightness-110"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingCohort(cohort)}
+                            aria-label={`Excluir turma ${cohort.name}`}
+                            title="Excluir turma"
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-djon-warning-red/10 text-djon-warning-red transition-[filter] hover:brightness-110"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      ) : null}
+                      <span
+                        className={`rounded-full border px-2.5 py-1 text-[10px] font-black ${cohort.status === "ativa" ? "border-djon-accent/25 bg-djon-accent/10 text-djon-accent" : "border-djon-yellow/25 bg-djon-yellow/10 text-djon-yellow"}`}
+                      >
+                        {cohort.status.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-5 h-2 overflow-hidden rounded-full bg-djon-text/8">
+                    <div
+                      className="h-full rounded-full bg-djon-accent"
+                      style={{ width: `${cohort.progress.percent}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 text-[11px] font-bold text-djon-text/35">
+                    {cohort.lessonCount} aulas · {cohort.durationMinutes} min
+                  </div>
+                </article>
+                );
+              })}
+              {!visibleManagedCohorts.length ? (
+                <div className="rounded-2xl border-2 border-dashed border-djon-text/10 p-10 text-center text-sm text-djon-text/35 md:col-span-2">
+                  {cohorts.length
+                    ? "Nenhuma turma corresponde aos filtros."
+                    : "Nenhuma turma disponível."}
+                </div>
+              ) : null}
+            </div>
+          </section>
+        )}
+      </main>
+
+      {editingCohort ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm"
+          onClick={(event) =>
+            event.target === event.currentTarget && setEditingCohort(null)
+          }
+        >
+          <form
+            onSubmit={saveEditedCohort}
+            className="my-6 w-full max-w-md space-y-5 rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-black text-djon-accent">EDITAR</p>
+                <h2 className="text-xl font-black text-djon-text">Turma</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingCohort(null)}
+                aria-label="Fechar edição da turma"
+              >
+                <X size={18} className="text-djon-text/40" />
+              </button>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-black text-djon-text/40">
+                NOME DA TURMA
+              </label>
+              <input
+                required
+                autoFocus
+                maxLength={150}
+                value={editingName}
+                onChange={(event) => setEditingName(event.target.value)}
+                className={field}
+              />
+            </div>
+            <button
+              disabled={saving || !editingName.trim()}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-djon-accent text-xs font-black text-djon-ink transition-[filter] hover:brightness-90 disabled:opacity-40"
+            >
+              <Save size={14} /> {saving ? "SALVANDO..." : "SALVAR ALTERAÇÕES"}
+            </button>
+          </form>
         </div>
-      </section>
+      ) : null}
+
+      {deletingCohort ? (
+        <div
+          className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm"
+          onClick={(event) =>
+            event.target === event.currentTarget && setDeletingCohort(null)
+          }
+        >
+          <div className="my-6 w-full max-w-sm rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6">
+            <p className="text-lg font-black text-djon-text">Excluir turma?</p>
+            <p className="mt-2 text-sm leading-relaxed text-djon-text/40">
+              A turma{" "}
+              <span className="font-black text-djon-text">
+                {deletingCohort.name}
+              </span>{" "}
+              e todas as aulas da agenda vinculadas a ela serão excluídas
+              definitivamente.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingCohort(null)}
+                disabled={saving}
+                className="h-11 flex-1 rounded-full border border-djon-text/15 text-xs font-black text-djon-text/60 disabled:opacity-40"
+              >
+                CANCELAR
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmDeleteCohort()}
+                disabled={saving}
+                className="h-11 flex-1 rounded-full bg-djon-warning-red/80 text-xs font-black text-djon-text transition-[filter] hover:brightness-110 disabled:opacity-40"
+              >
+                {saving ? "EXCLUINDO..." : "EXCLUIR"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {cohortModal && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm">
@@ -427,7 +984,9 @@ export function CohortManagementPage() {
                   </label>
                   <DjonSelect
                     required
-                    disabled={user?.role === "professor"}
+                    disabled={
+                      user?.role === "professor" && !canManageAllCourses
+                    }
                     value={cohortForm.unitId}
                     onChange={(unitId) =>
                       setCohortForm({
@@ -451,7 +1010,9 @@ export function CohortManagementPage() {
                   </label>
                   <DjonSelect
                     required
-                    disabled={user?.role === "professor"}
+                    disabled={
+                      user?.role === "professor" && !canManageAllCourses
+                    }
                     value={cohortForm.professorId}
                     onChange={(professorId) =>
                       setCohortForm({ ...cohortForm, professorId })
@@ -813,32 +1374,6 @@ export function CohortManagementPage() {
         </div>
       )}
 
-      {detail && (
-        <CohortDetailDialog
-          cohort={detail}
-          currentUser={user}
-          onClose={() => setDetail(null)}
-          onUpdated={(updated) => {
-            setDetail(updated);
-            setCohorts((items) =>
-              items.map((item) => (item.id === updated.id ? updated : item)),
-            );
-          }}
-          onConfigure={(cohort) => {
-            setNewCohort(null);
-            setConfiguring(cohort);
-            setLessonForms(
-              Array.from({ length: cohort.lessonCount }, () => ({
-                materialId: "",
-                date: "",
-                time: "",
-              })),
-            );
-            setScheduleConflicts([]);
-            setDetail(null);
-          }}
-        />
-      )}
-    </main>
+    </div>
   );
 }

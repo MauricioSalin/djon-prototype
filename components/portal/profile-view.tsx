@@ -6,19 +6,19 @@ import { useLenis } from "lenis/react"
 import Image from "next/image"
 import Link from "next/link"
 import {
-  Camera, Instagram, Youtube, Save,
-  MapPin, Clock, ArrowRight, Edit3, Music, Mail, Phone,
-  ExternalLink, Upload, X, KeyRound,
+  BookOpen, CalendarDays, Camera, Instagram, Youtube, Save,
+  MapPin, Clock, ArrowLeft, ArrowRight, Edit3, Music, Mail, Phone,
+  ExternalLink, GraduationCap, MessageSquareText, Upload, X, KeyRound,
 } from "lucide-react"
 import { SoundCloudIcon, SpotifyIcon } from "@/components/social-icons"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { usePageTitle } from "@/components/page-title-manager"
-import { store, type User, type DJEvent } from "@/lib/store"
+import { store, type User, type DJEvent, type StudentCourseProgress, type StudentObservation } from "@/lib/store"
 import { formatPhone } from "@/lib/phone"
 
 const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 40 },
-  whileInView: { opacity: 1, y: 0 },
+  initial: { opacity: 0 },
+  whileInView: { opacity: 1 },
   viewport: { once: true, amount: 0 },
   transition: { duration: 0.7, ease: [0.25, 0.4, 0.25, 1] as const, delay },
 })
@@ -35,7 +35,7 @@ const ROLE_LABELS: Record<string, string> = {
 const BANNER_FALLBACK = "var(--djon-gradient-image-fallback)"
 const DEFAULT_RELEASE_COVER = "/images/latest-release-default.jpg"
 
-type EditableSection = "profile" | "socials" | "release" | "password"
+type EditableSection = "profile" | "courses" | "socials" | "release" | "password"
 
 interface ProfileViewProps {
   user: User
@@ -59,14 +59,13 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
     email: user.email,
     whatsapp: formatPhone(user.whatsapp),
     bio: user.bio ?? "",
-    showAcademicProgress: user.showAcademicProgress !== false,
+    pressKit: user.socials?.pressKit ?? "",
   })
   const [socialForm, setSocialForm] = useState({
     instagram: user.socials?.instagram ?? "",
     soundcloud: user.socials?.soundcloud ?? "",
     youtube: user.socials?.youtube ?? "",
     spotify: user.socials?.spotify ?? "",
-    pressKit: user.socials?.pressKit ?? "",
   })
   const [releaseForm, setReleaseForm] = useState({
     title: user.latestRelease?.title ?? "",
@@ -77,6 +76,17 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
   const [passwordMessage, setPasswordMessage] = useState("")
   const [failedAvatar, setFailedAvatar] = useState<string | null>(null)
   const [failedBanner, setFailedBanner] = useState<string | null>(null)
+  const [studentObservations, setStudentObservations] = useState<StudentObservation[]>([])
+  const [observationsLoading, setObservationsLoading] = useState(false)
+  const [observationsError, setObservationsError] = useState(false)
+  const [viewingObservations, setViewingObservations] = useState(false)
+  const [courseProgress, setCourseProgress] = useState<StudentCourseProgress[]>([])
+  const [courseProgressLoading, setCourseProgressLoading] = useState(user.role === "student")
+  const [courseProgressError, setCourseProgressError] = useState(false)
+  const [courseVisibilityForm, setCourseVisibilityForm] = useState({
+    show: user.showAcademicProgress !== false,
+    courseIds: user.profileCourseIds ?? [],
+  })
   const avatarRef = useRef<HTMLInputElement>(null)
   const bannerRef = useRef<HTMLInputElement>(null)
   const releaseCoverRef = useRef<HTMLInputElement>(null)
@@ -97,6 +107,63 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
     const frame = window.requestAnimationFrame(() => scrollToEditor(editingSection))
     return () => window.cancelAnimationFrame(frame)
   }, [editingSection, scrollToEditor])
+
+  const viewer = store.getCurrentUser()
+  const mayViewStudentObservations =
+    viewer?.role === "professor" && user.role === "student"
+
+  useEffect(() => {
+    if (!mayViewStudentObservations) {
+      setStudentObservations([])
+      setObservationsLoading(false)
+      setObservationsError(false)
+      return
+    }
+
+    let active = true
+    setObservationsLoading(true)
+    setObservationsError(false)
+    store.listStudentObservations(user.id)
+      .then((items) => {
+        if (active) setStudentObservations(items)
+      })
+      .catch(() => {
+        if (active) setObservationsError(true)
+      })
+      .finally(() => {
+        if (active) setObservationsLoading(false)
+      })
+    return () => { active = false }
+  }, [mayViewStudentObservations, user.id])
+
+  useEffect(() => {
+    if (user.role !== "student") {
+      setCourseProgress([])
+      setCourseProgressLoading(false)
+      setCourseProgressError(false)
+      return
+    }
+
+    let active = true
+    setCourseProgressLoading(true)
+    setCourseProgressError(false)
+    store.listStudentCourseProgress(user.id)
+      .then((items) => {
+        if (!active) return
+        setCourseProgress(items)
+        setCourseVisibilityForm({
+          show: user.showAcademicProgress !== false,
+          courseIds: items.filter((item) => item.visible).map((item) => item.id),
+        })
+      })
+      .catch(() => {
+        if (active) setCourseProgressError(true)
+      })
+      .finally(() => {
+        if (active) setCourseProgressLoading(false)
+      })
+    return () => { active = false }
+  }, [user.id, user.role, user.showAcademicProgress])
 
   const startEditing = async (section: EditableSection) => {
     if (user.passwordChangeRequired && section !== "password") return
@@ -122,7 +189,13 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         email: user.email,
         whatsapp: formatPhone(user.whatsapp),
         bio: user.bio ?? "",
-        showAcademicProgress: user.showAcademicProgress !== false,
+        pressKit: user.socials?.pressKit ?? "",
+      })
+    }
+    if (editingSection === "courses" && section !== "courses") {
+      setCourseVisibilityForm({
+        show: user.showAcademicProgress !== false,
+        courseIds: courseProgress.filter((item) => item.visible).map((item) => item.id),
       })
     }
     if (editingSection === "socials" && section !== "socials") {
@@ -131,7 +204,6 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         soundcloud: user.socials?.soundcloud ?? "",
         youtube: user.socials?.youtube ?? "",
         spotify: user.socials?.spotify ?? "",
-        pressKit: user.socials?.pressKit ?? "",
       })
     }
     if (editingSection === "password" && section !== "password") {
@@ -160,8 +232,29 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       email: profileForm.email,
       whatsapp: profileForm.whatsapp,
       bio: profileForm.bio,
-      showAcademicProgress: profileForm.showAcademicProgress,
+      socials: {
+        ...user.socials,
+        pressKit: profileForm.pressKit.trim() || undefined,
+      },
     })
+    if (updated && onUserUpdate) onUserUpdate(updated)
+    setEditingSection(null)
+  }
+
+  const handleCourseVisibilitySave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const updated = await store.updateUser(user.id, {
+      showAcademicProgress: courseVisibilityForm.show,
+      profileCourseIds: courseVisibilityForm.courseIds,
+    })
+    setCourseProgress((items) =>
+      items.map((item) => ({
+        ...item,
+        visible:
+          courseVisibilityForm.show &&
+          courseVisibilityForm.courseIds.includes(item.id),
+      })),
+    )
     if (updated && onUserUpdate) onUserUpdate(updated)
     setEditingSection(null)
   }
@@ -174,7 +267,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         soundcloud: socialForm.soundcloud.trim().replace(/^@/, "") || undefined,
         youtube: socialForm.youtube.trim().replace(/^@/, "") || undefined,
         spotify: socialForm.spotify.trim() || undefined,
-        pressKit: socialForm.pressKit.trim() || undefined,
+        pressKit: user.socials?.pressKit,
       },
     })
     if (updated && onUserUpdate) onUserUpdate(updated)
@@ -223,19 +316,22 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       email: user.email,
       whatsapp: formatPhone(user.whatsapp),
       bio: user.bio ?? "",
-      showAcademicProgress: user.showAcademicProgress !== false,
+      pressKit: user.socials?.pressKit ?? "",
     })
     setSocialForm({
       instagram: user.socials?.instagram ?? "",
       soundcloud: user.socials?.soundcloud ?? "",
       youtube: user.socials?.youtube ?? "",
       spotify: user.socials?.spotify ?? "",
-      pressKit: user.socials?.pressKit ?? "",
     })
     setReleaseForm({
       title: user.latestRelease?.title ?? "",
       link: user.latestRelease?.link ?? "",
       cover: user.latestRelease?.cover ?? "",
+    })
+    setCourseVisibilityForm({
+      show: user.showAcademicProgress !== false,
+      courseIds: courseProgress.filter((item) => item.visible).map((item) => item.id),
     })
     setEditingSection(null)
   }
@@ -281,6 +377,23 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
   const hasLatestRelease = Boolean(
     user.latestRelease?.title || user.latestRelease?.link || user.latestRelease?.cover,
   )
+  const hasStudentObservations =
+    mayViewStudentObservations &&
+    !observationsLoading &&
+    !observationsError &&
+    studentObservations.length > 0
+  const visibleCourseProgress = courseProgress.filter((item) => item.visible)
+
+  if (viewingObservations && hasStudentObservations) {
+    return (
+      <StudentObservationsView
+        user={user}
+        observations={studentObservations}
+        formatDate={fmt}
+        onBack={() => setViewingObservations(false)}
+      />
+    )
+  }
 
   return (
     <div className="bg-djon-page">
@@ -385,12 +498,19 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 {ROLE_LABELS[user.role] ?? "DJ ON Academy"}
               </motion.div>
               <motion.h1
-                className="djon-section-title font-black text-djon-text"
+                className="djon-section-title flex items-center gap-3 font-black text-djon-text"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                {user.projectName || user.name}
+                <span>{user.projectName || user.name}</span>
+                {hasStudentObservations && (
+                  <MessageSquareText
+                    size={22}
+                    className="shrink-0 translate-y-[0.06em] self-center text-djon-light-purple"
+                    aria-label="Aluno com observações"
+                  />
+                )}
               </motion.h1>
               {user.projectName && <p className="mt-1 text-sm font-bold text-djon-text/40">{user.name}</p>}
             </div>
@@ -436,18 +556,36 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
               </motion.p>
             )}
 
-            {user.socials?.pressKit && (
-              <motion.a
-                href={user.socials.pressKit}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full border border-djon-text/10 px-4 py-2 text-xs font-black tracking-wide text-djon-text/45 transition-all hover:border-djon-accent/40 hover:text-djon-text"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                PRESS KIT <ExternalLink size={12} />
-              </motion.a>
+            {(hasStudentObservations || user.socials?.pressKit) && (
+              <div className="flex flex-wrap items-center gap-2">
+                {hasStudentObservations && (
+                  <motion.button
+                    type="button"
+                    onClick={() => setViewingObservations(true)}
+                    className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-djon-light-purple/25 bg-djon-light-purple/8 px-4 py-2 text-xs font-black tracking-wide text-djon-light-purple transition-all hover:border-djon-light-purple/50 hover:brightness-110"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.45 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <MessageSquareText size={13} /> VER OBSERVAÇÕES
+                  </motion.button>
+                )}
+                {user.socials?.pressKit && (
+                  <motion.a
+                    href={user.socials.pressKit}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-djon-text/10 px-4 py-2 text-xs font-black tracking-wide text-djon-text/45 transition-all hover:border-djon-accent/40 hover:text-djon-text"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    PRESS KIT <ExternalLink size={12} />
+                  </motion.a>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -475,12 +613,9 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 <Field label="BIO" className="md:col-span-2">
                   <textarea value={profileForm.bio} onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })} rows={4} placeholder="Escreva algo sobre você..." className={`${inputCls} resize-none`} />
                 </Field>
-                {user.role === "student" && (
-                  <label className="flex items-center gap-3 rounded-xl border border-djon-text/10 bg-djon-text/5 px-4 py-3 text-xs font-bold text-djon-text/55 md:col-span-2">
-                    <input type="checkbox" checked={profileForm.showAcademicProgress} onChange={(e) => setProfileForm({ ...profileForm, showAcademicProgress: e.target.checked })} />
-                    Exibir meu progresso acadêmico no perfil
-                  </label>
-                )}
+                <Field label="PRESS KIT" className="md:col-span-2">
+                  <div className="relative"><ExternalLink size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input type="url" value={profileForm.pressKit} onChange={(e) => setProfileForm({ ...profileForm, pressKit: e.target.value })} placeholder="https://..." className={`${inputCls} pl-10`} /></div>
+                </Field>
                 <SaveActions onCancel={cancelEditing} />
               </form>
             </motion.div>
@@ -517,7 +652,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         </section>
       )}
 
-      {/* ── REDES SOCIAIS ───────────────────────────────────────────────────── */}
+      {/* ── REDES SOCIAIS ────────────────────────────────────────────────────── */}
       {(isOwner || hasSocials) && (
         <section id={editingSection === "socials" ? "socials-editor" : undefined} className={`scroll-mt-20 border-t border-djon-text/6 py-16 sm:py-20 ${editingSection === "socials" ? "bg-djon-muted-panel" : "bg-djon-page"}`}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -529,7 +664,6 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                   <Field label="SOUNDCLOUD"><div className="relative"><span className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30"><SoundCloudIcon size={20} /></span><input value={socialForm.soundcloud} onChange={(e) => setSocialForm({ ...socialForm, soundcloud: e.target.value })} placeholder="seuusuario" className={`${inputCls} pl-10`} /></div></Field>
                   <Field label="YOUTUBE"><div className="relative"><Youtube size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input value={socialForm.youtube} onChange={(e) => setSocialForm({ ...socialForm, youtube: e.target.value })} placeholder="seucanal" className={`${inputCls} pl-10`} /></div></Field>
                   <Field label="SPOTIFY"><div className="relative"><SpotifyIcon size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input type="url" value={socialForm.spotify} onChange={(e) => setSocialForm({ ...socialForm, spotify: e.target.value })} placeholder="https://open.spotify.com/artist/..." className={`${inputCls} pl-10`} /></div></Field>
-                  <Field label="PRESS KIT" className="md:col-span-2"><div className="relative"><ExternalLink size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30" /><input type="url" value={socialForm.pressKit} onChange={(e) => setSocialForm({ ...socialForm, pressKit: e.target.value })} placeholder="https://..." className={`${inputCls} pl-10`} /></div></Field>
                   <SaveActions onCancel={cancelEditing} />
                 </form>
               </motion.div>
@@ -596,6 +730,78 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         </section>
       )}
 
+      {/* ── CURSOS ───────────────────────────────────────────────────────── */}
+      {user.role === "student" && (isOwner || visibleCourseProgress.length > 0) && (
+        <section
+          id={editingSection === "courses" ? "courses-editor" : undefined}
+          className={`scroll-mt-20 py-16 sm:py-20 ${editingSection === "courses" ? "bg-djon-muted-panel" : "bg-djon-page"}`}
+        >
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            {editingSection === "courses" ? (
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+                <EditorHeading title="Cursos no perfil" onCancel={cancelEditing} />
+                <form onSubmit={handleCourseVisibilitySave} className="max-w-3xl space-y-6">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-djon-text/10 bg-djon-text/5 p-4">
+                    <input type="checkbox" checked={courseVisibilityForm.show} onChange={(event) => setCourseVisibilityForm((current) => ({ ...current, show: event.target.checked }))} className="mt-0.5 size-4 accent-djon-accent" />
+                    <span>
+                      <span className="block text-sm font-black text-djon-text">Exibir a seção de cursos</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-djon-text/40">Quando desativada, nenhuma informação de curso ou progresso aparece para outras pessoas.</span>
+                    </span>
+                  </label>
+                  <div className={`space-y-3 transition-opacity ${courseVisibilityForm.show ? "opacity-100" : "opacity-45"}`}>
+                    <div>
+                      <p className="text-xs font-black tracking-widest text-djon-text/60">CURSOS VISÍVEIS</p>
+                      <p className="mt-1 text-xs text-djon-text/35">Escolha em quais cursos a porcentagem de conclusão será mostrada.</p>
+                    </div>
+                    {courseProgress.map((course) => {
+                      const checked = courseVisibilityForm.courseIds.includes(course.id)
+                      return (
+                        <label key={course.id} className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-djon-text/10 bg-djon-surface-2 px-4 py-3">
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-black text-djon-text">{course.name}</span>
+                            <span className="mt-1 block text-xs font-bold text-djon-text/35">{course.percent}% concluído</span>
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => setCourseVisibilityForm((current) => ({
+                              ...current,
+                              courseIds: checked ? current.courseIds.filter((id) => id !== course.id) : [...current.courseIds, course.id],
+                            }))}
+                            className="size-4 shrink-0 accent-djon-accent"
+                          />
+                        </label>
+                      )
+                    })}
+                    {!courseProgressLoading && courseProgress.length === 0 && (
+                      <p className="rounded-xl border border-dashed border-djon-text/10 px-4 py-6 text-sm text-djon-text/35">Você ainda não está matriculado em um curso.</p>
+                    )}
+                  </div>
+                  <SaveActions onCancel={cancelEditing} />
+                </form>
+              </motion.div>
+            ) : (
+              <>
+                <SectionHeading eyebrow="DJ ON ACADEMY" title="Cursos" isOwner={isOwner && !user.passwordChangeRequired} onEdit={() => startEditing("courses")} />
+                {courseProgressLoading ? (
+                  <div role="status" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[0, 1].map((item) => <div key={item} className="h-72 animate-pulse rounded-2xl bg-djon-text/5" />)}
+                  </div>
+                ) : courseProgressError ? (
+                  <p className="rounded-2xl border border-djon-warning-red/20 bg-djon-warning-red/5 px-5 py-6 text-sm text-djon-warning-red">Não foi possível carregar o progresso dos cursos.</p>
+                ) : visibleCourseProgress.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {visibleCourseProgress.map((course, index) => <CourseProgressCard key={course.id} course={course} index={index} />)}
+                  </div>
+                ) : (
+                  <p className="rounded-2xl border border-dashed border-djon-text/10 px-5 py-8 text-sm font-bold text-djon-text/30">A seção está oculta. Use Editar para escolher os cursos que deseja mostrar.</p>
+                )}
+              </>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* ── PRÓXIMOS EVENTOS ────────────────────────────────────────────────── */}
       {upcomingEvents.length > 0 && (
         <section className="py-16 bg-djon-page sm:py-20">
@@ -652,30 +858,22 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         </section>
       )}
 
-      {events.length === 0 && (
-        <section className="py-20 bg-djon-page sm:py-24">
-          <div className="max-w-7xl mx-auto px-4 text-center sm:px-6">
-            <p className="text-djon-text/20 text-sm font-bold">Nenhum evento cadastrado ainda.</p>
-          </div>
-        </section>
-      )}
-
       {/* ── CTA (somente para o dono da conta) ─────────────────────────────── */}
-      {isOwner && (
+      {isOwner && user.role !== "admin" && (
         <section className="py-16 bg-djon-page border-t border-djon-text/6 sm:py-20">
           <div className="max-w-7xl mx-auto px-4 text-center sm:px-6">
             <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-6" {...fadeUp(0)}>
-              Pronto para o próximo set?
+              {user.role === "professor" ? "Pronto para a próxima aula?" : "Pronto para o próximo set?"}
             </motion.h2>
             <motion.div className="flex flex-wrap items-center justify-center gap-3" {...fadeUp(0.2)}>
               <Link
-                href="/dashboard/student/agendar"
+                href={user.role === "professor" ? "/dashboard/agenda" : "/dashboard/student/agendar"}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-8 py-3.5 text-sm font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90 sm:w-auto"
               >
-                AGENDAR AULA <ArrowRight size={14} />
+                {user.role === "professor" ? "VER AGENDA" : "AGENDAR AULA"} <ArrowRight size={14} />
               </Link>
               <Link
-                href="/dashboard/student/evento"
+                href={user.role === "professor" ? "/dashboard/professor/evento" : "/dashboard/student/evento"}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-djon-text/20 px-8 py-3.5 text-sm font-black tracking-widest text-djon-text transition-all hover:brightness-110 sm:w-auto"
               >
                 <Music size={14} /> NOVO EVENTO
@@ -684,6 +882,96 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
           </div>
         </section>
       )}
+    </div>
+  )
+}
+
+function StudentObservationsView({
+  user,
+  observations,
+  formatDate,
+  onBack,
+}: {
+  user: User
+  observations: StudentObservation[]
+  formatDate: (date: string) => string
+  onBack: () => void
+}) {
+  return (
+    <div className="min-h-[70vh] bg-djon-page">
+      <section className="border-y border-djon-text/8 bg-djon-muted-panel">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+          <motion.button
+            type="button"
+            onClick={onBack}
+            className="mb-10 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-djon-text/15 px-5 py-2.5 text-xs font-black tracking-widest text-djon-text/55 transition-colors hover:border-djon-accent/35 hover:text-djon-text"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.35 }}
+            whileHover={{ x: -3 }}
+            whileTap={{ scale: 0.97 }}
+          >
+            <ArrowLeft size={14} /> VOLTAR
+          </motion.button>
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="mb-2 block text-xs font-black uppercase tracking-widest text-djon-light-purple">
+              ACOMPANHAMENTO
+            </span>
+            <div className="flex items-center gap-3">
+              <h2 className="text-3xl font-black tracking-tighter text-djon-text md:text-5xl">
+                Observações
+              </h2>
+              <MessageSquareText size={24} className="shrink-0 text-djon-light-purple" />
+            </div>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-djon-text/40">
+              Registros de {user.projectName || user.name} feitos durante as aulas para acompanhar dificuldades, evolução e próximos pontos de atenção.
+            </p>
+            <div className="mb-10 mt-4 h-[3px] w-10 rounded-full bg-djon-light-purple" />
+          </motion.div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {observations.map((observation, index) => (
+              <motion.article
+                key={observation.id}
+                className="rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 sm:p-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.45, delay: Math.min(index * 0.06, 0.3) }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-djon-accent">
+                      <BookOpen size={12} /> {observation.courseName}
+                    </span>
+                    <h3 className="mt-2 text-lg font-black leading-tight text-djon-text">
+                      Aula {observation.lessonOrder}
+                      {observation.lessonTitle ? ` · ${observation.lessonTitle}` : ""}
+                    </h3>
+                    <p className="mt-1 text-xs font-bold text-djon-text/30">
+                      {observation.cohortName}
+                    </p>
+                  </div>
+                  <MessageSquareText size={19} className="shrink-0 text-djon-light-purple" />
+                </div>
+                <p className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-djon-text/65">
+                  {observation.observation}
+                </p>
+                <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-djon-text/8 pt-4 text-[11px] font-bold text-djon-text/30">
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays size={12} /> {formatDate(observation.date)} às {observation.time}
+                  </span>
+                  {observation.professorName && <span>Prof. {observation.professorName}</span>}
+                </div>
+              </motion.article>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
@@ -742,6 +1030,49 @@ function SectionHeading({ eyebrow, title, isOwner, onEdit }: { eyebrow: string; 
   )
 }
 
+function CourseProgressCard({ course, index }: { course: StudentCourseProgress; index: number }) {
+  const [imageFailed, setImageFailed] = useState(false)
+
+  return (
+    <motion.article
+      className="overflow-hidden rounded-2xl border border-djon-text/8 bg-djon-surface-2"
+      {...fadeUp(index * 0.06)}
+      whileHover={{ y: -4 }}
+    >
+      <div className="relative h-36 overflow-hidden bg-djon-muted-panel">
+        {course.coverImage && !imageFailed ? (
+          <Image
+            src={course.coverImage}
+            alt={`Capa do curso ${course.name}`}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-djon-surface to-djon-muted-panel">
+            <GraduationCap size={34} className="text-djon-accent" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-djon-black/75 via-transparent to-transparent" />
+        <span className="absolute bottom-4 left-4 text-xs font-black tracking-widest text-djon-accent">CURSO</span>
+      </div>
+      <div className="p-5">
+        <h3 className="text-xl font-black tracking-tight text-djon-text">{course.name}</h3>
+        {course.description && <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-djon-text/40">{course.description}</p>}
+        <div className="mt-5 flex items-center justify-between gap-4 text-xs font-black text-djon-text/55">
+          <span>PROGRESSO</span>
+          <span className="text-djon-accent">{course.percent}%</span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-djon-text/8" role="progressbar" aria-label={`Conclusão do curso ${course.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={course.percent}>
+          <div className="h-full rounded-full bg-djon-accent transition-[width]" style={{ width: `${course.percent}%` }} />
+        </div>
+        <p className="mt-2 text-xs font-bold text-djon-text/30">{course.completed} de {course.total} aulas concluídas</p>
+      </div>
+    </motion.article>
+  )
+}
+
 function SocialCard({ href, label, value, icon }: { href: string; label: string; value: string; icon: ReactNode }) {
   return (
     <motion.a href={href} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-4 rounded-2xl border border-djon-text/8 bg-djon-surface-2 p-5 transition-all hover:border-djon-accent/30 hover:brightness-110" {...fadeUp(0.1)} whileHover={{ y: -3 }}>
@@ -757,8 +1088,8 @@ function EventCard({ ev, i }: { ev: DJEvent; i: number }) {
     <motion.div
       key={ev.id}
       className="bg-djon-surface-2 border border-djon-text/8 hover:brightness-110 rounded-2xl p-6 transition-all"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true, amount: 0 }}
       transition={{ delay: i * 0.07, duration: 0.6 }}
       whileHover={{ y: -4 }}
