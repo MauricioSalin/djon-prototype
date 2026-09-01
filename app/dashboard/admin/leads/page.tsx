@@ -8,6 +8,7 @@ import { store, type Lead, type Unit } from "@/lib/store"
 import { DjonSelect } from "@/components/djon-select"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
+import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 
 const field = "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none focus:border-djon-accent/50"
 const statuses: Lead["status"][] = ["novo", "contatado", "convertido", "arquivado"]
@@ -23,10 +24,11 @@ export default function LeadsAdminPage() {
   const [leads, setLeads] = useState<Lead[]>([])
   const [units, setUnits] = useState<Unit[]>([])
   const [filter, setFilter] = useState<Lead["status"] | "todos">("todos")
+  const [loading, setLoading] = useState(true)
 
   const load = () => setLeads(store.getLeads())
   useEffect(() => {
-    void store.listLeads().then(load)
+    void store.listLeads().then(load).catch(() => undefined).finally(() => setLoading(false))
     void store.getPublicUnits().then(setUnits).catch(() => undefined)
   }, [])
 
@@ -53,6 +55,8 @@ export default function LeadsAdminPage() {
   const pagination = useListPagination(visible, filter)
   const unitLabel = (unitKey: string) =>
     units.find((unit) => unit.key === unitKey)?.label ?? academyLocations[unitKey]?.label ?? unitKey
+
+  if (loading) return <DashboardPageSkeleton variant="leads" rows={4} />
 
   return (
     <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">

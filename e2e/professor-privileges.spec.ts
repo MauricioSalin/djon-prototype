@@ -232,6 +232,25 @@ test("mostra o skeleton de turmas com o hero da página atual", async ({
   await expect(page.getByLabel("Buscar turmas")).toBeVisible();
 });
 
+test("mostra o skeleton de contatos enquanto os leads carregam", async ({
+  page,
+}) => {
+  await mockPortal(page, () => ["leads.manage"]);
+  await page.route("**/api/v1/leads", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await route.fulfill({ json: [] });
+  });
+
+  await page.goto("/dashboard/admin/leads");
+
+  const loading = page.getByRole("status");
+  await expect(loading).toBeVisible();
+  await expect(loading.locator("section")).toHaveCount(4);
+  await expect(page.getByText("Nenhum contato encontrado.")).toHaveCount(0);
+
+  await expect(page.getByText("Nenhum contato encontrado.")).toBeVisible();
+});
+
 test("mostra somente privilégios configuráveis e salva acesso total", async ({
   page,
 }) => {
