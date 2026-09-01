@@ -294,7 +294,7 @@ export function MaterialCourseView({
             }
           >
             <motion.div
-              className="my-6 w-full max-w-sm rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
+              className="djon-scroll my-6 max-h-[calc(100svh-3rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}

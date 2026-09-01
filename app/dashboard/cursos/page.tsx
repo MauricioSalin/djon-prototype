@@ -305,7 +305,7 @@ export default function CoursesPage() {
       <AnimatePresence>
         {editorCourse ? (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -315,7 +315,10 @@ export default function CoursesPage() {
           >
             <motion.form
               onSubmit={saveCourse}
-              className="my-6 w-full max-w-lg space-y-5 rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
+              className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-lg space-y-5 overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
+              data-lenis-prevent
+              data-lenis-prevent-wheel
+              data-lenis-prevent-touch
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
@@ -443,7 +446,7 @@ export default function CoursesPage() {
       <AnimatePresence>
         {deleteCourse ? (
           <motion.div
-            className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -452,7 +455,7 @@ export default function CoursesPage() {
             }
           >
             <motion.div
-              className="my-6 w-full max-w-sm rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
+              className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}

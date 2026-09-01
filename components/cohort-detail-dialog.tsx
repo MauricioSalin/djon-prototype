@@ -584,8 +584,15 @@ export function CohortDetailView({
   );
 
   return variant === "dialog" ? (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/85 p-4 backdrop-blur-sm">
-      <div className="my-5 w-full max-w-4xl">{content}</div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/85 p-4 backdrop-blur-sm">
+      <div
+        className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-4xl overflow-y-auto overscroll-contain"
+        data-lenis-prevent
+        data-lenis-prevent-wheel
+        data-lenis-prevent-touch
+      >
+        {content}
+      </div>
     </div>
   ) : (
     <section className="space-y-5">{content}</section>

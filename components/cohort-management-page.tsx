@@ -837,14 +837,17 @@ export function CohortManagementPage() {
 
       {editingCohort ? (
         <div
-          className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm"
           onClick={(event) =>
             event.target === event.currentTarget && setEditingCohort(null)
           }
         >
           <form
             onSubmit={saveEditedCohort}
-            className="my-6 w-full max-w-md space-y-5 rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
+            className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-md space-y-5 overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6"
+            data-lenis-prevent
+            data-lenis-prevent-wheel
+            data-lenis-prevent-touch
           >
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -884,12 +887,12 @@ export function CohortManagementPage() {
 
       {deletingCohort ? (
         <div
-          className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm"
           onClick={(event) =>
             event.target === event.currentTarget && setDeletingCohort(null)
           }
         >
-          <div className="my-6 w-full max-w-sm rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6">
+          <div className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-calendar-cell p-6">
             <p className="text-lg font-black text-djon-text">Excluir turma?</p>
             <p className="mt-2 text-sm leading-relaxed text-djon-text/40">
               A turma{" "}
@@ -922,11 +925,14 @@ export function CohortManagementPage() {
       ) : null}
 
       {cohortModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm">
           {cohortStep === 1 ? (
             <form
               onSubmit={continueToStudents}
-              className="my-5 w-full max-w-2xl space-y-5 rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+              className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-2xl space-y-5 overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+              data-lenis-prevent
+              data-lenis-prevent-wheel
+              data-lenis-prevent-touch
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -1241,10 +1247,13 @@ export function CohortManagementPage() {
       )}
 
       {lessonConfiguration && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/85 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/85 p-4 backdrop-blur-sm">
           <form
             onSubmit={configureLessons}
-            className="my-5 w-full max-w-3xl space-y-5 rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-3xl space-y-5 overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            data-lenis-prevent
+            data-lenis-prevent-wheel
+            data-lenis-prevent-touch
           >
             <div className="flex items-center justify-between">
               <div>

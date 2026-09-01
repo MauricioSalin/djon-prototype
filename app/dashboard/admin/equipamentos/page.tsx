@@ -263,10 +263,13 @@ export default function EquipmentsAdminPage() {
       />
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm">
           <form
             onSubmit={submit}
-            className="my-6 w-full max-w-lg space-y-4 rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-lg space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            data-lenis-prevent
+            data-lenis-prevent-wheel
+            data-lenis-prevent-touch
           >
             <div className="flex items-center justify-between">
               <div>
@@ -353,10 +356,13 @@ export default function EquipmentsAdminPage() {
       )}
 
       {availabilityTarget && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm">
           <form
             onSubmit={(event) => void saveAvailability(event)}
-            className="my-auto w-full max-w-md rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            data-lenis-prevent
+            data-lenis-prevent-wheel
+            data-lenis-prevent-touch
           >
             <div className="flex items-start justify-between gap-4">
               <div>

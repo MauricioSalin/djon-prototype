@@ -773,7 +773,10 @@ export default function NovoMaterialPage() {
               initial={{ opacity: 0, y: 18, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.98 }}
-              className="w-full max-w-lg rounded-2xl border border-djon-text/15 bg-djon-calendar-cell p-6 shadow-2xl sm:p-7"
+              className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/15 bg-djon-calendar-cell p-6 shadow-2xl sm:p-7"
+              data-lenis-prevent
+              data-lenis-prevent-wheel
+              data-lenis-prevent-touch
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-djon-accent/15">

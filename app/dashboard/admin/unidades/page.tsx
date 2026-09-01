@@ -146,10 +146,13 @@ export default function UnitsAdminPage() {
         onPageSizeChange={pagination.setPageSize}
       />
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/80 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm">
           <form
             onSubmit={submit}
-            className="my-6 w-full max-w-lg space-y-4 rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-lg space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
+            data-lenis-prevent
+            data-lenis-prevent-wheel
+            data-lenis-prevent-touch
           >
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black text-djon-text">
@@ -195,18 +198,10 @@ export default function UnitsAdminPage() {
               placeholder="Endereço completo"
               className={field}
             />
-            <input
-              value={form.mapSrc ?? ""}
-              onChange={(e) => setForm({ ...form, mapSrc: e.target.value })}
-              placeholder="URL do mapa incorporado"
-              className={field}
-            />
-            <input
-              value={form.mapsHref ?? ""}
-              onChange={(e) => setForm({ ...form, mapsHref: e.target.value })}
-              placeholder="URL para abrir no mapa"
-              className={field}
-            />
+            <p className="rounded-xl border border-djon-accent/15 bg-djon-accent/5 px-3 py-2.5 text-xs leading-relaxed text-djon-text/50">
+              Os mapas do OpenStreetMap e do Google Maps são gerados
+              automaticamente pelo endereço informado.
+            </p>
             <div className="border-t border-djon-text/8 pt-4">
               <p className="mb-3 text-xs font-black tracking-widest text-djon-accent">
                 CONTATO NO SITE
