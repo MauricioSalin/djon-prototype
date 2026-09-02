@@ -23,7 +23,7 @@ import {
   type User,
 } from "@/lib/store";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
-import { PortalLoadError } from "@/components/portal/portal-load-error";
+import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { usePageTitle } from "@/components/page-title-manager";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
@@ -171,6 +171,7 @@ function ImageLightbox({
 export default function MaterialDetailPage() {
   const [loadError, setLoadError] = useState<unknown>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  useLoadRecovery(loadError, setLoadAttempt);
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -197,7 +198,7 @@ export default function MaterialDetailPage() {
     setLoadError(null);
     setCoverError(false);
     store
-      .fetchMaterialById(id)
+      .fetchMaterialById(id, true)
       .then((item) => {
         if (active) setMaterial(item);
       })
@@ -212,8 +213,7 @@ export default function MaterialDetailPage() {
     };
   }, [id, router, loadAttempt]);
 
-  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
-  if (!user || !loaded) return <DashboardPageSkeleton variant="article" />;
+  if (loadError || !user || !loaded) return <DashboardPageSkeleton variant="article" />;
 
   if (!material) {
     return (

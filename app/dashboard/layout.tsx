@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { isRetryableLoadError, useLoadRecovery } from "@/hooks/use-load-recovery";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -243,6 +244,11 @@ export default function DashboardLayout({
   const [user, setUser] = useState<StoreUser | null>(null);
   const [portalReady, setPortalReady] = useState(false);
   const [bootstrapVersion, setBootstrapVersion] = useState(0);
+  const [bootstrapError, setBootstrapError] = useState<unknown>(null);
+  const [resumeError, setResumeError] = useState<unknown>(null);
+  const [resumeVersion, setResumeVersion] = useState(0);
+  useLoadRecovery(bootstrapError, setBootstrapVersion);
+  useLoadRecovery(resumeError, setResumeVersion);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -352,6 +358,7 @@ export default function DashboardLayout({
   useEffect(() => {
     let active = true;
     setSessionError("");
+    setBootstrapError(null);
     store
       .bootstrap(true)
       .then((authenticatedUser) => {
@@ -365,6 +372,7 @@ export default function DashboardLayout({
       })
       .catch((error) => {
         if (!active) return;
+        setBootstrapError(error);
         setPortalReady(false);
         setSessionError(
           error instanceof Error
@@ -380,19 +388,26 @@ export default function DashboardLayout({
   useEffect(() => {
     let active = true;
     const refreshPermissions = () => {
+      if (document.visibilityState !== "visible" || !store.hasSession()) return;
+      setResumeError(null);
       void store
         .restoreSession(true)
         .then((authenticatedUser) => {
           if (active && authenticatedUser) setUser(authenticatedUser);
         })
-        .catch(() => undefined);
+        .catch((error: unknown) => { if (active) setResumeError(error); });
     };
+    if (resumeVersion > 0) refreshPermissions();
     window.addEventListener("focus", refreshPermissions);
+    window.addEventListener("online", refreshPermissions);
+    document.addEventListener("visibilitychange", refreshPermissions);
     return () => {
       active = false;
       window.removeEventListener("focus", refreshPermissions);
+      window.removeEventListener("online", refreshPermissions);
+      document.removeEventListener("visibilitychange", refreshPermissions);
     };
-  }, []);
+  }, [resumeVersion]);
 
   useEffect(() => {
     if (!user) return;
@@ -792,7 +807,7 @@ export default function DashboardLayout({
   }, []);
 
   if (!user || !portalReady) {
-    if (!sessionError) return <div className="min-h-svh bg-djon-page" />;
+    if (!sessionError || isRetryableLoadError(bootstrapError)) return <div className="min-h-svh bg-djon-page" />;
 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-djon-page px-4 text-center">

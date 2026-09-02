@@ -6,6 +6,42 @@ const identity = {
   email: "profile@example.test", role: "student", permissions: [],
   avatar: "/images/latest-release-default.jpg", passwordChangeRequired: false,
 }
+
+test("PWA resume refreshes the visible profile and new editors, preserving an active draft", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  let currentProfile = profile;
+  let meRequests = 0;
+  await page.addInitScript(() => {
+    localStorage.setItem("djon_access_token", "resume-token");
+    Object.defineProperty(navigator, "standalone", { value: true });
+  });
+  await page.context().route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/api\/v1/, "");
+    if (path === "/users/me") {
+      meRequests += 1;
+      return route.fulfill({ json: currentProfile });
+    }
+    if (["/users", "/events", "/bookings", "/materials"].includes(path)) {
+      return route.fulfill({ json: { items: [], total: 0, page: 1, limit: 100 } });
+    }
+    if (path.startsWith("/portal-content/")) return route.fulfill({ json: null });
+    return route.fulfill({ json: [] });
+  });
+  await page.goto("/dashboard/student/perfil");
+  await expectProfile(page);
+  currentProfile = { ...profile, projectName: "Projeto atualizado", bio: "Biografia atualizada no servidor." };
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await expect(page.getByRole("heading", { name: currentProfile.projectName, exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "EDITAR PERFIL", exact: true }).click();
+  await expect(page.locator("#profile-editor input").nth(1)).toHaveValue(currentProfile.projectName);
+  await expect(page.locator("#profile-editor textarea")).toHaveValue(currentProfile.bio);
+  await page.locator("#profile-editor textarea").fill("Edicao em andamento");
+  currentProfile = { ...currentProfile, projectName: "Projeto mais recente", bio: "Outra alteracao externa." };
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect(page.getByRole("heading", { name: currentProfile.projectName, exact: true })).toBeVisible();
+  await expect(page.locator("#profile-editor textarea")).toHaveValue("Edicao em andamento");
+  expect(meRequests).toBe(3);
+});
 const profile = {
   ...identity, projectName: "Projeto Completo", active: true,
   banner: "/images/djon-hero.png", bio: "Biografia que ja existe no servidor.",
@@ -13,6 +49,35 @@ const profile = {
   socials: { instagram: "artista.teste", soundcloud: "artista-teste", youtube: "artista-teste", pressKit: "https://example.com/press-kit" },
   latestRelease: { title: "Set completo", link: "https://example.com/set", cover: "/images/latest-release-default.jpg" },
 }
+
+test("PWA finishes refreshing the profile after a temporary connection failure", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  let meRequests = 0;
+  const updatedProfile = { ...profile, projectName: "Projeto recuperado automaticamente" };
+  await page.addInitScript(() => {
+    localStorage.setItem("djon_access_token", "resume-recovery-token");
+    Object.defineProperty(navigator, "standalone", { value: true });
+  });
+  await page.context().route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/api\/v1/, "");
+    if (path === "/users/me") {
+      meRequests += 1;
+      if (meRequests > 1 && meRequests < 5) return route.abort("failed");
+      return route.fulfill({ json: meRequests === 1 ? profile : updatedProfile });
+    }
+    if (["/users", "/events", "/bookings", "/materials"].includes(path)) {
+      return route.fulfill({ json: { items: [], total: 0, page: 1, limit: 100 } });
+    }
+    if (path.startsWith("/portal-content/")) return route.fulfill({ json: null });
+    return route.fulfill({ json: [] });
+  });
+  await page.goto("/dashboard/student/perfil");
+  await expectProfile(page);
+  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await expect(page.getByRole("heading", { name: updatedProfile.projectName, exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
+  expect(meRequests).toBe(5);
+});
 
 async function expectProfile(page: Page) {
   await expect(page.getByRole("heading", { name: profile.projectName, exact: true })).toBeVisible()

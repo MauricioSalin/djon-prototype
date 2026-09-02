@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
-import { PortalLoadError } from "@/components/portal/portal-load-error";
+import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { notifyError } from "@/lib/feedback";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import {
@@ -84,6 +84,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  useLoadRecovery(loadError, setLoadAttempt);
   const [editorCourse, setEditorCourse] = useState<Course | "new" | null>(null);
   const [courseForm, setCourseForm] = useState<CourseForm>(emptyCourse);
   const [temporaryCoverId, setTemporaryCoverId] = useState("");
@@ -219,8 +220,7 @@ export default function CoursesPage() {
     }
   };
 
-  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
-  if (loading || !user)
+  if (loadError || loading || !user)
     return <DashboardPageSkeleton variant="courses" rows={5} />;
 
   return (

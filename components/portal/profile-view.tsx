@@ -166,7 +166,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       scrollToEditor(section)
       return
     }
-    if (editingSection === "release" && section !== "release") {
+    if (section === "release" || editingSection === "release") {
       if (pendingReleaseCoverId) {
         await store.deleteFile(pendingReleaseCoverId, { silent: true }).catch(() => undefined)
         setPendingReleaseCoverId(null)
@@ -177,7 +177,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         cover: user.latestRelease?.cover ?? "",
       })
     }
-    if (editingSection === "profile" && section !== "profile") {
+    if (section === "profile" || editingSection === "profile") {
       setProfileForm({
         name: user.name,
         projectName: user.projectName ?? "",
@@ -187,13 +187,13 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         pressKit: user.socials?.pressKit ?? "",
       })
     }
-    if (editingSection === "courses" && section !== "courses") {
+    if (section === "courses" || editingSection === "courses") {
       setCourseVisibilityForm({
         show: user.showAcademicProgress !== false,
         courseIds: courseProgress.filter((item) => item.visible).map((item) => item.id),
       })
     }
-    if (editingSection === "socials" && section !== "socials") {
+    if (section === "socials" || editingSection === "socials") {
       setSocialForm({
         instagram: user.socials?.instagram ?? "",
         soundcloud: user.socials?.soundcloud ?? "",

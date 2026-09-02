@@ -21,7 +21,7 @@ import {
 import { academyLocationStorageKey } from "@/lib/locations";
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
-import { PortalLoadError } from "@/components/portal/portal-load-error";
+import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { DjonSelect } from "@/components/djon-select";
 import {
   ListPagination,
@@ -74,6 +74,7 @@ export default function AgendarPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  useLoadRecovery(loadError, setLoadAttempt);
   useBodyScrollLock(showForm);
   const [form, setForm] = useState({
     title: "",
@@ -256,8 +257,7 @@ export default function AgendarPage() {
       year: "numeric",
     });
 
-  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
-  if (loading) return <DashboardPageSkeleton variant="student-agenda" />;
+  if (loadError || loading) return <DashboardPageSkeleton variant="student-agenda" />;
 
   return (
     <div className="bg-djon-page">

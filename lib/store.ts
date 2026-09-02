@@ -1121,6 +1121,9 @@ class ApiStore {
         this.currentUser = user;
         this.currentUserHydrated = true;
         this.users = this.uniqueUsers([...this.users, user]);
+        if (this.hasBootstrapData) {
+          window.dispatchEvent(new Event(CURRENT_USER_UPDATED_EVENT));
+        }
         return user;
       })
       .catch((error: unknown) => {
@@ -1166,7 +1169,7 @@ class ApiStore {
         ? request<ApiRecord[]>("/leads")
         : Promise.resolve<ApiRecord[]>([]),
     ]);
-    this.users = this.uniqueUsers([me, ...userItems.map(normalizeUser)]);
+    this.users = this.uniqueUsers([...userItems.map(normalizeUser), me]);
     this.events = eventItems.map(normalizeEvent);
     this.bookings = bookingItems.map(normalizeBooking);
     this.materials = materialItems.map(normalizeMaterial);
@@ -1349,21 +1352,22 @@ class ApiStore {
     };
   }
 
-  async fetchUserById(id: string) {
+  async fetchUserById(id: string, force = false) {
+    if (id === this.currentUser?.id) return this.restoreSession(force);
     const cached = this.getUserById(id);
-    if (cached) return cached;
+    if (cached && !force) return cached;
     const user = normalizeUser(await request<ApiRecord>(`/users/${id}`));
     this.users = this.uniqueUsers([...this.users, user]);
     return user;
   }
 
-  async fetchMaterialById(id: string) {
+  async fetchMaterialById(id: string, force = false) {
     const cached = this.getMaterialById(id);
-    if (cached) return cached;
+    if (cached && !force) return cached;
     const material = normalizeMaterial(
       await request<ApiRecord>(`/materials/${id}`),
     );
-    this.materials = [material, ...this.materials];
+    this.materials = [material, ...this.materials.filter((item) => item.id !== id)];
     return material;
   }
 
@@ -1537,8 +1541,8 @@ class ApiStore {
       `/users${includeInactive ? "?includeInactive=true" : ""}`,
     ).then((items) => {
       this.users = this.uniqueUsers([
-        ...(this.currentUser ? [this.currentUser] : []),
         ...items.map(normalizeUser),
+        ...(this.currentUser ? [this.currentUser] : []),
       ]);
       if (includeInactive) this.adminUsersLoadedAt = Date.now();
       return this.getUsers();

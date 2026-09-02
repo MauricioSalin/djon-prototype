@@ -10,7 +10,7 @@ import {
   type BookingWithUser,
 } from "@/components/booking-details-dialog"
 import { DashboardPageSkeleton } from "@/components/loading-skeletons"
-import { PortalLoadError } from "@/components/portal/portal-load-error"
+import { useLoadRecovery } from "@/hooks/use-load-recovery"
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
 import { UpcomingEventsSection } from "@/components/portal/upcoming-events-section"
 import {
@@ -51,6 +51,7 @@ const bookingStatusMeta = {
 export default function AdminPage() {
   const [loadError, setLoadError] = useState<unknown>(null)
   const [loadAttempt, setLoadAttempt] = useState(0)
+  useLoadRecovery(loadError, setLoadAttempt)
   const [stats, setStats] = useState({ users: 0, events: 0, bookings: 0, djOnEvents: 0 })
   const [bookings, setBookings] = useState<Booking[]>([])
   const [selected, setSelected] = useState<BookingWithUser | null>(null)
@@ -137,8 +138,7 @@ export default function AdminPage() {
     { label: "Mural", href: "/dashboard/mural", icon: Newspaper, desc: "Ver todos os eventos" },
   ]
 
-  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />
-  if (loading) return <DashboardPageSkeleton variant="admin-dashboard" />
+  if (loadError || loading) return <DashboardPageSkeleton variant="admin-dashboard" />
 
   return (
     <div className="bg-djon-page">

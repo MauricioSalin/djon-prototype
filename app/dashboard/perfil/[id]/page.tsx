@@ -6,26 +6,27 @@ import { ArrowLeft } from "lucide-react"
 import { ApiError, store, type User } from "@/lib/store"
 import { ProfileView } from "@/components/portal/profile-view"
 import { DashboardPageSkeleton } from "@/components/loading-skeletons"
-import { PortalLoadError } from "@/components/portal/portal-load-error"
+import { useLoadRecovery } from "@/hooks/use-load-recovery"
+import { useCurrentUser } from "@/hooks/use-current-user"
 
 export default function PublicPerfilPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [viewedUser, setViewedUser] = useState<User | null>(null)
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const currentUser = useCurrentUser()
   const [loadError, setLoadError] = useState<unknown>(null)
   const [notFound, setNotFound] = useState(false)
   const [loadAttempt, setLoadAttempt] = useState(0)
+  useLoadRecovery(loadError, setLoadAttempt)
 
   useEffect(() => {
     const cu = store.getCurrentUser()
     if (!cu) { router.replace("/login"); return }
-    setCurrentUser(cu)
     let active = true
     setViewedUser(null)
     setLoadError(null)
     setNotFound(false)
-    store.fetchUserById(id)
+    store.fetchUserById(id, true)
       .then((profile) => { if (active) setViewedUser(profile) })
       .catch((error: unknown) => {
         if (!active) return
@@ -35,7 +36,6 @@ export default function PublicPerfilPage() {
     return () => { active = false }
   }, [id, router, loadAttempt])
 
-  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />
   if (notFound) return <div className="min-h-[50vh] flex items-center justify-center text-djon-text/50 font-bold">Perfil não encontrado.</div>
   if (!viewedUser || !currentUser) return <DashboardPageSkeleton variant="profile" />
 
@@ -56,7 +56,7 @@ export default function PublicPerfilPage() {
         </div>
       </div>
       <ProfileView
-        user={viewedUser}
+        user={isOwner ? currentUser : viewedUser}
         isOwner={isOwner}
         onUserUpdate={(u) => setViewedUser(u)}
       />

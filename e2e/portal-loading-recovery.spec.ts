@@ -57,8 +57,8 @@ test("agenda waits for an expired cache refresh before rendering bookings", asyn
     return true;
   });
   try {
-    await page.goto(`/dashboard/perfil/${currentUser.id}`);
-    await expect(page.getByRole("heading", { name: currentUser.name, exact: true })).toBeVisible();
+    await page.goto("/dashboard/cursos");
+    await expect(page.getByRole("heading", { name: "Cursos", exact: true })).toBeVisible();
     await page.clock.setFixedTime(new Date("2026-09-10T12:06:00-03:00"));
     await page.locator('a[href="/dashboard/agenda"]').first().click();
     await expect.poll(() => requests).toBe(2);
@@ -72,16 +72,18 @@ test("agenda waits for an expired cache refresh before rendering bookings", asyn
 
 test("courses recover from a failed request without an endless skeleton", async ({ page }) => {
   let fail = true;
+  let failures = 0;
   await mockPortal(page, async (route, path) => {
     if (path !== "/courses") return false;
+    if (fail) failures += 1;
     await route.fulfill({ status: fail ? 503 : 200, json: fail ? { message: "Unavailable" } : [{ id: "course", name: "Curso recuperado", active: true }] });
     return true;
   });
   await page.goto("/dashboard/cursos");
-  await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toBeVisible();
+  await expect.poll(() => failures).toBeGreaterThanOrEqual(6);
+  await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
   await expect(page.getByText("Nenhum curso cadastrado", { exact: true })).toHaveCount(0);
   fail = false;
-  await page.getByRole("button", { name: "TENTAR NOVAMENTE" }).click();
   await expect(page.getByRole("link", { name: "Acessar curso Curso recuperado", exact: true })).toBeVisible();
 });
 
@@ -92,16 +94,18 @@ for (const routeCase of [
   test(`${routeCase.page} distinguishes a network failure from an empty list`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     let fail = true;
+    let failures = 0;
     await mockPortal(page, async (route, path) => {
       if (path !== routeCase.endpoint || !fail) return false;
+      failures += 1;
       await route.abort("failed");
       return true;
     }, routeCase.role);
     await page.goto(routeCase.page);
-    await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toBeVisible();
+    await expect.poll(() => failures).toBeGreaterThanOrEqual(6);
+    await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
     await expect(page.getByText(routeCase.empty, { exact: true })).toHaveCount(0);
     fail = false;
-    await page.getByRole("button", { name: "TENTAR NOVAMENTE" }).click();
     await expect(page.getByText(routeCase.empty, { exact: true })).toBeVisible();
   });
 }
@@ -113,16 +117,18 @@ for (const detail of [
   test(`${detail.path} retries a failed detail request without claiming the record is missing`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     let fail = true;
+    let failures = 0;
     await mockPortal(page, async (route, path) => {
       if (path !== `/${detail.endpoint}/${detailId}` || !fail) return false;
+      failures += 1;
       await route.fulfill({ status: 503, json: { message: "Unavailable" } });
       return true;
     });
     await page.goto(`/dashboard/${detail.path}/${detailId}`);
-    await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toBeVisible();
+    await expect.poll(() => failures).toBeGreaterThanOrEqual(6);
+    await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
     await expect(page.getByText(detail.missing, { exact: true })).toHaveCount(0);
     fail = false;
-    await page.getByRole("button", { name: "TENTAR NOVAMENTE" }).click();
     await expect(page.getByRole("heading", { name: detail.title, exact: true })).toBeVisible();
   });
 
@@ -136,7 +142,38 @@ for (const detail of [
     await expect(page.getByText(detail.missing, { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
   });
+
+  test(`${detail.path} reads the current record instead of an older directory snapshot`, async ({ page }) => {
+    let detailRequests = 0;
+    await mockPortal(page, async (route, path) => {
+      if (path === `/${detail.endpoint}/${detailId}`) detailRequests += 1;
+      if (path !== `/${detail.endpoint}`) return false;
+      const item = detail.path === "perfil"
+        ? { ...profile, projectName: "Nome antigo", bio: "" }
+        : { ...material, title: "Titulo antigo", body: "" };
+      await route.fulfill({ json: { items: [item], total: 1, page: 1, limit: 100 } });
+      return true;
+    });
+    await page.goto(`/dashboard/${detail.path}/${detailId}`);
+    await expect(page.getByRole("heading", { name: detail.title, exact: true })).toBeVisible();
+    expect(detailRequests).toBeGreaterThan(0);
+  });
 }
+
+test("portal completes its initial load after a connection failure without user intervention", async ({ page }) => {
+  let meRequests = 0;
+  await mockPortal(page, async (route, path) => {
+    if (path !== "/users/me") return false;
+    meRequests += 1;
+    if (meRequests > 3) return false;
+    await route.abort("failed");
+    return true;
+  }, "student");
+  await page.goto("/dashboard/student/perfil");
+  await expect(page.getByRole("heading", { name: currentUser.name, exact: true })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
+  expect(meRequests).toBe(4);
+});
 
 for (const destination of [
   { path: "/dashboard/agenda", role: "admin" },
@@ -160,9 +197,9 @@ for (const destination of [
     fail = true;
     await page.clock.setFixedTime(new Date("2026-09-10T12:06:00-03:00"));
     await page.locator(`a[href="${destination.path}"]`).first().click();
-    await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toBeVisible();
+    await expect.poll(() => requests).toBeGreaterThanOrEqual(4);
+    await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
     fail = false;
-    await page.getByRole("button", { name: "TENTAR NOVAMENTE" }).click();
     if (destination.path === "/dashboard/agenda") {
       await expect(page.getByRole("button", { name: `16:00 ${currentUser.name}`, exact: true })).toBeVisible();
     } else {

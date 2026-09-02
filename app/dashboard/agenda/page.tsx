@@ -41,7 +41,7 @@ import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { BookingDetailsDialog } from "@/components/booking-details-dialog";
 import { CohortDetailDialog } from "@/components/cohort-detail-dialog";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
-import { PortalLoadError } from "@/components/portal/portal-load-error";
+import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { notifyRequestError } from "@/lib/feedback";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import type { Cohort } from "@/lib/store";
@@ -733,6 +733,7 @@ export default function AgendaPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  useLoadRecovery(loadError, setLoadAttempt);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -973,8 +974,7 @@ export default function AgendaPage() {
     setShowNewForm(false);
   };
 
-  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
-  if (loading) return <DashboardPageSkeleton variant="agenda" />;
+  if (loadError || loading) return <DashboardPageSkeleton variant="agenda" />;
 
   return (
     <div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-djon-page">

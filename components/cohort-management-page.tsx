@@ -22,7 +22,7 @@ import {
 } from "@/components/cohort-detail-dialog";
 import { DjonSelect } from "@/components/djon-select";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
-import { PortalLoadError } from "@/components/portal/portal-load-error";
+import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
 import {
   COURSES_HERO_SECTIONS,
@@ -227,6 +227,7 @@ export function CohortManagementPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  useLoadRecovery(loadError, setLoadAttempt);
   const [cohortModal, setCohortModal] = useState(false);
   const [cohortStep, setCohortStep] = useState<1 | 2>(1);
   const [cohortForm, setCohortForm] = useState<CohortForm>(emptyCohort);
@@ -553,8 +554,7 @@ export function CohortManagementPage() {
     }
   };
 
-  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
-  if (loading) return <DashboardPageSkeleton variant="cohorts" rows={4} />;
+  if (loadError || loading) return <DashboardPageSkeleton variant="cohorts" rows={4} />;
   const overview = !detail;
   const studentOverview = user?.role === "student" && overview;
   const heroKey = user?.role === "student" ? "student-courses" : "staff-courses";
