@@ -449,6 +449,14 @@
   contain-intrinsic-size: auto 900px;
 }
 
+@media (max-width: 767px) {
+  .landing-page {
+    --djon-font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --djon-font-mono: ui-monospace, "Cascadia Mono", monospace;
+    --djon-font-titling: "Arial Narrow", "Roboto Condensed", sans-serif;
+  }
+}
+
 .djon-hero-title,
 .djon-section-title,
 .djon-display-title {
