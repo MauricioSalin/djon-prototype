@@ -371,20 +371,6 @@ test.describe("PWA real", () => {
   });
 });
 
-test("landing desktop não inicializa cenas WebGL", async ({ page }) => {
-  const splineRequests: string[] = [];
-  page.on("request", (request) => {
-    if (request.url().includes("prod.spline.design")) splineRequests.push(request.url());
-  });
-  await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
-
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await expect(page.locator("[data-spline-fallback]:visible").first()).toBeVisible();
-  await page.waitForTimeout(500);
-
-  expect(splineRequests).toEqual([]);
-});
-
 test.describe("landing em iPhone", () => {
   test.use({
     viewport: { width: 390, height: 844 },
@@ -402,7 +388,7 @@ test.describe("landing em iPhone", () => {
     await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("[data-spline-fallback]:visible").first()).toBeVisible();
+    await expect(page.locator("[data-spline-fallback]").first()).toBeVisible();
     await page.waitForTimeout(500);
 
     expect(splineRequests).toEqual([]);

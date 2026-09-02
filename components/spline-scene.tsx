@@ -11,11 +11,6 @@ const DESKTOP_LOAD_MARGIN = 220
 const DESKTOP_PREFETCH_MARGIN = "1600px 0px"
 const scenePrefetches = new Map<string, Promise<boolean>>()
 
-// Keep the production experience stable while the Spline scenes are being
-// optimized. Some WebKit/WebView and desktop GPU processes are terminated
-// after WebGL starts, replacing the page with the browser's generic error UI.
-const SPLINE_WEBGL_ENABLED = false
-
 type NetworkInformation = {
   effectiveType?: string
   saveData?: boolean
@@ -99,7 +94,7 @@ export function SplineScene({
   const sceneKey = scene
 
   useEffect(() => {
-    setIsMemorySensitive(!SPLINE_WEBGL_ENABLED || isMemorySensitiveDevice())
+    setIsMemorySensitive(isMemorySensitiveDevice())
     setDeviceProfileResolved(true)
   }, [])
 
