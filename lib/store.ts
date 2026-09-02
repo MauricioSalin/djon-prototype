@@ -916,6 +916,38 @@ function normalizePortalHero(raw: ApiRecord): PortalHeroContent {
   };
 }
 
+const TRANSIENT_HTTP_STATUSES = new Set([408, 502, 503, 504]);
+const GET_RETRY_DELAYS_MS = [300, 900];
+
+function waitForRetry(delayMs: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, delayMs));
+}
+
+async function fetchWithRetry(url: string, options: RequestInit) {
+  const method = (options.method ?? "GET").toUpperCase();
+  const retryDelays = method === "GET" ? GET_RETRY_DELAYS_MS : [];
+  let lastCause: unknown;
+
+  for (let attempt = 0; attempt <= retryDelays.length; attempt += 1) {
+    try {
+      const response = await fetch(url, options);
+      if (
+        !TRANSIENT_HTTP_STATUSES.has(response.status) ||
+        attempt === retryDelays.length
+      ) {
+        return response;
+      }
+    } catch (cause) {
+      lastCause = cause;
+      if (attempt === retryDelays.length) throw cause;
+    }
+
+    await waitForRetry(retryDelays[attempt]);
+  }
+
+  throw lastCause;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -929,14 +961,14 @@ async function request<T>(
     headers.set("Content-Type", "application/json");
   let response: Response;
   try {
-    response = await fetch(`${apiBase()}${path}`, {
+    response = await fetchWithRetry(`${apiBase()}${path}`, {
       ...options,
       headers,
       cache: "no-store",
     });
-  } catch (cause) {
+  } catch {
     const error = new ApiError(
-      cause instanceof Error ? cause.message : "Falha de conexão.",
+      "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
       0,
     );
     if (showError) notifyRequestError(error);

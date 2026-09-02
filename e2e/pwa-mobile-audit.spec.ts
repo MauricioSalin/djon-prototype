@@ -371,6 +371,40 @@ test.describe("PWA real", () => {
   });
 });
 
+test("dashboard recupera uma falha transitória da API", async ({ page }) => {
+  let currentUserAttempts = 0;
+  await page.addInitScript(() => {
+    window.localStorage.setItem("djon_access_token", "token-retry-audit");
+  });
+  await page.route("**/api/v1/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.replace(/^\/api\/v1/, "");
+    if (path === "/users/me") {
+      currentUserAttempts += 1;
+      if (currentUserAttempts === 1) {
+        await route.abort("connectionfailed");
+        return;
+      }
+      await route.fulfill({ json: user("admin") });
+      return;
+    }
+    if (path === "/users" || path.startsWith("/users?")) {
+      await route.fulfill({ json: { items: [user("admin")], total: 1, page: 1, limit: 100 } });
+      return;
+    }
+    if (path === "/events" || path === "/bookings" || path === "/materials") {
+      await route.fulfill({ json: { items: [], total: 0, page: 1, limit: 100 } });
+      return;
+    }
+    await route.fulfill({ json: [] });
+  });
+
+  await page.goto("/dashboard/admin");
+
+  await expect(page.getByText("PAINEL ADMINISTRATIVO")).toBeVisible();
+  expect(currentUserAttempts).toBe(2);
+  await expect(page.getByText("Failed to fetch")).toHaveCount(0);
+});
+
 test.describe("landing em iPhone", () => {
   test.use({
     viewport: { width: 390, height: 844 },
