@@ -10,6 +10,12 @@ import { LocationDropdown } from "@/components/location-dropdown"
 import { store, type User } from "@/lib/store"
 import { ShimmerSkeleton } from "@/components/loading-skeletons"
 import { portalHref } from "@/lib/site-urls"
+import {
+  isPortalSessionResponse,
+  PORTAL_SESSION_LOGOUT,
+  PORTAL_SESSION_READY,
+  PORTAL_SESSION_REQUEST,
+} from "@/lib/portal-session-bridge"
 
 function portalHomeForRole(role: User["role"]) {
   if (role === "admin") return portalHref("/dashboard/admin")
@@ -55,25 +61,56 @@ export function Navigation() {
   const [sessionLoading, setSessionLoading] = useState(true)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement>(null)
+  const sessionBridgeRef = useRef<HTMLIFrameElement>(null)
   const lenis = useLenis()
 
   useEffect(() => {
-    let active = true
-    void store
-      .restoreSession()
-      .then((sessionUser) => {
-        if (active) setUser(sessionUser)
-      })
-      .catch(() => {
-        if (active) setUser(null)
-      })
-      .finally(() => {
-        if (active) setSessionLoading(false)
-      })
+    const bridgeOrigin = new URL(
+      portalHref("/session-bridge"),
+      window.location.href,
+    ).origin
+    const requestSession = () => {
+      sessionBridgeRef.current?.contentWindow?.postMessage(
+        { type: PORTAL_SESSION_REQUEST },
+        bridgeOrigin,
+      )
+    }
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.origin !== bridgeOrigin ||
+        event.source !== sessionBridgeRef.current?.contentWindow
+      ) {
+        return
+      }
+      if ((event.data as { type?: unknown })?.type === PORTAL_SESSION_READY) {
+        requestSession()
+        return
+      }
+      if (!isPortalSessionResponse(event.data)) return
+      setUser(event.data.user)
+      setSessionLoading(false)
+    }
+    const timeout = window.setTimeout(() => setSessionLoading(false), 5_000)
+
+    window.addEventListener("message", handleMessage)
+    window.addEventListener("focus", requestSession)
     return () => {
-      active = false
+      window.clearTimeout(timeout)
+      window.removeEventListener("message", handleMessage)
+      window.removeEventListener("focus", requestSession)
     }
   }, [])
+
+  const requestPortalSession = () => {
+    const bridgeOrigin = new URL(
+      portalHref("/session-bridge"),
+      window.location.href,
+    ).origin
+    sessionBridgeRef.current?.contentWindow?.postMessage(
+      { type: PORTAL_SESSION_REQUEST },
+      bridgeOrigin,
+    )
+  }
 
   useEffect(() => {
     if (!accountOpen) return
@@ -128,6 +165,14 @@ export function Navigation() {
   }
 
   const handleLogout = () => {
+    const bridgeOrigin = new URL(
+      portalHref("/session-bridge"),
+      window.location.href,
+    ).origin
+    sessionBridgeRef.current?.contentWindow?.postMessage(
+      { type: PORTAL_SESSION_LOGOUT },
+      bridgeOrigin,
+    )
     store.logout()
     setUser(null)
     setAccountOpen(false)
@@ -152,6 +197,15 @@ export function Navigation() {
             : "bg-djon-ink/60 backdrop-blur-sm"
       }`}
     >
+      <iframe
+        ref={sessionBridgeRef}
+        src={portalHref("/session-bridge")}
+        title={"Sincronização da sessão do portal"}
+        className="hidden"
+        tabIndex={-1}
+        aria-hidden="true"
+        onLoad={requestPortalSession}
+      />
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between sm:px-6">
         <button onClick={() => scrollToSection("#hero")} className="flex min-h-11 cursor-pointer items-center transition-opacity hover:opacity-80">
           <motion.div

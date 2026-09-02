@@ -31,6 +31,20 @@ test("redirects the portal root to login on the same host", async ({ request }) 
   )
 })
 
+test("redirects the session bridge from the public host to the portal host", async ({
+  request,
+}) => {
+  const response = await request.get("/session-bridge", {
+    headers: { host: "www.djonacademy.com" },
+    maxRedirects: 0,
+  })
+
+  expect(response.status()).toBe(308)
+  expect(response.headers().location).toBe(
+    "https://portal.djonacademy.com/session-bridge",
+  )
+})
+
 test("keeps public and authenticated routes on their intended hosts", async ({
   request,
 }) => {

@@ -15,6 +15,7 @@ function isPortalPath(pathname: string) {
     "/login",
     "/recuperar-senha",
     "/redefinir-senha",
+    "/session-bridge",
     "/dashboard",
   ].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
@@ -52,6 +53,7 @@ export const config = {
     "/login/:path*",
     "/recuperar-senha/:path*",
     "/redefinir-senha/:path*",
+    "/session-bridge",
     "/dashboard/:path*",
     "/robots.txt",
   ],
