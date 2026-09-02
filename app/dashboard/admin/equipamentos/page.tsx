@@ -20,6 +20,7 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { store, type Equipment, type Unit } from "@/lib/store";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const field =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none placeholder:text-djon-text/25 focus:border-djon-accent/50";
@@ -64,6 +65,7 @@ export default function EquipmentsAdminPage() {
   const [unavailableFrom, setUnavailableFrom] = useState("");
   const [unavailableUntil, setUnavailableUntil] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
+  useBodyScrollLock(open || Boolean(availabilityTarget));
 
   const sync = useCallback(() => setEquipments(store.getEquipments()), []);
   const load = useCallback(async () => {

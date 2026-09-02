@@ -43,11 +43,11 @@ export function Footer() {
   const unit = units.find((item) => item.key === selectedLocation)
   const fallbackLocation = academyLocations[selectedLocation] ?? academyLocations.poa
   const location = { ...fallbackLocation, ...(unit ?? {}), lines: unit ? [unit.address, ""] : fallbackLocation.lines }
-  const phone = unit?.phone ?? "(51) 99700-7846"
-  const email = unit?.email ?? "contato@djonacademy.com"
-  const instagram = unit?.instagram ?? "https://www.instagram.com/djonacademy"
-  const facebook = unit?.facebook ?? "https://www.facebook.com/djonacademy"
-  const openingHours = unit?.openingHours ?? "Segunda à sexta das 9h às 18h"
+  const phone = unit?.phone ?? fallbackLocation.phone ?? ""
+  const email = unit?.email ?? fallbackLocation.email ?? ""
+  const instagram = unit?.instagram ?? fallbackLocation.instagram ?? "#"
+  const facebook = unit?.facebook ?? fallbackLocation.facebook ?? "#"
+  const openingHours = unit?.openingHours ?? fallbackLocation.openingHours ?? ""
 
   useEffect(() => {
     store.getPublicUnits().then(setUnits).catch(() => undefined)

@@ -954,6 +954,12 @@
   position: absolute;
   width: 100%;
 }
+.material-prose [data-video-layout][data-video-transparent="true"],
+.material-editor [data-video-layout][data-video-transparent="true"],
+.material-prose [data-video-layout][data-video-transparent="true"] > iframe,
+.material-editor [data-video-layout][data-video-transparent="true"] > iframe {
+  background-color: transparent;
+}
 .material-prose [data-video-layout="left"]:has(> [data-video-text]) > iframe,
 .material-prose [data-video-layout="right"]:has(> [data-video-text]) > iframe,
 .material-editor [data-video-layout="left"]:has(> [data-video-text]) > iframe,

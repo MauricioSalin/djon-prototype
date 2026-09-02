@@ -30,6 +30,7 @@ import {
 } from "@/components/list-pagination";
 import { DjonSelect } from "@/components/djon-select";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const inp =
   "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all";
@@ -169,6 +170,9 @@ export default function ProfessoresAdminPage() {
   const [removalAction, setRemovalAction] = useState<
     "deactivate" | "delete" | null
   >(null);
+  useBodyScrollLock(
+    showForm || Boolean(permissionTarget) || Boolean(removingUser),
+  );
 
   const load = () => setProfessors(store.getProfessors());
 

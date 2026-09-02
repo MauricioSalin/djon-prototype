@@ -22,6 +22,7 @@ import { DjonSelect } from "@/components/djon-select";
 import { store, type Unit, type User as AppUser } from "@/lib/store";
 import { formatPhone, phoneMatchesSearch } from "@/lib/phone";
 import { formatCpf } from "@/lib/cpf";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import {
   ListPagination,
   useListPagination,
@@ -60,6 +61,7 @@ export default function ProfessorAlunosPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [units, setUnits] = useState<Unit[]>([]);
+  useBodyScrollLock(showForm);
 
   const load = () => setStudents(store.getStudents());
 

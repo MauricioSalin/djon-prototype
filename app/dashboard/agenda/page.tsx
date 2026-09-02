@@ -42,6 +42,7 @@ import { BookingDetailsDialog } from "@/components/booking-details-dialog";
 import { CohortDetailDialog } from "@/components/cohort-detail-dialog";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { notifyRequestError } from "@/lib/feedback";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import type { Cohort } from "@/lib/store";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -724,16 +725,7 @@ export default function AgendaPage() {
     durationMinutes: 60,
   });
 
-  useEffect(() => {
-    if (!showNewForm) return;
-
-    const previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-    };
-  }, [showNewForm]);
+  useBodyScrollLock(showNewForm);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("todos");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(today.getFullYear());

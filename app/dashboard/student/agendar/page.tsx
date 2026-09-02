@@ -28,6 +28,7 @@ import {
 } from "@/components/list-pagination";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import {
   ADMIN_HOME_HERO,
   STUDENT_BOOKINGS_HERO,
@@ -70,6 +71,7 @@ export default function AgendarPage() {
   const [trainingBalance, setTrainingBalance] =
     useState<TrainingBalance | null>(null);
   const [loading, setLoading] = useState(true);
+  useBodyScrollLock(showForm);
   const [form, setForm] = useState({
     title: "",
     date: "",

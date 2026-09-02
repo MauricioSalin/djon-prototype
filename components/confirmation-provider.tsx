@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, X } from "lucide-react"
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
 
 type ConfirmationOptions = {
   title: string
@@ -20,6 +21,7 @@ const ConfirmationContext = createContext<ConfirmationContextValue | null>(null)
 
 export function ConfirmationProvider({ children }: { children: ReactNode }) {
   const [options, setOptions] = useState<ConfirmationOptions | null>(null)
+  useBodyScrollLock(Boolean(options))
   const resolver = useRef<((confirmed: boolean) => void) | null>(null)
 
   const close = useCallback((confirmed: boolean) => {

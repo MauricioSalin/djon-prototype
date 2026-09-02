@@ -39,6 +39,7 @@ import {
   type User,
 } from "@/lib/store";
 import { notifyError, notifyRequestError } from "@/lib/feedback";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const field =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none placeholder:text-djon-text/25 focus:border-djon-accent/50";
@@ -240,6 +241,13 @@ export function CohortManagementPage() {
   const [detail, setDetail] = useState<Cohort | null>(null);
   const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
   const [editingName, setEditingName] = useState("");
+  useBodyScrollLock(
+    cohortModal ||
+      Boolean(newCohort) ||
+      Boolean(configuring) ||
+      Boolean(detail) ||
+      Boolean(editingCohort),
+  );
   const [deletingCohort, setDeletingCohort] = useState<Cohort | null>(null);
   const [saving, setSaving] = useState(false);
 

@@ -47,6 +47,7 @@ import {
   type Notification as PortalNotification,
 } from "@/lib/store";
 import { useConfirmation } from "@/components/confirmation-provider";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import { buildLoginHref } from "@/lib/auth-routing";
 import {
   NotificationItem,
@@ -393,16 +394,7 @@ export default function DashboardLayout({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [mobileMenuOpen]);
+  useBodyScrollLock(mobileMenuOpen);
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
@@ -516,6 +508,7 @@ export default function DashboardLayout({
         setSearchResults([]);
         setMobileMenuOpen(false);
         setNotificationsOpen(false);
+        setDropdownOpen(false);
       }
     };
     document.addEventListener("keydown", handler);
@@ -830,6 +823,7 @@ export default function DashboardLayout({
               height={28}
               priority
               className="h-5 w-auto min-[360px]:h-6 sm:h-7"
+              style={{ width: "auto" }}
             />
             <span className="text-djon-caption text-djon-accent font-black tracking-[0.2em] uppercase hidden sm:block">
               Portal
@@ -840,6 +834,7 @@ export default function DashboardLayout({
             className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full text-djon-text opacity-60 transition-opacity hover:opacity-100 md:hidden"
             onClick={toggleMobileMenu}
             aria-expanded={mobileMenuOpen}
+            aria-controls="portal-mobile-menu"
             aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
@@ -931,6 +926,7 @@ export default function DashboardLayout({
                   }}
                   className="relative flex size-11 cursor-pointer items-center justify-center rounded-full text-djon-text transition-all hover:opacity-40"
                   aria-label="Notificações"
+                  aria-expanded={notificationsOpen}
                 >
                   <Bell size={16} />
                   {totalNotifications > 0 && (
@@ -1090,6 +1086,7 @@ export default function DashboardLayout({
               onClick={searchBarOpen ? closeSearch : openSearch}
               className={`flex size-11 cursor-pointer items-center justify-center rounded-full transition-all ${searchBarOpen ? "bg-djon-accent text-djon-ink" : "text-djon-text opacity-40 hover:opacity-100"}`}
               aria-label="Buscar"
+              aria-expanded={searchBarOpen}
             >
               {searchBarOpen ? <X size={16} /> : <Search size={16} />}
             </button>
@@ -1276,6 +1273,8 @@ export default function DashboardLayout({
                   }}
                   className="flex size-11 cursor-pointer items-center justify-center gap-0 rounded-full border border-djon-text/10 bg-djon-text/6 p-0 transition-all hover:brightness-110 min-[360px]:h-auto min-[360px]:min-h-11 min-[360px]:w-auto min-[360px]:gap-2 min-[360px]:py-1.5 min-[360px]:pl-1.5 min-[360px]:pr-2 sm:gap-2.5 sm:pr-3"
                   whileTap={{ scale: 0.97 }}
+                  aria-label="Abrir menu da conta"
+                  aria-expanded={dropdownOpen}
                 >
                   <div className="djon-avatar-fallback w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0">
                     {user.avatar ? (
@@ -1353,58 +1352,68 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <motion.div
-              className="fixed inset-x-0 bottom-0 top-16 z-40 bg-djon-mobile-overlay md:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <motion.nav
-                className="djon-scroll max-h-full overflow-y-auto border-t border-djon-text/8 bg-djon-page px-3 py-5 pb-10 sm:px-4"
-                initial={{ opacity: 0, y: -12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.22, ease: "easeOut" }}
-                onClick={(e) => e.stopPropagation()}
-                data-lenis-prevent
-                data-lenis-prevent-wheel
-                data-lenis-prevent-touch
-              >
-                <div className="flex flex-col gap-1">
-                  {nav.map((item) => {
-                    const isHome = item.label === "Início";
-                    const active = isHome
-                      ? pathname === item.href
-                      : pathname === item.href ||
-                        pathname.startsWith(item.href + "/");
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-wide transition-all ${
-                          active
-                            ? "bg-djon-accent text-djon-ink"
-                            : "text-djon-text opacity-50 hover:opacity-100"
-                        }`}
-                      >
-                        <item.icon size={14} />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </motion.nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
-      <main className="pt-16 overflow-x-hidden">
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            id="portal-mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu do portal"
+            className="fixed inset-x-0 bottom-0 top-16 z-40 bg-djon-mobile-overlay md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <motion.nav
+              aria-label="Navegação do portal"
+              className="djon-scroll max-h-full overflow-y-auto border-t border-djon-text/8 bg-djon-page px-3 py-5 pb-10 sm:px-4"
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              onClick={(event) => event.stopPropagation()}
+              data-lenis-prevent
+              data-lenis-prevent-wheel
+              data-lenis-prevent-touch
+            >
+              <div className="flex flex-col gap-1">
+                {nav.map((item) => {
+                  const isHome = item.label === "Início";
+                  const active = isHome
+                    ? pathname === item.href
+                    : pathname === item.href ||
+                      pathname.startsWith(item.href + "/");
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-wide transition-all ${
+                        active
+                          ? "bg-djon-accent text-djon-ink"
+                          : "text-djon-text opacity-50 hover:opacity-100"
+                      }`}
+                    >
+                      <item.icon size={14} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </motion.nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main
+        className="pt-16 overflow-x-hidden"
+        aria-hidden={mobileMenuOpen || undefined}
+        inert={mobileMenuOpen || undefined}
+      >
         {user.passwordChangeRequired && (
           <div className="border-b border-djon-accent/20 bg-djon-accent/10 px-4 py-3">
             <div className="mx-auto flex max-w-7xl flex-col gap-2 text-xs text-djon-text/70 sm:flex-row sm:items-center sm:justify-between">

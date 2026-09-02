@@ -88,7 +88,7 @@ export default function LoginPage() {
         transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] as const }}
       >
         <div className="mb-6 flex items-center justify-center sm:mb-10">
-          <Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-11 w-auto sm:h-14" priority />
+          <Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-11 w-auto sm:h-14" style={{ width: "auto" }} priority />
         </div>
 
         <div className="bg-djon-surface-2 border border-djon-text/10 rounded-2xl p-6 sm:p-8">

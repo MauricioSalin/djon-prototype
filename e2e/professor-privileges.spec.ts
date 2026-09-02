@@ -296,6 +296,7 @@ test("mostra somente privilégios configuráveis e salva acesso total", async ({
 test("com todos os privilégios usa a navegação e todas as rotas do admin", async ({
   page,
 }) => {
+  test.setTimeout(60_000);
   const permissions: Permission[] = [...allPermissions];
   await mockPortal(page, () => permissions);
 

@@ -35,6 +35,7 @@ import { LockedCoverOverlay } from "@/components/locked-cover-overlay";
 import { MaterialCourseView } from "@/components/material-course-view";
 import { usePageTitle } from "@/components/page-title-manager";
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const DRAFTS_CATEGORY = "Rascunhos";
 const COURSES_CATEGORY = "Cursos";
@@ -125,6 +126,9 @@ export default function MaterialPage() {
   } | null>(null);
   const [categoryDelete, setCategoryDelete] = useState<string | null>(null);
   const [transferCategory, setTransferCategory] = useState("");
+  useBodyScrollLock(
+    Boolean(categoryModal) || Boolean(categoryDelete) || Boolean(deleteId),
+  );
   const listScrollPosition = useRef(0);
   const selectedCourseRef = useRef<string | null>(null);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);

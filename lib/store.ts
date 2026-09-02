@@ -264,6 +264,18 @@ export interface Unit {
   active: boolean;
 }
 
+export type SaveUnitInput = Pick<
+  Unit,
+  | "label"
+  | "address"
+  | "phone"
+  | "email"
+  | "instagram"
+  | "facebook"
+  | "openingHours"
+  | "active"
+>;
+
 export interface Equipment {
   id: string;
   name: string;
@@ -1092,7 +1104,7 @@ class ApiStore {
   }
 
   private async bootstrapPortal(force: boolean) {
-    const me = await this.restoreSession(true);
+    const me = this.currentUser ?? (await this.restoreSession(true));
     if (!me) return null;
     if (!force && this.hydratePortalCache(me)) return me;
     return this.loadAll(me);
@@ -2349,11 +2361,9 @@ class ApiStore {
     return this.getUnits();
   }
 
-  async saveUnit(data: Omit<Unit, "id">, id?: string) {
+  async saveUnit(data: SaveUnitInput, id?: string) {
     const payload = {
       ...data,
-      mapSrc: data.mapSrc || undefined,
-      mapsHref: data.mapsHref || undefined,
       phone: data.phone || undefined,
       email: data.email?.trim() || undefined,
       instagram: data.instagram?.trim() || undefined,

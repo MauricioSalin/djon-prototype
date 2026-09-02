@@ -259,6 +259,18 @@ function unwrapVideoSideLayout(video: HTMLElement) {
 
 function normalizeVideoLayouts(editor: HTMLDivElement) {
   editor.querySelectorAll<HTMLElement>("[data-video-layout]").forEach((video) => {
+    const iframe = video.querySelector<HTMLIFrameElement>(":scope > iframe")
+    const kind = videoKindOf(video)
+    video.dataset.videoKind = kind
+    if (kind === "embed" && iframe) {
+      if (requestsTransparentBackground(iframe.src)) {
+        video.dataset.videoTransparent = "true"
+        iframe.setAttribute("allowtransparency", "true")
+      } else {
+        delete video.dataset.videoTransparent
+        iframe.removeAttribute("allowtransparency")
+      }
+    }
     const alignment = video.dataset.videoLayout
     if (alignment === "left" || alignment === "right") {
       ensureVideoSideLayout(video, alignment)
@@ -266,6 +278,31 @@ function normalizeVideoLayouts(editor: HTMLDivElement) {
       video.contentEditable = "false"
     }
   })
+}
+
+function videoKindOf(video: HTMLElement): "youtube" | "embed" {
+  if (video.dataset.videoKind === "youtube" || video.dataset.videoKind === "embed") {
+    return video.dataset.videoKind
+  }
+  const iframe = video.querySelector<HTMLIFrameElement>(":scope > iframe")
+  if (!iframe) return "youtube"
+  try {
+    const hostname = new URL(iframe.src).hostname.replace(/^www\./, "")
+    return hostname === "youtube.com" || hostname === "youtube-nocookie.com"
+      ? "youtube"
+      : "embed"
+  } catch {
+    return "embed"
+  }
+}
+
+function requestsTransparentBackground(src: string) {
+  try {
+    const transparent = new URL(src).searchParams.get("transparent")?.toLowerCase()
+    return transparent === "1" || transparent === "true"
+  } catch {
+    return false
+  }
 }
 
 function iframeEmbedAttributes(value: string) {
@@ -283,6 +320,7 @@ function iframeEmbedAttributes(value: string) {
     if (src.protocol !== "https:" || src.username || src.password) return null
     return {
       src: src.toString(),
+      transparent: requestsTransparentBackground(src.toString()),
       title: iframe.getAttribute("title")?.trim().slice(0, 200) || "Conteúdo incorporado",
       allow: iframe.getAttribute("allow")?.trim().slice(0, 500) || "autoplay; fullscreen; xr-spatial-tracking; web-share",
       passthroughAttributes: [
@@ -304,18 +342,21 @@ function mediaEmbedHtml({
   title,
   allow,
   kind,
+  transparent = false,
   passthroughAttributes = [],
 }: {
   src: string
   title: string
   allow: string
   kind: "youtube" | "embed"
+  transparent?: boolean
   passthroughAttributes?: string[]
 }) {
   const wrapper = document.createElement("div")
   wrapper.dataset.videoLayout = "block"
   wrapper.dataset.videoWidth = "100%"
   wrapper.dataset.videoKind = kind
+  if (transparent) wrapper.dataset.videoTransparent = "true"
   wrapper.contentEditable = "false"
 
   const iframe = document.createElement("iframe")
@@ -325,6 +366,7 @@ function mediaEmbedHtml({
   iframe.allow = allow
   iframe.allowFullscreen = true
   iframe.referrerPolicy = "strict-origin-when-cross-origin"
+  if (transparent) iframe.setAttribute("allowtransparency", "true")
   passthroughAttributes.forEach((attribute) => iframe.setAttribute(attribute, ""))
   wrapper.appendChild(iframe)
 
@@ -518,7 +560,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     if (video) video.setAttribute("data-editor-selected", "true")
     selectedVideoRef.current = video
     setVideoSelected(Boolean(video))
-    setSelectedVideoKind(video?.dataset.videoKind === "embed" ? "embed" : "youtube")
+    setSelectedVideoKind(video ? videoKindOf(video) : "youtube")
     setSelectedVideoWidth(video?.dataset.videoWidth || "100%")
     const alignment = video?.dataset.videoLayout
     setSelectedVideoAlignment(alignment === "left" || alignment === "right" ? alignment : "block")
@@ -664,10 +706,10 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
 
   const toggleBlock = (block: "h2" | "h3" | "blockquote") => {
     restoreSelection()
-    const currentBlock = String(document.queryCommandValue("formatBlock"))
-      .replace(/[<>]/g, "")
-      .toLowerCase()
-    exec("formatBlock", currentBlock === block ? "<p>" : `<${block}>`)
+    const anchorNode = window.getSelection()?.anchorNode
+    const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode?.parentElement
+    const currentBlock = anchorElement?.closest("h2, h3, blockquote")?.tagName.toLowerCase()
+    exec("formatBlock", currentBlock === block ? "p" : block)
   }
 
   const insertImage = async (e: React.ChangeEvent<HTMLInputElement>) => {

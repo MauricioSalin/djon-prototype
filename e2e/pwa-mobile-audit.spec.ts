@@ -231,6 +231,252 @@ const routes: Record<PortalRole, string[]> = {
   ],
 };
 
+const navigationLabels: Record<PortalRole, string[]> = {
+  admin: [
+    "Início",
+    "Alunos",
+    "Professores",
+    "Eventos",
+    "Mural",
+    "Contatos",
+    "Unidades",
+    "Equipamentos",
+    "Agenda",
+    "Material",
+    "Cursos",
+    "Turmas",
+  ],
+  professor: [
+    "Início",
+    "Agenda",
+    "Meus Eventos",
+    "Mural",
+    "Alunos",
+    "Professores",
+    "Material",
+    "Cursos",
+    "Turmas",
+  ],
+  student: [
+    "Início",
+    "Agenda",
+    "Meus Eventos",
+    "Mural",
+    "Professores",
+    "Material",
+    "Cursos",
+  ],
+};
+
+async function expectMobileMenu(page: Page, role: PortalRole) {
+  const openButton = page.getByRole("button", {
+    name: "Abrir menu",
+    exact: true,
+  });
+  await expect(openButton).toBeVisible();
+  await openButton.click();
+
+  const menu = page.getByRole("dialog", { name: "Menu do portal" });
+  const navigation = page.getByRole("navigation", {
+    name: "Navegação do portal",
+  });
+  await expect(menu).toBeVisible();
+  await expect(openButton).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Fechar menu" })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("hidden");
+
+  const geometry = await menu.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      top: rect.top,
+      bottom: rect.bottom,
+      height: rect.height,
+      viewportHeight: window.innerHeight,
+    };
+  });
+  expect(geometry.top).toBeCloseTo(64, 0);
+  expect(geometry.bottom).toBeCloseTo(geometry.viewportHeight, 0);
+  expect(geometry.height).toBeCloseTo(geometry.viewportHeight - 64, 0);
+
+  const expectedLabels = navigationLabels[role];
+  await expect(navigation.getByRole("link")).toHaveCount(expectedLabels.length);
+  for (const label of expectedLabels) {
+    await expect(
+      navigation.getByRole("link", { name: label, exact: true }),
+    ).toHaveCount(1);
+  }
+
+  const lastLink = navigation.getByRole("link", {
+    name: expectedLabels.at(-1),
+    exact: true,
+  });
+  await lastLink.scrollIntoViewIfNeeded();
+  await expect(lastLink).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeHidden();
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("");
+}
+
+async function expectMobileHeaderPanels(page: Page) {
+  const notificationsButton = page.getByRole("button", {
+    name: "Notificações",
+  });
+  await notificationsButton.click();
+  await expect(notificationsButton).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByText("Nenhuma notificação.")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(notificationsButton).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByText("Nenhuma notificação.")).toBeHidden();
+
+  const searchButton = page.getByRole("button", { name: "Buscar" });
+  await searchButton.click();
+  await expect(searchButton).toHaveAttribute("aria-expanded", "true");
+  const searchInput = page.getByPlaceholder(
+    "Buscar alunos, professores, eventos...",
+  );
+  await expect(searchInput).toBeVisible();
+  await searchInput.fill("zz");
+  await expect(page.getByText('Nenhum resultado para "zz"')).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(searchButton).toHaveAttribute("aria-expanded", "false");
+  await expect(searchInput).toBeHidden();
+
+  const accountButton = page.getByRole("button", {
+    name: "Abrir menu da conta",
+  });
+  await accountButton.click();
+  await expect(accountButton).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("link", { name: "Acessar site" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Meu perfil" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(accountButton).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("link", { name: "Meu perfil" })).toBeHidden();
+}
+
+async function expectContainedModal(
+  page: Page,
+  path: string,
+  triggerName: string,
+  headingName: string,
+) {
+  await page.goto(path, { waitUntil: "domcontentloaded" });
+  const trigger = page.getByRole("button", {
+    name: triggerName,
+    exact: true,
+  }).first();
+  await expect(trigger).toBeVisible();
+  await trigger.click();
+
+  const heading = page.getByRole("heading", {
+    name: headingName,
+    exact: true,
+  });
+  await expect(heading).toBeVisible();
+  const overlay = heading.locator(
+    "xpath=ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' fixed ')][1]",
+  );
+  const panel = heading.locator(
+    "xpath=ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' djon-scroll ')][1]",
+  );
+  await expect(overlay).toBeVisible();
+  await expect(panel).toBeVisible();
+  await page.waitForTimeout(400);
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("hidden");
+
+  const geometry = await panel.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      top: rect.top,
+      bottom: rect.bottom,
+      left: rect.left,
+      right: rect.right,
+      viewportHeight: window.innerHeight,
+      viewportWidth: window.innerWidth,
+      overflowY: getComputedStyle(element).overflowY,
+    };
+  });
+  expect(geometry.top).toBeGreaterThanOrEqual(0);
+  expect(geometry.bottom).toBeLessThanOrEqual(geometry.viewportHeight + 1);
+  expect(geometry.left).toBeGreaterThanOrEqual(0);
+  expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth + 1);
+  expect(["auto", "scroll"]).toContain(geometry.overflowY);
+
+  await panel
+    .locator("button")
+    .filter({ has: page.locator("svg.lucide-x") })
+    .first()
+    .click();
+  await expect(heading).toBeHidden();
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("");
+}
+
+async function expectCoreMobileModals(page: Page, role: PortalRole) {
+  const sharedAuthoring = [
+    ["/dashboard/agenda", "NOVO", "Agendamento"],
+    ["/dashboard/cursos", "NOVO CURSO", "Curso"],
+  ] as const;
+  const scenarios =
+    role === "admin"
+      ? ([
+          ["/dashboard/admin/alunos", "NOVO ALUNO", "Cadastrar Aluno"],
+          [
+            "/dashboard/admin/professores",
+            "NOVO PROFESSOR",
+            "Cadastrar Professor",
+          ],
+          ["/dashboard/admin/eventos", "NOVO EVENTO", "Novo Evento"],
+          ["/dashboard/admin/unidades", "NOVA UNIDADE", "Nova unidade"],
+          [
+            "/dashboard/admin/equipamentos",
+            "NOVO EQUIPAMENTO",
+            "Equipamento",
+          ],
+          ...sharedAuthoring,
+        ] as const)
+      : role === "professor"
+        ? ([
+            [
+              "/dashboard/professor/alunos",
+              "NOVO ALUNO",
+              "Cadastrar aluno",
+            ],
+            [
+              "/dashboard/professor/evento",
+              "NOVO EVENTO",
+              "Cadastrar Evento",
+            ],
+            ...sharedAuthoring,
+          ] as const)
+        : ([
+            [
+              "/dashboard/student/agendar",
+              "SOLICITAR TREINO",
+              "Solicitar treino",
+            ],
+            [
+              "/dashboard/student/evento",
+              "NOVO EVENTO",
+              "Cadastrar Evento",
+            ],
+          ] as const);
+
+  for (const [path, trigger, heading] of scenarios) {
+    await expectContainedModal(page, path, trigger, heading);
+  }
+}
+
 async function expectMobilePage(page: Page, path: string) {
   const errors: string[] = [];
   const onPageError = (error: Error) => errors.push(error.message);
@@ -246,6 +492,7 @@ async function expectMobilePage(page: Page, path: string) {
   page.on("console", onConsole);
 
   await page.goto(path, { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("load");
   await page.waitForTimeout(350);
 
   const layout = await page.evaluate(() => {
@@ -309,6 +556,44 @@ async function expectMobilePage(page: Page, path: string) {
 
   page.off("pageerror", onPageError);
   page.off("console", onConsole);
+}
+
+async function expectPublicMobileMenu(page: Page) {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.waitForLoadState("load");
+  await page.waitForTimeout(300);
+  const openButton = page.getByRole("button", {
+    name: "Abrir menu",
+    exact: true,
+  });
+  await openButton.click();
+  await expect(
+    page.getByRole("button", { name: "Fechar menu", exact: true }),
+  ).toHaveAttribute("aria-expanded", "true");
+  const menu = page.getByRole("dialog", { name: "Menu do site" });
+  await expect(menu).toBeVisible();
+  await expect(page.getByRole("link", { name: "LOGIN" })).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("hidden");
+
+  await expect
+    .poll(() => menu.evaluate((element) => element.getBoundingClientRect().top))
+    .toBeCloseTo(64, 0);
+  await expect
+    .poll(() =>
+      menu.evaluate(
+        (element) =>
+          Math.abs(element.getBoundingClientRect().bottom - window.innerHeight),
+      ),
+    )
+    .toBeLessThan(0.5);
+
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeHidden();
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("");
 }
 
 test.describe("PWA real", () => {
@@ -453,13 +738,17 @@ for (const viewport of [
       ]) {
         await expectMobilePage(page, path);
       }
+      await expectPublicMobileMenu(page);
     });
 
     for (const role of ["admin", "professor", "student"] as const) {
       test(`${role}: rotas e subtelas`, async ({ page }) => {
-        test.setTimeout(90_000);
+        test.setTimeout(150_000);
         await mockPortal(page, role);
         for (const path of routes[role]) await expectMobilePage(page, path);
+        await expectMobileMenu(page, role);
+        await expectMobileHeaderPanels(page);
+        await expectCoreMobileModals(page, role);
       });
     }
   });

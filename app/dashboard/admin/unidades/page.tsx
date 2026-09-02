@@ -1,31 +1,44 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Building2, Edit2, Plus, Save, Trash2, X } from "lucide-react";
-import { store, type Unit } from "@/lib/store";
-import { ListPagination, useListPagination } from "@/components/list-pagination";
+import {
+  Building2,
+  Edit2,
+  Globe2,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  Save,
+  Trash2,
+  X,
+} from "lucide-react";
+import { store, type SaveUnitInput, type Unit } from "@/lib/store";
+import {
+  ListPagination,
+  useListPagination,
+} from "@/components/list-pagination";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { formatPhone } from "@/lib/phone";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { academyLocations } from "@/lib/locations";
 
 const field =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none focus:border-djon-accent/50";
-type UnitForm = Omit<Unit, "id">;
+type UnitForm = SaveUnitInput;
 const empty: UnitForm = {
-  key: "",
   label: "",
-  shortLabel: "",
   address: "",
-  mapSrc: "",
-  mapsHref: "",
   phone: "",
   email: "",
   instagram: "",
   facebook: "",
   openingHours: "Segunda à sexta das 9h às 18h",
-  timezone: "America/Sao_Paulo",
   active: true,
 };
+
+const label = "mb-1.5 block text-xs font-bold text-djon-text/60";
 
 export default function UnitsAdminPage() {
   const { confirm } = useConfirmation();
@@ -34,6 +47,7 @@ export default function UnitsAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  useBodyScrollLock(open);
 
   const sync = useCallback(() => setUnits(store.getUnits()), []);
   const load = useCallback(async () => {
@@ -45,9 +59,17 @@ export default function UnitsAdminPage() {
   }, [load]);
 
   const edit = (unit: Unit) => {
-    const { id, ...values } = unit;
-    void id;
-    setForm(values);
+    const fallback = academyLocations[unit.key];
+    setForm({
+      label: unit.label,
+      address: unit.address,
+      phone: unit.phone ?? fallback?.phone ?? "",
+      email: unit.email ?? fallback?.email ?? "",
+      instagram: unit.instagram ?? fallback?.instagram ?? "",
+      facebook: unit.facebook ?? fallback?.facebook ?? "",
+      openingHours: unit.openingHours ?? fallback?.openingHours ?? "",
+      active: unit.active,
+    });
     setEditingId(unit.id);
     setOpen(true);
   };
@@ -104,7 +126,22 @@ export default function UnitsAdminPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-black text-djon-text">{unit.label}</p>
-                <p className="mt-1 text-xs text-djon-text/40">{unit.address}</p>
+                <p className="mt-1 flex items-start gap-1.5 text-xs text-djon-text/40">
+                  <MapPin size={12} className="mt-0.5 shrink-0" />
+                  {unit.address}
+                </p>
+                {(unit.phone ?? academyLocations[unit.key]?.phone) && (
+                  <p className="mt-2 flex items-center gap-1.5 text-xs text-djon-text/50">
+                    <Phone size={12} className="shrink-0" />
+                    {unit.phone ?? academyLocations[unit.key]?.phone}
+                  </p>
+                )}
+                {(unit.email ?? academyLocations[unit.key]?.email) && (
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-djon-text/50">
+                    <Mail size={12} className="shrink-0" />
+                    {unit.email ?? academyLocations[unit.key]?.email}
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => edit(unit)}
@@ -146,7 +183,12 @@ export default function UnitsAdminPage() {
         onPageSizeChange={pagination.setPageSize}
       />
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="unit-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/80 p-4 backdrop-blur-sm"
+        >
           <form
             onSubmit={submit}
             className="djon-scroll max-h-[calc(100svh-2rem)] w-full max-w-lg space-y-4 overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6"
@@ -155,7 +197,10 @@ export default function UnitsAdminPage() {
             data-lenis-prevent-touch
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black text-djon-text">
+              <h2
+                id="unit-dialog-title"
+                className="text-xl font-black text-djon-text"
+              >
                 {editingId ? "Editar unidade" : "Nova unidade"}
               </h2>
               <button
@@ -166,92 +211,146 @@ export default function UnitsAdminPage() {
                 <X size={18} />
               </button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <input
-                required
-                value={form.key}
-                onChange={(e) => setForm({ ...form, key: e.target.value })}
-                placeholder="Identificador (poa)"
-                className={field}
-              />
-              <input
-                required
-                value={form.shortLabel}
-                onChange={(e) =>
-                  setForm({ ...form, shortLabel: e.target.value })
-                }
-                placeholder="Nome curto"
-                className={field}
-              />
-            </div>
-            <input
-              required
-              value={form.label}
-              onChange={(e) => setForm({ ...form, label: e.target.value })}
-              placeholder="Nome da unidade"
-              className={field}
-            />
-            <input
-              required
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              placeholder="Endereço completo"
-              className={field}
-            />
-            <p className="rounded-xl border border-djon-accent/15 bg-djon-accent/5 px-3 py-2.5 text-xs leading-relaxed text-djon-text/50">
-              Os mapas do OpenStreetMap e do Google Maps são gerados
-              automaticamente pelo endereço informado.
-            </p>
-            <div className="border-t border-djon-text/8 pt-4">
+            <section>
               <p className="mb-3 text-xs font-black tracking-widest text-djon-accent">
-                CONTATO NO SITE
+                INFORMAÇÕES DA UNIDADE
               </p>
               <div className="space-y-4">
-                <input
-                  value={form.phone ?? ""}
-                  onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })}
-                  placeholder="Telefone público"
-                  inputMode="numeric"
-                  maxLength={15}
-                  className={field}
-                />
-                <input
-                  type="email"
-                  value={form.email ?? ""}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="E-mail da unidade e destino dos contatos"
-                  className={field}
-                />
-                <input
-                  type="url"
-                  value={form.instagram ?? ""}
-                  onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-                  placeholder="URL do Instagram"
-                  className={field}
-                />
-                <input
-                  type="url"
-                  value={form.facebook ?? ""}
-                  onChange={(e) => setForm({ ...form, facebook: e.target.value })}
-                  placeholder="URL do Facebook"
-                  className={field}
-                />
-                <input
-                  value={form.openingHours ?? ""}
-                  onChange={(e) => setForm({ ...form, openingHours: e.target.value })}
-                  placeholder="Horário de atendimento"
-                  maxLength={120}
-                  className={field}
-                />
+                <label>
+                  <span className={label}>Nome da unidade</span>
+                  <input
+                    required
+                    value={form.label}
+                    onChange={(e) =>
+                      setForm({ ...form, label: e.target.value })
+                    }
+                    placeholder="Ex.: Porto Alegre / RS"
+                    maxLength={150}
+                    className={field}
+                  />
+                </label>
+                <label>
+                  <span className={label}>Endereço completo</span>
+                  <input
+                    required
+                    value={form.address}
+                    onChange={(e) =>
+                      setForm({ ...form, address: e.target.value })
+                    }
+                    placeholder="Rua, número, complemento, bairro, cidade e estado"
+                    maxLength={300}
+                    autoComplete="street-address"
+                    className={field}
+                  />
+                </label>
+                <p className="flex gap-2 rounded-xl border border-djon-accent/15 bg-djon-accent/5 px-3 py-2.5 text-xs leading-relaxed text-djon-text/50">
+                  <Globe2
+                    size={15}
+                    className="mt-0.5 shrink-0 text-djon-accent"
+                  />
+                  Mapa, link de localização, identificador interno e fuso
+                  horário são definidos automaticamente.
+                </p>
+              </div>
+            </section>
+            <div className="border-t border-djon-text/8 pt-4">
+              <p className="mb-3 text-xs font-black tracking-widest text-djon-accent">
+                CONTATO E SITE
+              </p>
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label>
+                    <span className={label}>Telefone público</span>
+                    <div className="relative">
+                      <Phone
+                        size={15}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-djon-text/30"
+                      />
+                      <input
+                        required
+                        value={form.phone ?? ""}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            phone: formatPhone(e.target.value),
+                          })
+                        }
+                        placeholder="(51) 99999-0000"
+                        inputMode="numeric"
+                        autoComplete="tel"
+                        maxLength={15}
+                        className={`${field} pl-9`}
+                      />
+                    </div>
+                  </label>
+                  <label>
+                    <span className={label}>E-mail de contato</span>
+                    <div className="relative">
+                      <Mail
+                        size={15}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-djon-text/30"
+                      />
+                      <input
+                        required
+                        type="email"
+                        value={form.email ?? ""}
+                        onChange={(e) =>
+                          setForm({ ...form, email: e.target.value })
+                        }
+                        placeholder="contato@unidade.com"
+                        autoComplete="email"
+                        className={`${field} pl-9`}
+                      />
+                    </div>
+                  </label>
+                </div>
+                <label>
+                  <span className={label}>Horário de atendimento</span>
+                  <input
+                    required
+                    value={form.openingHours ?? ""}
+                    onChange={(e) =>
+                      setForm({ ...form, openingHours: e.target.value })
+                    }
+                    placeholder="Ex.: Segunda à sexta, das 9h às 18h"
+                    maxLength={120}
+                    className={field}
+                  />
+                </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label>
+                    <span className={label}>
+                      Instagram{" "}
+                      <span className="font-normal opacity-60">(opcional)</span>
+                    </span>
+                    <input
+                      type="url"
+                      value={form.instagram ?? ""}
+                      onChange={(e) =>
+                        setForm({ ...form, instagram: e.target.value })
+                      }
+                      placeholder="https://instagram.com/..."
+                      className={field}
+                    />
+                  </label>
+                  <label>
+                    <span className={label}>
+                      Facebook{" "}
+                      <span className="font-normal opacity-60">(opcional)</span>
+                    </span>
+                    <input
+                      type="url"
+                      value={form.facebook ?? ""}
+                      onChange={(e) =>
+                        setForm({ ...form, facebook: e.target.value })
+                      }
+                      placeholder="https://facebook.com/..."
+                      className={field}
+                    />
+                  </label>
+                </div>
               </div>
             </div>
-            <input
-              required
-              value={form.timezone}
-              onChange={(e) => setForm({ ...form, timezone: e.target.value })}
-              placeholder="Fuso horário"
-              className={field}
-            />
             <label className="flex items-center gap-2 text-sm text-djon-text/60">
               <input
                 type="checkbox"

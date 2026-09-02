@@ -17,11 +17,14 @@ test("does not render the login form while redirecting an active session", async
     window.localStorage.setItem("djon_access_token", "token-no-flash-e2e")
   })
 
-  await page.route("**/api/v1/users/me", async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 1_000))
-    await route.fulfill({
-      json: student,
-    })
+  await page.route("**/api/v1/**", async (route) => {
+    const pathname = new URL(route.request().url()).pathname.replace(/^\/api\/v1/, "")
+    if (pathname === "/users/me") {
+      await new Promise((resolve) => setTimeout(resolve, 1_000))
+      await route.fulfill({ json: student })
+      return
+    }
+    await route.fulfill({ json: [] })
   })
 
   await page.goto("/login")

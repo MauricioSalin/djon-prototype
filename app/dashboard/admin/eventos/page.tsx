@@ -7,6 +7,7 @@ import { store, type DJEvent } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
 import {
   ADMIN_EVENTS_HERO,
   EVENTS_HERO_SECTIONS,
@@ -24,6 +25,7 @@ export default function AdminEventosPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [tab, setTab] = useState<DJEvent["type"]>("djOn")
+  useBodyScrollLock(showForm)
 
   const load = () => {
     const all = store.getEvents().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())

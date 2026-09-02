@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { notifyRequestError, notifySuccess } from "@/lib/feedback";
 import { hasPermission, store, type Cohort, type User } from "@/lib/store";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const ACCORDION_EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -603,6 +604,7 @@ export function CohortDetailDialog({
   onClose,
   ...props
 }: CohortDetailDialogProps) {
+  useBodyScrollLock(true);
   return (
     <CohortDetailView
       {...props}

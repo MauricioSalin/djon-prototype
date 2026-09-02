@@ -212,25 +212,33 @@ test("usa os dropdowns próprios do portal para cores e ícones", async ({ page 
 
   const colorSelect = dialog.getByRole("combobox", { name: "Cor" }).first();
   await expect(colorSelect.locator('[data-slot="select-option-preview"]')).toBeVisible();
-  await colorSelect.press("Enter");
+  await colorSelect.click();
   const viewport = page.locator('[data-slot="select-viewport"]');
   await expect(viewport).toBeVisible();
   await expect(viewport).toHaveCSS("overflow-y", "auto");
   await expect(page.locator('[data-slot="select-scroll-up-button"]')).toHaveCount(0);
   await expect(page.locator('[data-slot="select-scroll-down-button"]')).toHaveCount(0);
+  const purpleOption = page
+    .locator('[data-slot="select-item"]')
+    .filter({ hasText: /^Roxo claro$/ });
+  await expect(purpleOption).toHaveAttribute("role", "option");
   await expect(
-    page.getByRole("option", { name: "Verde" }).last().locator('[data-slot="select-option-preview"]'),
+    purpleOption.locator('[data-slot="select-option-preview"]'),
   ).toBeVisible();
   await page.keyboard.press("Escape");
+  await expect(viewport).toBeHidden();
 
   const iconSelect = dialog
     .getByRole("combobox", { name: "Ícone da biblioteca Lucide" })
     .first();
   await expect(iconSelect.locator('[data-slot="select-option-preview"]')).toBeVisible();
-  await iconSelect.press("Enter");
-  await expect(
-    page.getByRole("option", { name: "Pessoas" }).last().locator('[data-slot="select-option-preview"]'),
-  ).toBeVisible();
+  await iconSelect.click();
+  await expect(viewport).toBeVisible();
+  const peopleOption = page
+    .locator('[data-slot="select-item"]')
+    .filter({ hasText: /^Pessoas$/ });
+  await expect(peopleOption).toHaveAttribute("role", "option");
+  await expect(peopleOption.locator('[data-slot="select-option-preview"]')).toBeVisible();
   await page.keyboard.press("Escape");
 });
 

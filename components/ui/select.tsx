@@ -54,6 +54,7 @@ function SelectContent({
   className,
   children,
   position = 'popper',
+  onEscapeKeyDown,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
@@ -67,6 +68,10 @@ function SelectContent({
           className,
         )}
         position={position}
+        onEscapeKeyDown={(event) => {
+          onEscapeKeyDown?.(event)
+          event.stopPropagation()
+        }}
         {...props}
       >
         <SelectPrimitive.Viewport

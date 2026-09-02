@@ -15,8 +15,13 @@ const professor = {
   createdAt: "2026-09-02T12:00:00.000Z",
 };
 
-async function mockMaterialEditor(page: Page) {
+async function mockMaterialEditor(
+  page: Page,
+  initialMaterial: Record<string, unknown> | null = null,
+) {
+  const materialId = "507f1f77bcf86cd799439041";
   let savedBody = "";
+  let savedMaterial: Record<string, unknown> | null = initialMaterial;
   await page.addInitScript(() => {
     window.localStorage.setItem("djon_access_token", "token-e2e");
   });
@@ -44,18 +49,28 @@ async function mockMaterialEditor(page: Page) {
     if (path === "/materials" && request.method() === "POST") {
       const payload = request.postDataJSON() as { body?: string };
       savedBody = payload.body ?? "";
-      await route.fulfill({
-        json: {
-          id: "507f1f77bcf86cd799439041",
-          title: "",
-          category: "Equipamento",
-          status: "draft",
-          body: savedBody,
-          authorId: professor.id,
-          authorName: professor.name,
-          attachments: [],
-          createdAt: "2026-09-02T12:00:00.000Z",
+      savedMaterial = {
+        id: materialId,
+        title: "",
+        categoryId: {
+          id: "507f1f77bcf86cd799439031",
+          name: "Equipamento",
         },
+        status: "draft",
+        body: savedBody,
+        authorId: professor,
+        attachments: [],
+        createdAt: "2026-09-02T12:00:00.000Z",
+      };
+      await route.fulfill({
+        json: savedMaterial,
+      });
+      return;
+    }
+    if (path === `/materials/${materialId}` && request.method() === "GET") {
+      await route.fulfill({
+        status: savedMaterial ? 200 : 404,
+        json: savedMaterial ?? { message: "Material não encontrado." },
       });
       return;
     }
@@ -80,7 +95,7 @@ async function mockMaterialEditor(page: Page) {
   return () => savedBody;
 }
 
-test("insere iframe seguro e mantém texto ao lado e abaixo", async ({ page }) => {
+test("insere iframe seguro e o retoma no rascunho com textos preservados", async ({ page }) => {
   const getSavedBody = await mockMaterialEditor(page);
   await page.goto("/dashboard/material/novo");
 
@@ -105,6 +120,10 @@ test("insere iframe seguro e mantém texto ao lado e abaixo", async ({ page }) =
   const media = page.locator('.material-editor [data-video-kind="embed"]');
   const iframe = media.locator("iframe");
   await expect(media).toHaveAttribute("data-video-layout", "block");
+  await expect(media).toHaveAttribute("data-video-transparent", "true");
+  await expect(media).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(iframe).toHaveAttribute("allowtransparency", "true");
+  await expect(iframe).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   await expect(iframe).toHaveAttribute("title", "DDJ FLX4 - Pioneer");
   await expect(iframe).toHaveAttribute(
     "src",
@@ -122,6 +141,8 @@ test("insere iframe seguro e mantém texto ao lado e abaixo", async ({ page }) =
   await expect.poll(getSavedBody).toContain('data-video-kind="embed"');
 
   const saved = getSavedBody();
+  expect(saved).toContain('data-video-transparent="true"');
+  expect(saved).toContain('allowtransparency="true"');
   expect(saved).toContain("Texto ao lado do modelo 3D.");
   expect(saved).toContain("Texto abaixo do iframe.");
   expect(saved).toContain("https://sketchfab.com/models/3d58b845642e4867b77c756c64d29802/embed?autostart=1&amp;transparent=1");
@@ -130,4 +151,80 @@ test("insere iframe seguro e mantém texto ao lado e abaixo", async ({ page }) =
   expect(saved.indexOf("Texto abaixo do iframe.")).toBeGreaterThan(
     saved.indexOf('data-video-layout="left"'),
   );
+
+  await expect(page).toHaveURL(/category=Rascunhos/);
+  await page.goto("/dashboard/material/novo?edit=507f1f77bcf86cd799439041");
+
+  const resumedMedia = page.locator('.material-editor [data-video-kind="embed"]');
+  await expect(resumedMedia.locator("iframe")).toHaveAttribute(
+    "src",
+    "https://sketchfab.com/models/3d58b845642e4867b77c756c64d29802/embed?autostart=1&transparent=1",
+  );
+  await expect(resumedMedia.locator('[data-video-text="true"]')).toContainText(
+    "Texto ao lado do modelo 3D.",
+  );
+  await expect(page.locator(".material-editor")).toContainText("Texto abaixo do iframe.");
+  await resumedMedia.click({ position: { x: 10, y: 10 } });
+  await expect(page.getByText("IFRAME", { exact: true })).toBeVisible();
+});
+
+test("não força transparência quando o embed mantém o próprio fundo", async ({ page }) => {
+  await mockMaterialEditor(page);
+  await page.goto("/dashboard/material/novo");
+
+  await page.getByRole("button", { name: "Conteúdo incorporado (iframe)" }).click();
+  const dialog = page.getByRole("dialog", { name: "Inserir iframe" });
+  await dialog.getByLabel("Código do iframe").fill(
+    '<iframe title="Modelo com fundo" src="https://sketchfab.com/models/3d58b845642e4867b77c756c64d29802/embed?autostart=1"></iframe>',
+  );
+  await dialog.getByRole("button", { name: "INSERIR IFRAME" }).click();
+
+  const media = page.locator('.material-editor [data-video-kind="embed"]');
+  await expect(media).not.toHaveAttribute("data-video-transparent", /.+/);
+  await expect(media.locator("iframe")).not.toHaveAttribute("allowtransparency", /.+/);
+});
+
+test("remove subtítulo ao clicar novamente em H3", async ({ page }) => {
+  await mockMaterialEditor(page);
+  await page.goto("/dashboard/material/novo");
+
+  const editor = page.locator(".material-editor");
+  await editor.fill("Texto que volta a ser parágrafo.");
+  await editor.selectText();
+  await page.getByRole("button", { name: "Subtítulo", exact: true }).click();
+  await expect(editor.locator("h3")).toHaveText("Texto que volta a ser parágrafo.");
+
+  await editor.locator("h3").click();
+  await page.getByRole("button", { name: "Subtítulo", exact: true }).click();
+  await expect(editor.locator("h3")).toHaveCount(0);
+  await expect(editor.locator("p")).toHaveText("Texto que volta a ser parágrafo.");
+});
+
+test("mostra o iframe dentro do artigo publicado", async ({ page }) => {
+  const materialId = "507f1f77bcf86cd799439041";
+  const iframeSrc =
+    "https://sketchfab.com/models/3d58b845642e4867b77c756c64d29802/embed?autostart=1&transparent=1";
+  await mockMaterialEditor(page, {
+    id: materialId,
+    title: "Controladora",
+    categoryId: {
+      id: "507f1f77bcf86cd799439031",
+      name: "Equipamento",
+    },
+    status: "published",
+    body: `<div data-video-layout="block" data-video-width="100%" data-video-kind="embed" data-video-transparent="true"><iframe src="${iframeSrc}" title="DDJ FLX4 - Pioneer" allowfullscreen allowtransparency="true"></iframe></div><p>Texto abaixo do iframe.</p>`,
+    authorId: professor,
+    attachments: [],
+    createdAt: "2026-09-02T12:00:00.000Z",
+  });
+
+  await page.goto(`/dashboard/material/${materialId}`);
+
+  const article = page.locator(".material-prose");
+  await expect(article.locator('iframe[title="DDJ FLX4 - Pioneer"]')).toHaveAttribute(
+    "src",
+    iframeSrc,
+  );
+  await expect(article.locator("iframe")).toBeVisible();
+  await expect(article).toContainText("Texto abaixo do iframe.");
 });

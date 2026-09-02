@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/brand",
   },
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+  },
   openGraph: {
     title: "Brand System x Salin | DJ ON",
     description:
@@ -226,7 +231,7 @@ export default function BrandPage() {
               <Image src="/images/djon-verde.png" alt="DJ ON Academy em verde" width={340} height={86} className="h-auto w-full max-w-[340px]" />
             </div>
             <div className="flex min-h-[280px] items-center justify-center rounded-2xl border border-djon-text/10 bg-djon-surface-8 p-8">
-              <Image src="/images/djon-logo.png" alt="DJ ON Academy versão compacta" width={220} height={72} className="h-auto w-full max-w-[220px] drop-shadow-djon-soft" />
+              <Image src="/images/djon-logo.png" alt="DJ ON Academy versão compacta" width={220} height={56} className="h-auto w-full max-w-[220px] drop-shadow-djon-soft" />
             </div>
             <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-djon-ink/10 bg-djon-text p-8">
               <Image src="/images/djon-logo-preta-j-grosso.svg" alt="DJ ON Academy versão preta" width={300} height={78} className="h-auto w-full max-w-[300px]" />

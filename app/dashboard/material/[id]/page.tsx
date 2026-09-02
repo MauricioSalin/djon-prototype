@@ -23,6 +23,7 @@ import {
 } from "@/lib/store";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { usePageTitle } from "@/components/page-title-manager";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0 },
@@ -174,6 +175,7 @@ export default function MaterialDetailPage() {
   const [material, setMaterial] = useState<Material | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [viewer, setViewer] = useState<MaterialAttachment | null>(null);
+  useBodyScrollLock(Boolean(viewer));
   const [coverError, setCoverError] = useState(false);
 
   usePageTitle(material?.title);

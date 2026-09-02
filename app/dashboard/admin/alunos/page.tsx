@@ -27,6 +27,7 @@ import {
 import { formatPhone, phoneMatchesSearch, whatsappUrl } from "@/lib/phone";
 import { formatCpf } from "@/lib/cpf";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const inp =
   "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all";
@@ -87,16 +88,7 @@ export default function AlunosPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [removalAction, removingUser]);
 
-  useEffect(() => {
-    if (!showForm) return;
-
-    const previousBodyOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousBodyOverflow;
-    };
-  }, [showForm]);
+  useBodyScrollLock(showForm || Boolean(removingUser));
 
   const openNew = () => {
     setForm({ ...emptyForm, unitId: units[0]?.id ?? "" });

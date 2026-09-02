@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { notifyError } from "@/lib/feedback";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import {
   canAuthorMaterials,
   store,
@@ -85,6 +86,7 @@ export default function CoursesPage() {
   const [temporaryCoverId, setTemporaryCoverId] = useState("");
   const [deleteCourse, setDeleteCourse] = useState<Course | null>(null);
   const [saving, setSaving] = useState(false);
+  useBodyScrollLock(Boolean(editorCourse) || Boolean(deleteCourse));
 
   const load = useCallback(async () => {
     const current = await store.bootstrap();

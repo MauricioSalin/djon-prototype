@@ -7,6 +7,7 @@ import { store, type DJEvent } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
 import {
   EVENTS_HERO_SECTIONS,
   PROFESSOR_EVENTS_HERO,
@@ -31,6 +32,7 @@ export default function StudentEventPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
+  useBodyScrollLock(showForm)
 
   const load = () => {
     const u = store.getCurrentUser()

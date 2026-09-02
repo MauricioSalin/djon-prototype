@@ -30,6 +30,7 @@ import { useConfirmation } from "@/components/confirmation-provider";
 import { notifyError, notifyUndoable } from "@/lib/feedback";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { usePageTitle } from "@/components/page-title-manager";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0 },
@@ -92,6 +93,7 @@ export default function NovoMaterialPage() {
     useState<Material["status"]>("published");
   const [loaded, setLoaded] = useState(false);
   const [exitModalOpen, setExitModalOpen] = useState(false);
+  useBodyScrollLock(exitModalOpen);
   const [initialSnapshot, setInitialSnapshot] = useState("");
   const draftIdsRef = useRef(new Set<string>());
   const committedRef = useRef(false);

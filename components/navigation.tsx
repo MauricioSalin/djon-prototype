@@ -10,6 +10,7 @@ import { LocationDropdown } from "@/components/location-dropdown"
 import { store, type User } from "@/lib/store"
 import { ShimmerSkeleton } from "@/components/loading-skeletons"
 import { portalHref } from "@/lib/site-urls"
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
 import {
   isPortalSessionResponse,
   PORTAL_SESSION_LOGOUT,
@@ -131,16 +132,17 @@ export function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  useBodyScrollLock(mobileMenuOpen)
+
   useEffect(() => {
-    if (!mobileMenuOpen) return
-
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = "hidden"
-
-    return () => {
-      document.body.style.overflow = previousOverflow
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return
+      setMobileMenuOpen(false)
+      setAccountOpen(false)
     }
-  }, [mobileMenuOpen])
+    document.addEventListener("keydown", closeOnEscape)
+    return () => document.removeEventListener("keydown", closeOnEscape)
+  }, [])
 
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)")
@@ -188,24 +190,25 @@ export function Navigation() {
   ]
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        mobileMenuOpen
-          ? "bg-djon-page border-b border-djon-text/10"
-          : scrolled
-            ? "bg-djon-ink/95 backdrop-blur-md border-b border-djon-text/10"
-            : "bg-djon-ink/60 backdrop-blur-sm"
-      }`}
-    >
+    <>
       <iframe
         ref={sessionBridgeRef}
         src={portalHref("/session-bridge")}
-        title={"Sincronização da sessão do portal"}
+        title="Sincronização da sessão do portal"
         className="hidden"
         tabIndex={-1}
         aria-hidden="true"
         onLoad={requestPortalSession}
       />
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+          mobileMenuOpen
+            ? "bg-djon-page border-b border-djon-text/10"
+            : scrolled
+              ? "bg-djon-ink/95 backdrop-blur-md border-b border-djon-text/10"
+              : "bg-djon-ink/60 backdrop-blur-sm"
+        }`}
+      >
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between sm:px-6">
         <button onClick={() => scrollToSection("#hero")} className="flex min-h-11 cursor-pointer items-center transition-opacity hover:opacity-80">
           <motion.div
@@ -215,10 +218,11 @@ export function Navigation() {
             <Image
               src="/images/djon-verde.png"
               alt="DJ ON Academy"
-              width={126}
+              width={127}
               height={32}
               className="h-8 w-auto"
-              priority
+              style={{ width: "auto" }}
+              loading="eager"
             />
           </motion.div>
         </button>
@@ -316,6 +320,7 @@ export function Navigation() {
           onClick={() => setMobileMenuOpen((open) => !open)}
           aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
           aria-expanded={mobileMenuOpen}
+          aria-controls="public-mobile-menu"
         >
           {mobileMenuOpen ? (
             <X className="text-djon-text" />
@@ -323,11 +328,16 @@ export function Navigation() {
             <Menu className="text-djon-text" />
           )}
         </button>
-      </div>
+        </div>
+      </nav>
 
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
+            id="public-mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu do site"
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
@@ -397,6 +407,6 @@ export function Navigation() {
           </motion.div>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   )
 }

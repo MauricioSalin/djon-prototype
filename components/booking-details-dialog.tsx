@@ -17,6 +17,7 @@ import {
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { DjonSelect } from "@/components/djon-select";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import {
   store,
   type Booking,
@@ -97,6 +98,7 @@ export function BookingDetailsDialog({
   onRemoved: () => void;
 }) {
   const { confirm } = useConfirmation();
+  useBodyScrollLock(true);
   const mountedRef = useRef(true);
   const [editing, setEditing] = useState(false);
   const [reviewing, setReviewing] = useState<"accept" | "reject" | null>(null);
