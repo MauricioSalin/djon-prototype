@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import {
   Bold, Italic, Heading2, Heading3, List, ListOrdered,
   Quote, ImageIcon, Link2, Undo, Redo, Trash2,
-  AlignLeft, AlignCenter, AlignRight, AlignJustify, CodeXml, Youtube, X,
+  AlignLeft, AlignCenter, AlignRight, AlignJustify, CodeXml, Youtube, X, Pilcrow,
 } from "lucide-react"
 import { store, type UploadedFile } from "@/lib/store"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
@@ -54,6 +54,7 @@ const imageAlignments: Array<{
 type ActiveFormats = {
   bold: boolean
   italic: boolean
+  normal: boolean
   h2: boolean
   h3: boolean
   blockquote: boolean
@@ -66,6 +67,7 @@ type ActiveFormats = {
 const emptyActiveFormats: ActiveFormats = {
   bold: false,
   italic: false,
+  normal: false,
   h2: false,
   h3: false,
   blockquote: false,
@@ -259,6 +261,7 @@ function unwrapVideoSideLayout(video: HTMLElement) {
 
 function normalizeVideoLayouts(editor: HTMLDivElement) {
   editor.querySelectorAll<HTMLElement>("[data-video-layout]").forEach((video) => {
+    liftVideoOutOfHeading(video)
     const iframe = video.querySelector<HTMLIFrameElement>(":scope > iframe")
     const kind = videoKindOf(video)
     video.dataset.videoKind = kind
@@ -303,6 +306,48 @@ function requestsTransparentBackground(src: string) {
   } catch {
     return false
   }
+}
+
+function replaceTextBlockTag(element: HTMLElement, tagName: "p") {
+  const replacement = document.createElement(tagName)
+  Array.from(element.attributes).forEach(({ name, value }) => {
+    replacement.setAttribute(name, value)
+  })
+  while (element.firstChild) replacement.appendChild(element.firstChild)
+  element.replaceWith(replacement)
+  return replacement
+}
+
+function liftVideoOutOfHeading(video: HTMLElement) {
+  const heading = video.parentElement
+  if (!heading?.matches("h2, h3, blockquote")) return
+
+  const trailing = document.createElement(heading.tagName.toLowerCase())
+  Array.from(heading.attributes).forEach(({ name, value }) => {
+    trailing.setAttribute(name, value)
+  })
+  while (video.nextSibling) trailing.appendChild(video.nextSibling)
+
+  while (heading.lastChild instanceof HTMLBRElement) heading.lastChild.remove()
+  heading.after(video)
+
+  const trailingHasText = Boolean(trailing.textContent?.trim())
+  const trailingElements = Array.from(trailing.children)
+  const onlyBlockElements = !Array.from(trailing.childNodes).some(
+    (node) => node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()),
+  ) && trailingElements.every((element) => element.matches("p, div, h2, h3, blockquote, ul, ol"))
+
+  if (onlyBlockElements) {
+    let insertionPoint: Node = video
+    trailingElements.forEach((element) => {
+      insertionPoint.parentNode?.insertBefore(element, insertionPoint.nextSibling)
+      insertionPoint = element
+    })
+  } else if (trailingHasText || trailingElements.length > 0) {
+    video.after(trailing)
+  }
+
+  if (!heading.textContent?.trim() && heading.children.length === 0) heading.remove()
 }
 
 function iframeEmbedAttributes(value: string) {
@@ -449,6 +494,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     setActiveFormats({
       bold: document.queryCommandState("bold"),
       italic: document.queryCommandState("italic"),
+      normal: blockName === "p" || blockName === "div" || Boolean(anchorElement?.closest("p")),
       h2: blockName === "h2" || Boolean(anchorElement?.closest("h2")),
       h3: blockName === "h3" || Boolean(anchorElement?.closest("h3")),
       blockquote: blockName === "blockquote" || Boolean(anchorElement?.closest("blockquote")),
@@ -476,8 +522,10 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
       setSelectedImageWidth("auto")
       setSelectedImageAlignment("block")
     }
-    lastEmittedValueRef.current = value
-  }, [value])
+    const normalizedValue = editor.innerHTML
+    lastEmittedValueRef.current = normalizedValue
+    if (normalizedValue !== value) onChange(normalizedValue)
+  }, [onChange, value])
 
   useEffect(() => {
     document.addEventListener("selectionchange", updateToolbarState)
@@ -706,10 +754,68 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
 
   const toggleBlock = (block: "h2" | "h3" | "blockquote") => {
     restoreSelection()
-    const anchorNode = window.getSelection()?.anchorNode
-    const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode?.parentElement
-    const currentBlock = anchorElement?.closest("h2, h3, blockquote")?.tagName.toLowerCase()
-    exec("formatBlock", currentBlock === block ? "p" : block)
+    const editor = editorRef.current
+    const selection = window.getSelection()
+    const range = selection?.rangeCount ? selection.getRangeAt(0) : savedSelectionRef.current
+    if (!editor || !range) return
+
+    const matchingBlocks = Array.from(editor.querySelectorAll<HTMLElement>(block)).filter((element) => {
+      if (range.collapsed) {
+        const container = range.startContainer instanceof Element
+          ? range.startContainer
+          : range.startContainer.parentElement
+        return container?.closest(block) === element
+      }
+      try {
+        return range.intersectsNode(element)
+      } catch {
+        return false
+      }
+    })
+
+    if (matchingBlocks.length === 0) {
+      exec("formatBlock", block)
+      return
+    }
+
+    matchingBlocks.forEach((element) => replaceTextBlockTag(element, "p"))
+    rememberSelection()
+    emit()
+    updateToolbarState()
+  }
+
+  const setNormalBlock = () => {
+    restoreSelection()
+    const editor = editorRef.current
+    const selection = window.getSelection()
+    const range = selection?.rangeCount ? selection.getRangeAt(0) : savedSelectionRef.current
+    if (!editor || !range) return
+
+    const formattedBlocks = Array.from(
+      editor.querySelectorAll<HTMLElement>("h2, h3, blockquote"),
+    ).filter((element) => {
+      if (range.collapsed) {
+        const container = range.startContainer instanceof Element
+          ? range.startContainer
+          : range.startContainer.parentElement
+        return container?.closest("h2, h3, blockquote") === element
+      }
+      try {
+        return range.intersectsNode(element)
+      } catch {
+        return false
+      }
+    })
+
+    if (formattedBlocks.length === 0) {
+      exec("formatBlock", "p")
+      return
+    }
+
+    formattedBlocks.forEach((element) => replaceTextBlockTag(element, "p"))
+    rememberSelection()
+    emit()
+    updateToolbarState()
   }
 
   const insertImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -807,6 +913,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
       document.execCommand("insertHTML", false, html)
       const videos = editorRef.current?.querySelectorAll<HTMLElement>("[data-video-layout]")
       const video = videos?.item((videos?.length ?? 1) - 1) ?? null
+      if (video) liftVideoOutOfHeading(video)
       selectImage(null)
       selectVideo(video)
       emit()
@@ -833,6 +940,7 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
         <button type="button" onMouseDown={preserveSelection} onClick={() => exec("bold")} className={btn(activeFormats.bold)} title="Negrito" aria-label="Negrito" aria-pressed={activeFormats.bold}><Bold size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => exec("italic")} className={btn(activeFormats.italic)} title="Itálico" aria-label="Itálico" aria-pressed={activeFormats.italic}><Italic size={15} /></button>
         <div className="w-px h-5 bg-djon-text/10 mx-1" />
+        <button type="button" onMouseDown={preserveSelection} onClick={setNormalBlock} className={btn(activeFormats.normal)} title="Texto normal" aria-label="Texto normal" aria-pressed={activeFormats.normal}><Pilcrow size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => toggleBlock("h2")} className={btn(activeFormats.h2)} title={activeFormats.h2 ? "Remover título" : "Título"} aria-label="Título" aria-pressed={activeFormats.h2}><Heading2 size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => toggleBlock("h3")} className={btn(activeFormats.h3)} title={activeFormats.h3 ? "Remover subtítulo" : "Subtítulo"} aria-label="Subtítulo" aria-pressed={activeFormats.h3}><Heading3 size={15} /></button>
         <button type="button" onMouseDown={preserveSelection} onClick={() => toggleBlock("blockquote")} className={btn(activeFormats.blockquote)} title={activeFormats.blockquote ? "Remover citação" : "Citação"} aria-label="Citação" aria-pressed={activeFormats.blockquote}><Quote size={15} /></button>

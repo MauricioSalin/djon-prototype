@@ -14,7 +14,7 @@ import "./globals.css"
 
 const raleway = Raleway({
   subsets: ["latin"],
-  style: ["normal", "italic"],
+  style: "normal",
   variable: "--font-raleway",
   display: "swap",
 })
@@ -29,9 +29,10 @@ const bowlbyOneSc = Bowlby_One_SC({
 const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
+  style: "normal",
   variable: "--font-barlow-condensed",
   display: "swap",
+  preload: false,
 })
 
 const siteUrl = new URL(publicSiteOrigin)

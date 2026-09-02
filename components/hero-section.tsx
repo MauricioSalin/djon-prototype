@@ -72,7 +72,9 @@ export function HeroSection() {
           fill
           className="object-cover opacity-30"
           sizes="100vw"
-          preload
+          quality={50}
+          loading="eager"
+          fetchPriority="low"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
       </div>
