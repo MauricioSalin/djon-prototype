@@ -739,10 +739,10 @@ test.describe("landing em iPhone", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1_000);
     expect(unitRequests).toBe(0);
-    await expect(page.locator("[data-sonner-toaster]")).toHaveCount(0);
+    await expect(page.getByRole("region", { name: /Notifications/ })).toHaveCount(0);
 
     await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
-    await expect(page.locator("[data-sonner-toaster]")).toBeVisible();
+    await expect(page.getByRole("region", { name: /Notifications/ })).toHaveCount(1);
     await page.getByRole("button", { name: /UNIDADE/ }).click();
     await expect.poll(() => unitRequests).toBe(1);
   });
