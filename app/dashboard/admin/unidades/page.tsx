@@ -38,7 +38,8 @@ const empty: UnitForm = {
   active: true,
 };
 
-const label = "mb-1.5 block text-xs font-bold text-djon-text/60";
+const label =
+  "mb-1.5 block text-djon-label font-black uppercase tracking-widest text-djon-text/40";
 
 export default function UnitsAdminPage() {
   const { confirm } = useConfirmation();
@@ -216,7 +217,7 @@ export default function UnitsAdminPage() {
                 INFORMAÇÕES DA UNIDADE
               </p>
               <div className="space-y-4">
-                <label>
+                <label className="block">
                   <span className={label}>Nome da unidade</span>
                   <input
                     required
@@ -229,7 +230,7 @@ export default function UnitsAdminPage() {
                     className={field}
                   />
                 </label>
-                <label>
+                <label className="block">
                   <span className={label}>Endereço completo</span>
                   <input
                     required
@@ -259,7 +260,7 @@ export default function UnitsAdminPage() {
               </p>
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label>
+                  <label className="block">
                     <span className={label}>Telefone público</span>
                     <div className="relative">
                       <Phone
@@ -283,7 +284,7 @@ export default function UnitsAdminPage() {
                       />
                     </div>
                   </label>
-                  <label>
+                  <label className="block">
                     <span className={label}>E-mail de contato</span>
                     <div className="relative">
                       <Mail
@@ -304,7 +305,7 @@ export default function UnitsAdminPage() {
                     </div>
                   </label>
                 </div>
-                <label>
+                <label className="block">
                   <span className={label}>Horário de atendimento</span>
                   <input
                     required
@@ -318,7 +319,7 @@ export default function UnitsAdminPage() {
                   />
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <label>
+                  <label className="block">
                     <span className={label}>
                       Instagram{" "}
                       <span className="font-normal opacity-60">(opcional)</span>
@@ -333,7 +334,7 @@ export default function UnitsAdminPage() {
                       className={field}
                     />
                   </label>
-                  <label>
+                  <label className="block">
                     <span className={label}>
                       Facebook{" "}
                       <span className="font-normal opacity-60">(opcional)</span>

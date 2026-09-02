@@ -441,6 +441,14 @@
   }
 }
 
+/* Mantém o HTML completo da landing para SEO e acessibilidade, mas evita
+   layout e pintura antecipados das seções que ainda estão fora da tela. */
+.landing-page > section:not(#hero),
+.landing-page > footer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+
 .djon-hero-title,
 .djon-section-title,
 .djon-display-title {

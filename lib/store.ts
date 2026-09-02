@@ -2426,30 +2426,17 @@ class ApiStore {
     return equipment;
   }
 
-  async deactivateEquipment(id: string, options: MutationFeedbackOptions = {}) {
+  async deleteEquipment(id: string, options: MutationFeedbackOptions = {}) {
     const previous = this.equipments.find((equipment) => equipment.id === id);
     if (!previous) failWithFeedback("Equipamento não encontrado.", 404);
-    const inactive = { ...previous, active: false };
-    this.equipments = [
-      ...this.equipments.filter((item) => item.id !== id),
-      inactive,
-    ];
+    await request(`/equipments/${id}`, json("DELETE"));
+    this.equipments = this.equipments.filter((item) => item.id !== id);
     options.onChange?.();
-    notifyUndoable({
-      title: "Equipamento desativado",
-      description: `${previous.name} não aparece mais para novos treinos.`,
-      commit: () =>
-        request(`/equipments/${id}`, json("DELETE", undefined, true)),
-      undo: () => {
-        this.equipments = [
-          ...this.equipments.filter((item) => item.id !== id),
-          previous,
-        ];
-        options.onChange?.();
-      },
-      undoDescription: `${previous.name} voltou a ficar disponível.`,
-    });
-    return inactive;
+    notifySuccess(
+      "Equipamento excluído",
+      `${previous.name} foi removido definitivamente.`,
+    );
+    return previous;
   }
 
   async submitLead(

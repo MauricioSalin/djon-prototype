@@ -104,6 +104,16 @@ test("edita somente dados úteis e preenche o contato legado exibido no site", a
     ),
   ).toBeVisible();
 
+  const nameField = page.getByLabel("Nome da unidade");
+  const addressLabel = page.getByText("Endereço completo", { exact: true });
+  const nameFieldBox = await nameField.boundingBox();
+  const addressLabelBox = await addressLabel.boundingBox();
+  expect(nameFieldBox).not.toBeNull();
+  expect(addressLabelBox).not.toBeNull();
+  expect(addressLabelBox!.y - (nameFieldBox!.y + nameFieldBox!.height)).toBeGreaterThanOrEqual(16);
+  await expect(addressLabel).toHaveCSS("text-transform", "uppercase");
+  await expect(addressLabel).toHaveCSS("font-weight", "900");
+
   await page.getByRole("button", { name: "SALVAR UNIDADE" }).click();
   await expect.poll(() => savedPayload).toBeDefined();
   expect(savedPayload).toMatchObject({

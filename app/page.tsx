@@ -99,7 +99,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="landing-page min-h-screen bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

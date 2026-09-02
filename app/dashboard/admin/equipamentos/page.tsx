@@ -112,12 +112,12 @@ export default function EquipmentsAdminPage() {
 
   const remove = async (equipment: Equipment) => {
     const confirmed = await confirm({
-      title: "Remover equipamento?",
-      description: `${equipment.name} deixará de aparecer para novos agendamentos. Você poderá desfazer pelo aviso exibido em seguida.`,
-      confirmLabel: "REMOVER",
+      title: "Excluir equipamento?",
+      description: `${equipment.name} será excluído definitivamente. Para impedir agendamentos apenas por algum tempo, use o botão de desativar.`,
+      confirmLabel: "EXCLUIR",
     });
     if (confirmed) {
-      await store.deactivateEquipment(equipment.id, { onChange: sync });
+      await store.deleteEquipment(equipment.id, { onChange: sync });
     }
   };
 
@@ -217,16 +217,14 @@ export default function EquipmentsAdminPage() {
                 >
                   <Power size={15} />
                 </button>
-                {equipment.active && (
-                  <button
-                    onClick={() => void remove(equipment)}
-                    aria-label={`Remover ${equipment.name}`}
-                    title="Remover equipamento"
-                    className="p-2 text-djon-warning-red opacity-60 transition-opacity hover:opacity-100"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                )}
+                <button
+                  onClick={() => void remove(equipment)}
+                  aria-label={`Excluir ${equipment.name}`}
+                  title="Excluir equipamento"
+                  className="p-2 text-djon-warning-red opacity-60 transition-opacity hover:opacity-100"
+                >
+                  <Trash2 size={15} />
+                </button>
               </div>
               <footer className="mt-4 border-t border-djon-text/8 pt-4">
                 <span
