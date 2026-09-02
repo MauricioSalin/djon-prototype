@@ -32,7 +32,16 @@ function environmentAwareHref(
   return new URL(normalizedPath, `${productionOrigin}/`).toString()
 }
 
-export function publicSiteHref(path = "/") {
+export function publicSiteHref(path = "/", preservePwaOrigin = false) {
+  if (preservePwaOrigin && typeof window !== "undefined") {
+    const publicUrl = new URL(publicSiteOrigin)
+    const publicOrigins = new Set([publicUrl.origin])
+    if (publicUrl.hostname.startsWith("www.")) {
+      publicUrl.hostname = publicUrl.hostname.slice(4)
+      publicOrigins.add(publicUrl.origin)
+    }
+    if (publicOrigins.has(window.location.origin)) return localRelativeHref(path)
+  }
   return environmentAwareHref(
     path,
     process.env.NEXT_PUBLIC_SITE_URL,
@@ -40,7 +49,8 @@ export function publicSiteHref(path = "/") {
   )
 }
 
-export function portalHref(path = "/login") {
+export function portalHref(path = "/login", preservePwaOrigin = false) {
+  if (preservePwaOrigin) return localRelativeHref(path)
   return environmentAwareHref(
     path,
     process.env.NEXT_PUBLIC_PORTAL_URL,

@@ -12,7 +12,7 @@ import { store } from "@/lib/store"
 
 function allowedPublicOrigins() {
   const origin = new URL(publicSiteHref("/"), window.location.href)
-  const origins = new Set([origin.origin])
+  const origins = new Set([origin.origin, window.location.origin])
 
   if (origin.hostname.startsWith("www.")) {
     origin.hostname = origin.hostname.slice(4)

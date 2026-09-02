@@ -7,7 +7,6 @@ const configuredPortalOrigin =
   process.env.NEXT_PUBLIC_PORTAL_URL ??
   `http://portal.localhost:${String(port)}`
 const portalHostname = new URL(configuredPortalOrigin).hostname
-const redirectedPortalOrigin = `https://${portalHostname}`
 
 function metadataContent(html: string, attribute: "property" | "name", key: string) {
   const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -18,19 +17,21 @@ function metadataContent(html: string, attribute: "property" | "name", key: stri
   return tag?.match(/content=["']([^"']+)["']/i)?.[1]
 }
 
-test("redirects portal routes from the public host to the portal host", async ({
-  request,
-}) => {
-  const response = await request.get("/redefinir-senha?token=abc123", {
-    headers: { host: "www.djonacademy.com" },
-    maxRedirects: 0,
+for (const host of ["www.djonacademy.com", "djonacademy.com", portalHostname]) {
+  test(`keeps the manifest launch and portal routes on ${host}`, async ({ request }) => {
+    const manifestResponse = await request.get("/manifest.webmanifest", { headers: { host } })
+    const manifest = await manifestResponse.json()
+    expect(manifest.id).toBe("/")
+    expect(manifest.scope).toBe("/")
+    expect(manifest.start_url).toBe("/login")
+    for (const path of [manifest.start_url, "/recuperar-senha", "/redefinir-senha?token=abc123", "/session-bridge", "/dashboard/student", "/dashboard/notificacoes"]) {
+      const response = await request.get(path, { headers: { host }, maxRedirects: 0 })
+      expect(response.status(), `${host}${path}`).toBe(200)
+      expect(response.headers().location).toBeUndefined()
+      if (path !== "/session-bridge") expect(response.headers()["x-robots-tag"]).toContain("noindex")
+    }
   })
-
-  expect(response.status()).toBe(308)
-  expect(response.headers().location).toBe(
-    `${redirectedPortalOrigin}/redefinir-senha?token=abc123`,
-  )
-})
+}
 
 test("redirects the portal root to login on the same host", async ({ request }) => {
   const response = await request.get("/", {
@@ -42,20 +43,6 @@ test("redirects the portal root to login on the same host", async ({ request }) 
   const location = new URL(response.headers().location, configuredPortalOrigin)
   expect(location.hostname).toBe(portalHostname)
   expect(location.pathname).toBe("/login")
-})
-
-test("redirects the session bridge from the public host to the portal host", async ({
-  request,
-}) => {
-  const response = await request.get("/session-bridge", {
-    headers: { host: "www.djonacademy.com" },
-    maxRedirects: 0,
-  })
-
-  expect(response.status()).toBe(308)
-  expect(response.headers().location).toBe(
-    `${redirectedPortalOrigin}/session-bridge`,
-  )
 })
 
 test("keeps public and authenticated routes on their intended hosts", async ({

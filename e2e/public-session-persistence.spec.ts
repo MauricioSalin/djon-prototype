@@ -47,6 +47,8 @@ test("shows the portal user on the public home and synchronizes logout", async (
   await expect(
     page.locator('iframe[title="Sincronização da sessão do portal"]'),
   ).toHaveCount(0)
+  // A real React interaction waits for hydration; a raw Tab can arrive before effects.
+  await page.getByRole("button", { name: "UNIDADE Porto Alegre / RS" }).click()
   await page.keyboard.press("Tab")
   await expect(page.getByRole("button", { name: "Abrir menu da conta" })).toBeVisible()
   await expect(page.getByRole("link", { name: "LOGIN" })).toHaveCount(0)
@@ -55,6 +57,7 @@ test("shows the portal user on the public home and synchronizes logout", async (
   await expect(
     page.locator('iframe[title="Sincronização da sessão do portal"]'),
   ).toHaveCount(0)
+  await page.getByRole("button", { name: "UNIDADE Porto Alegre / RS" }).click()
   await page.keyboard.press("Tab")
   await expect(page.getByRole("button", { name: "Abrir menu da conta" })).toBeVisible()
   await page.getByRole("button", { name: "Abrir menu da conta" }).click()

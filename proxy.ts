@@ -2,22 +2,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import { portalOrigin } from "@/lib/site-urls"
 
 const PORTAL_HOSTNAME = new URL(portalOrigin).hostname
-const PUBLIC_HOSTNAMES = new Set(["djonacademy.com", "www.djonacademy.com"])
 
 function requestHostname(request: NextRequest) {
   const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]
   const host = forwardedHost ?? request.headers.get("host")
   return (host ?? request.nextUrl.hostname).trim().split(":")[0].toLowerCase()
-}
-
-function isPortalPath(pathname: string) {
-  return [
-    "/login",
-    "/recuperar-senha",
-    "/redefinir-senha",
-    "/session-bridge",
-    "/dashboard",
-  ].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))
 }
 
 export function proxy(request: NextRequest) {
@@ -36,14 +25,8 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl, 308)
   }
 
-  if (PUBLIC_HOSTNAMES.has(hostname) && isPortalPath(pathname)) {
-    const portalUrl = request.nextUrl.clone()
-    portalUrl.protocol = "https:"
-    portalUrl.hostname = PORTAL_HOSTNAME
-    portalUrl.port = ""
-    return NextResponse.redirect(portalUrl, 308)
-  }
-
+  // The same portal routes must work on the origin where the PWA was installed.
+  // A public-to-portal redirect takes iOS outside the installed app's scope.
   return NextResponse.next()
 }
 

@@ -1,4 +1,4 @@
-const SW_VERSION = "djon-pwa-v4"
+const SW_VERSION = "djon-pwa-v5"
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting())
@@ -16,6 +16,19 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data === "version") {
     event.source?.postMessage(SW_VERSION)
+  }
+})
+
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url)
+  const portalPath = /^\/(login|recuperar-senha|redefinir-senha|session-bridge|dashboard)(\/|$)/
+  if (
+    event.request.mode === "navigate" &&
+    url.origin === self.location.origin &&
+    portalPath.test(url.pathname)
+  ) {
+    // Replace old cached 308 redirects without deleting the user's session.
+    event.respondWith(fetch(event.request, { cache: "reload" }))
   }
 })
 

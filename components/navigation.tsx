@@ -9,6 +9,7 @@ import { LocationDropdown } from "@/components/location-dropdown"
 import { store, type User } from "@/lib/store"
 import { portalHref } from "@/lib/site-urls"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
+import { useStandalonePwa } from "@/hooks/use-standalone-pwa"
 import {
   isPortalSessionResponse,
   PORTAL_SESSION_LOGOUT,
@@ -16,10 +17,10 @@ import {
   PORTAL_SESSION_REQUEST,
 } from "@/lib/portal-session-bridge"
 
-function portalHomeForRole(role: User["role"]) {
-  if (role === "admin") return portalHref("/dashboard/admin")
-  if (role === "professor") return portalHref("/dashboard/professor")
-  return portalHref("/dashboard/student")
+function portalHomeForRole(role: User["role"], standalone: boolean) {
+  if (role === "admin") return portalHref("/dashboard/admin", standalone)
+  if (role === "professor") return portalHref("/dashboard/professor", standalone)
+  return portalHref("/dashboard/student", standalone)
 }
 
 function roleLabelFor(role: User["role"]) {
@@ -54,6 +55,7 @@ function UserIdentity({ user }: { user: User }) {
 }
 
 export function Navigation() {
+  const standalone = useStandalonePwa()
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
@@ -77,7 +79,7 @@ export function Navigation() {
     if (!sessionBridgeEnabled) return
 
     const bridgeOrigin = new URL(
-      portalHref("/session-bridge"),
+      portalHref("/session-bridge", standalone),
       window.location.href,
     ).origin
     const requestSession = () => {
@@ -107,11 +109,11 @@ export function Navigation() {
       window.removeEventListener("message", handleMessage)
       window.removeEventListener("focus", requestSession)
     }
-  }, [sessionBridgeEnabled])
+  }, [sessionBridgeEnabled, standalone])
 
   const requestPortalSession = () => {
     const bridgeOrigin = new URL(
-      portalHref("/session-bridge"),
+      portalHref("/session-bridge", standalone),
       window.location.href,
     ).origin
     sessionBridgeRef.current?.contentWindow?.postMessage(
@@ -176,7 +178,7 @@ export function Navigation() {
 
   const handleLogout = () => {
     const bridgeOrigin = new URL(
-      portalHref("/session-bridge"),
+      portalHref("/session-bridge", standalone),
       window.location.href,
     ).origin
     sessionBridgeRef.current?.contentWindow?.postMessage(
@@ -202,7 +204,7 @@ export function Navigation() {
       {sessionBridgeEnabled ? (
         <iframe
           ref={sessionBridgeRef}
-          src={portalHref("/session-bridge")}
+          src={portalHref("/session-bridge", standalone)}
           title="Sincronização da sessão do portal"
           className="hidden"
           tabIndex={-1}
@@ -288,7 +290,7 @@ export function Navigation() {
                     transition={{ duration: 0.15 }}
                   >
                     <Link
-                      href={portalHomeForRole(user.role)}
+                      href={portalHomeForRole(user.role, standalone)}
                       onClick={() => setAccountOpen(false)}
                       className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-xs font-bold tracking-wide text-djon-text opacity-[0.65] transition-opacity hover:opacity-100"
                     >
@@ -308,7 +310,7 @@ export function Navigation() {
               </AnimatePresence>
             </div>
           ) : (
-            <Link href={portalHref("/login")}>
+            <Link href={portalHref("/login", standalone)}>
               <motion.div
                 className="flex items-center gap-1.5 border border-djon-text/20 text-djon-text/70 hover:brightness-110 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
                 whileHover={{ scale: 1.05 }}
@@ -378,7 +380,7 @@ export function Navigation() {
                   </div>
                   <div className="mt-2 grid gap-2">
                     <Link
-                      href={portalHomeForRole(user.role)}
+                      href={portalHomeForRole(user.role, standalone)}
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-djon-accent px-6 py-3 text-xs font-black tracking-widest text-djon-ink transition-[filter] hover:brightness-90"
                     >
@@ -396,7 +398,7 @@ export function Navigation() {
                   </div>
                 </motion.div>
               ) : (
-                <Link href={portalHref("/login")} onClick={() => setMobileMenuOpen(false)}>
+                <Link href={portalHref("/login", standalone)} onClick={() => setMobileMenuOpen(false)}>
                   <motion.div
                     className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-djon-text/20 px-6 py-3 text-xs font-black tracking-widest text-djon-text/70"
                     initial={{ opacity: 0, y: 20 }}
