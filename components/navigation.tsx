@@ -218,10 +218,9 @@ export function Navigation() {
             <Image
               src="/images/djon-verde.png"
               alt="DJ ON Academy"
-              width={127}
+              width={126}
               height={32}
-              className="h-8 w-auto"
-              style={{ width: "auto" }}
+              className="h-8 w-[126px]"
               loading="eager"
             />
           </motion.div>

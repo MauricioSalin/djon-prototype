@@ -822,8 +822,7 @@ export default function DashboardLayout({
               width={111}
               height={28}
               priority
-              className="h-5 w-auto min-[360px]:h-6 sm:h-7"
-              style={{ width: "auto" }}
+              className="h-5 w-[79px] min-[360px]:h-6 min-[360px]:w-[95px] sm:h-7 sm:w-[111px]"
             />
             <span className="text-djon-caption text-djon-accent font-black tracking-[0.2em] uppercase hidden sm:block">
               Portal

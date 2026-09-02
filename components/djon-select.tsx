@@ -39,7 +39,12 @@ export function DjonSelect({
   required = false,
 }: DjonSelectProps) {
   return (
-    <Select value={value} onValueChange={onChange} disabled={disabled} required={required}>
+    <Select
+      value={value}
+      onValueChange={onChange}
+      disabled={disabled}
+      required={required}
+    >
       <SelectTrigger
         aria-label={ariaLabel ?? placeholder}
         className={cn("group w-full pr-5 font-bold", className)}

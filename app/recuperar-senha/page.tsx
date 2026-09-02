@@ -29,7 +29,7 @@ export default function RecuperarSenhaPage() {
     <div className="min-h-svh flex items-center justify-center px-4 py-6 sm:py-10 relative overflow-hidden noise-overlay bg-djon-page">
       <div className="absolute inset-0"><Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-25" priority /><div className="absolute inset-0 bg-djon-black/75" /></div>
       <motion.div className="relative z-10 w-full max-w-md" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="mb-6 flex justify-center sm:mb-10"><Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-11 w-auto sm:h-14" style={{ width: "auto" }} priority /></div>
+        <div className="mb-6 flex justify-center sm:mb-10"><Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-11 w-[174px] sm:h-14 sm:w-[221px]" priority /></div>
         <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6 sm:p-8">
           <p className="mb-2 text-xs font-bold tracking-wide text-djon-accent">RECUPERAR ACESSO</p>
           <h1 className="mb-2 text-3xl font-black tracking-tighter text-djon-text">Esqueceu sua senha?</h1>

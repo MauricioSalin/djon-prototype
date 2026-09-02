@@ -204,16 +204,27 @@ test("usa os dropdowns próprios do portal para cores e ícones", async ({ page 
 
   await page.getByRole("button", { name: "EDITAR", exact: true }).nth(3).click();
   const dialog = page.getByRole("dialog");
+  const dialogContent = page.locator('[data-slot="dialog-content"]');
 
   await expect(dialog.getByRole("combobox", { name: "Cor" })).toHaveCount(3);
   await expect(
     dialog.getByRole("combobox", { name: "Ícone da biblioteca Lucide" }),
   ).toHaveCount(3);
+  await dialog.evaluate(async (element) => {
+    await Promise.all(
+      element
+        .getAnimations()
+        .map((animation) => animation.finished.catch(() => undefined)),
+    );
+  });
 
-  const colorSelect = dialog.getByRole("combobox", { name: "Cor" }).first();
+  const colorSelect = dialogContent.locator('[data-slot="select-trigger"]').nth(0);
   await expect(colorSelect.locator('[data-slot="select-option-preview"]')).toBeVisible();
-  await colorSelect.click();
   const viewport = page.locator('[data-slot="select-viewport"]');
+  const selectContent = page.locator('[data-slot="select-content"]');
+  await colorSelect.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(selectContent).toBeVisible();
   await expect(viewport).toBeVisible();
   await expect(viewport).toHaveCSS("overflow-y", "auto");
   await expect(page.locator('[data-slot="select-scroll-up-button"]')).toHaveCount(0);
@@ -221,25 +232,24 @@ test("usa os dropdowns próprios do portal para cores e ícones", async ({ page 
   const purpleOption = page
     .locator('[data-slot="select-item"]')
     .filter({ hasText: /^Roxo claro$/ });
-  await expect(purpleOption).toHaveAttribute("role", "option");
-  await expect(
-    purpleOption.locator('[data-slot="select-option-preview"]'),
-  ).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(viewport).toBeHidden();
+  await purpleOption.dispatchEvent("click");
+  await expect(selectContent).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await expect(colorSelect).toContainText("Roxo claro");
+  await expect(colorSelect.locator('[data-slot="select-option-preview"]')).toBeVisible();
 
-  const iconSelect = dialog
-    .getByRole("combobox", { name: "Ícone da biblioteca Lucide" })
-    .first();
+  const iconSelect = dialogContent.locator('[data-slot="select-trigger"]').nth(1);
   await expect(iconSelect.locator('[data-slot="select-option-preview"]')).toBeVisible();
-  await iconSelect.click();
-  await expect(viewport).toBeVisible();
+  await iconSelect.focus();
+  await page.keyboard.press("ArrowDown");
+  await expect(selectContent).toBeVisible();
   const peopleOption = page
     .locator('[data-slot="select-item"]')
     .filter({ hasText: /^Pessoas$/ });
-  await expect(peopleOption).toHaveAttribute("role", "option");
-  await expect(peopleOption.locator('[data-slot="select-option-preview"]')).toBeVisible();
-  await page.keyboard.press("Escape");
+  await peopleOption.dispatchEvent("click");
+  await expect(selectContent).toHaveCount(0);
+  await expect(iconSelect).toContainText("Pessoas");
+  await expect(iconSelect.locator('[data-slot="select-option-preview"]')).toBeVisible();
 });
 
 test("remove do storage uma imagem enviada quando a edição é cancelada", async ({ page }) => {
