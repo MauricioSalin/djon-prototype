@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "DJ ON",
-    statusBarStyle: "black",
+    statusBarStyle: "black-translucent",
   },
   formatDetection: {
     telephone: false,
@@ -118,7 +118,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="DJ ON" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="theme-color" content="#121212" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
         <link rel="icon" href="/favicon.png" type="image/png" />

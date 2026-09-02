@@ -944,7 +944,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-djon-page">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-djon-page/95 backdrop-blur-xl border-b border-djon-text/8">
+      <header className="fixed top-0 left-0 right-0 z-50 pt-[var(--djon-safe-area-top)] bg-djon-page/95 backdrop-blur-xl border-b border-djon-text/8">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 h-16 flex items-center gap-2 sm:gap-4 lg:gap-6">
           {/* Logo */}
           <Link
@@ -1073,7 +1073,7 @@ export default function DashboardLayout({
                 <AnimatePresence>
                   {notificationsOpen && (
                     <motion.div
-                      className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(360px,calc(100vw-1rem))] rounded-2xl overflow-hidden border border-djon-text/10 bg-djon-calendar-cell/[98%] backdrop-blur-xl shadow-2xl max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:w-auto"
+                      className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(360px,calc(100vw-1rem))] rounded-2xl overflow-hidden border border-djon-text/10 bg-djon-calendar-cell/[98%] backdrop-blur-xl shadow-2xl max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[calc(var(--djon-header-offset)+0.5rem)] max-sm:w-auto"
                       initial={{ opacity: 0, y: -6, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -6, scale: 0.98 }}
@@ -1238,7 +1238,7 @@ export default function DashboardLayout({
               {searchBarOpen && (
                 <motion.div
                   ref={searchPanelRef}
-                  className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(480px,calc(100vw-1rem))] rounded-2xl overflow-hidden max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:w-auto"
+                  className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(480px,calc(100vw-1rem))] rounded-2xl overflow-hidden max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[calc(var(--djon-header-offset)+0.5rem)] max-sm:w-auto"
                   style={{
                     background: "rgb(0 0 0 / 0.85)",
                     backdropFilter: "blur(20px)",
@@ -1503,7 +1503,7 @@ export default function DashboardLayout({
             role="dialog"
             aria-modal="true"
             aria-label="Menu do portal"
-            className="fixed inset-x-0 bottom-0 top-16 z-40 bg-djon-mobile-overlay md:hidden"
+            className="fixed inset-x-0 bottom-0 top-[var(--djon-header-offset)] z-40 bg-djon-mobile-overlay md:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -1552,7 +1552,7 @@ export default function DashboardLayout({
       </AnimatePresence>
 
       <main
-        className="pt-16 overflow-x-hidden"
+        className="pt-[var(--djon-header-offset)] overflow-x-hidden"
         aria-hidden={mobileMenuOpen || undefined}
         inert={mobileMenuOpen || undefined}
       >

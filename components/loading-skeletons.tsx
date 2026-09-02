@@ -776,7 +776,7 @@ export function DashboardShellSkeleton() {
 
   return (
     <div className="min-h-svh bg-djon-page">
-      <div className="fixed inset-x-0 top-0 z-20 flex h-16 items-center gap-5 border-b border-djon-text/8 bg-djon-page px-4 sm:px-6">
+      <div className="fixed inset-x-0 top-0 z-20 flex h-[var(--djon-header-offset)] pt-[var(--djon-safe-area-top)] items-center gap-5 border-b border-djon-text/8 bg-djon-page px-4 sm:px-6">
         <ShimmerSkeleton className="h-9 w-28 rounded-lg" />
         <div className="hidden min-w-0 flex-1 gap-3 md:flex">
           {Array.from({ length: 7 }, (_, index) => (
@@ -786,7 +786,7 @@ export function DashboardShellSkeleton() {
         <ShimmerSkeleton className="ml-auto size-9 rounded-full" />
         <ShimmerSkeleton className="h-10 w-36 rounded-full" />
       </div>
-      <main className="pt-16">
+      <main className="pt-[var(--djon-header-offset)]">
         <DashboardPageSkeleton
           variant={getDashboardSkeletonVariant(pathname)}
         />

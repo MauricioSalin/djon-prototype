@@ -4,6 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Keep fixed headers below the device's status bar/notch without UA detection. */
+  --djon-safe-area-top: env(safe-area-inset-top, 0px);
+  --djon-header-offset: calc(4rem + var(--djon-safe-area-top));
+
   /* DJ ON design tokens: altere a marca aqui */
   --djon-font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --djon-font-mono: ui-monospace, "Cascadia Mono", monospace;
