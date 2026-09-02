@@ -8,13 +8,21 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import dynamic from "next/dynamic";
 import {
   landingDefaults,
   type LandingSectionDataMap,
   type LandingSectionKey,
 } from "@/lib/landing-content";
 import { hasPermission, store } from "@/lib/store";
-import { LandingSectionEditor } from "@/components/landing/landing-section-editor";
+
+const LandingSectionEditor = dynamic(
+  () =>
+    import("@/components/landing/landing-section-editor").then(
+      (module) => module.LandingSectionEditor,
+    ),
+  { ssr: false },
+);
 
 type LandingContextValue = {
   content: LandingSectionDataMap;

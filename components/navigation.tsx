@@ -8,7 +8,6 @@ import { useLenis } from "lenis/react"
 import { ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react"
 import { LocationDropdown } from "@/components/location-dropdown"
 import { store, type User } from "@/lib/store"
-import { ShimmerSkeleton } from "@/components/loading-skeletons"
 import { portalHref } from "@/lib/site-urls"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
 import {
@@ -59,13 +58,26 @@ export function Navigation() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
-  const [sessionLoading, setSessionLoading] = useState(true)
+  const [sessionBridgeEnabled, setSessionBridgeEnabled] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement>(null)
   const sessionBridgeRef = useRef<HTMLIFrameElement>(null)
   const lenis = useLenis()
 
   useEffect(() => {
+    const enableSessionBridge = () => setSessionBridgeEnabled(true)
+
+    window.addEventListener("pointerdown", enableSessionBridge, { once: true })
+    window.addEventListener("keydown", enableSessionBridge, { once: true })
+    return () => {
+      window.removeEventListener("pointerdown", enableSessionBridge)
+      window.removeEventListener("keydown", enableSessionBridge)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!sessionBridgeEnabled) return
+
     const bridgeOrigin = new URL(
       portalHref("/session-bridge"),
       window.location.href,
@@ -89,18 +101,15 @@ export function Navigation() {
       }
       if (!isPortalSessionResponse(event.data)) return
       setUser(event.data.user)
-      setSessionLoading(false)
     }
-    const timeout = window.setTimeout(() => setSessionLoading(false), 5_000)
 
     window.addEventListener("message", handleMessage)
     window.addEventListener("focus", requestSession)
     return () => {
-      window.clearTimeout(timeout)
       window.removeEventListener("message", handleMessage)
       window.removeEventListener("focus", requestSession)
     }
-  }, [])
+  }, [sessionBridgeEnabled])
 
   const requestPortalSession = () => {
     const bridgeOrigin = new URL(
@@ -191,15 +200,17 @@ export function Navigation() {
 
   return (
     <>
-      <iframe
-        ref={sessionBridgeRef}
-        src={portalHref("/session-bridge")}
-        title="Sincronização da sessão do portal"
-        className="hidden"
-        tabIndex={-1}
-        aria-hidden="true"
-        onLoad={requestPortalSession}
-      />
+      {sessionBridgeEnabled ? (
+        <iframe
+          ref={sessionBridgeRef}
+          src={portalHref("/session-bridge")}
+          title="Sincronização da sessão do portal"
+          className="hidden"
+          tabIndex={-1}
+          aria-hidden="true"
+          onLoad={requestPortalSession}
+        />
+      ) : null}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           mobileMenuOpen
@@ -221,7 +232,7 @@ export function Navigation() {
               width={126}
               height={32}
               className="h-8 w-[126px]"
-              loading="eager"
+              preload
             />
           </motion.div>
         </button>
@@ -251,9 +262,7 @@ export function Navigation() {
 
         <div className="hidden md:flex items-center gap-3">
           <LocationDropdown />
-          {sessionLoading ? (
-            <ShimmerSkeleton className="h-10 w-40 rounded-full" />
-          ) : user ? (
+          {user ? (
             <div ref={accountRef} className="relative">
               <motion.button
                 type="button"
@@ -358,9 +367,7 @@ export function Navigation() {
                 </motion.button>
               ))}
               <LocationDropdown align="left" mobile />
-              {sessionLoading ? (
-                <ShimmerSkeleton className="mt-2 h-12 w-full rounded-full" />
-              ) : user ? (
+              {user ? (
                 <motion.div
                   className="mt-2 rounded-2xl border border-djon-text/12 bg-djon-text/5 p-2"
                   initial={{ opacity: 0 }}

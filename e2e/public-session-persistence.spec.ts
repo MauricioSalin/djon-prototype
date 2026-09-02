@@ -44,10 +44,18 @@ test("shows the portal user on the public home and synchronizes logout", async (
   await page.goto("/")
 
   expect(await page.evaluate(() => localStorage.getItem("djon_access_token"))).toBeNull()
+  await expect(
+    page.locator('iframe[title="Sincronização da sessão do portal"]'),
+  ).toHaveCount(0)
+  await page.keyboard.press("Tab")
   await expect(page.getByRole("button", { name: "Abrir menu da conta" })).toBeVisible()
   await expect(page.getByRole("link", { name: "LOGIN" })).toHaveCount(0)
 
   await page.reload()
+  await expect(
+    page.locator('iframe[title="Sincronização da sessão do portal"]'),
+  ).toHaveCount(0)
+  await page.keyboard.press("Tab")
   await expect(page.getByRole("button", { name: "Abrir menu da conta" })).toBeVisible()
   await page.getByRole("button", { name: "Abrir menu da conta" }).click()
   await expect(page.getByRole("link", { name: "Acessar portal" })).toHaveAttribute(

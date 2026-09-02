@@ -173,6 +173,7 @@ export function Footer() {
 
             <div className="flex gap-3 pt-2">
               <motion.a
+                aria-label="Instagram da DJ ON Academy"
                 href={instagram}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -183,6 +184,7 @@ export function Footer() {
                 <Instagram className="w-4 h-4" />
               </motion.a>
               <motion.a
+                aria-label="Facebook da DJ ON Academy"
                 href={facebook}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -301,11 +303,11 @@ export function Footer() {
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/images/djon-verde.png"
               alt="DJ ON Academy"
-              style={{ height: "28px", width: "auto" }}
+              width={111}
+              height={28}
             />
           </motion.div>
 

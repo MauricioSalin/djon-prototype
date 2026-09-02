@@ -134,6 +134,7 @@ export function FlavorCarousel() {
         <div className="relative">
           <div className="flex items-center justify-center gap-6">
             <motion.button
+              aria-label="Curso anterior"
               onClick={() => paginate(-1)}
               className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:brightness-110 text-djon-text transition-colors"
               whileHover={{ scale: 1.1, rotate: -5 }}
@@ -258,6 +259,7 @@ export function FlavorCarousel() {
             </AnimatePresence>
 
             <motion.button
+              aria-label="Próximo curso"
               onClick={() => paginate(1)}
               className="cursor-pointer hidden md:flex w-12 h-12 rounded-full border-2 border-djon-text/20 items-center justify-center hover:brightness-110 text-djon-text transition-colors"
               whileHover={{ scale: 1.1, rotate: 5 }}
@@ -270,6 +272,7 @@ export function FlavorCarousel() {
 
           <div className="flex md:hidden justify-center gap-4 mt-6">
             <motion.button
+              aria-label="Curso anterior"
               onClick={() => paginate(-1)}
               className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text transition-opacity hover:opacity-70"
               whileTap={{ scale: 0.9 }}
@@ -277,6 +280,7 @@ export function FlavorCarousel() {
               <ChevronLeft className="w-4 h-4" />
             </motion.button>
             <motion.button
+              aria-label="Próximo curso"
               onClick={() => paginate(1)}
               className="cursor-pointer w-10 h-10 rounded-full border-2 border-djon-text/20 flex items-center justify-center text-djon-text transition-opacity hover:opacity-70"
               whileTap={{ scale: 0.9 }}
@@ -285,21 +289,29 @@ export function FlavorCarousel() {
             </motion.button>
           </div>
 
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center mt-6">
             {courses.map((course, index) => (
               <motion.button
                 key={course.id}
+                type="button"
+                aria-label={`Mostrar curso ${course.title}`}
+                aria-current={index === currentIndex ? "true" : undefined}
                 onClick={() => {
                   const newDirection = index > currentIndex ? 1 : -1
                   setCurrentIndex(index)
                   setPage([index, newDirection])
                 }}
-                className="cursor-pointer h-2 rounded-full transition-all"
-                style={{ backgroundColor: index === currentIndex ? landingColor(course.color).color : "color-mix(in srgb, var(--djon-color-white) 20%, transparent)" }}
-                animate={{ width: index === currentIndex ? 28 : 10 }}
+                className="flex size-6 cursor-pointer items-center justify-center rounded-full"
                 whileHover={{ scale: 1.2 }}
                 transition={{ type: "spring" as const, stiffness: 400, damping: 25 }}
-              />
+              >
+                <motion.span
+                  className="h-2 rounded-full"
+                  style={{ backgroundColor: index === currentIndex ? landingColor(course.color).color : "color-mix(in srgb, var(--djon-color-white) 20%, transparent)" }}
+                  animate={{ width: index === currentIndex ? 28 : 10 }}
+                  transition={{ type: "spring" as const, stiffness: 400, damping: 25 }}
+                />
+              </motion.button>
             ))}
           </div>
         </div>

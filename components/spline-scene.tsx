@@ -8,7 +8,7 @@ import type { Application } from "@splinetool/runtime"
 const Spline = dynamic(() => import("@splinetool/react-spline"), { ssr: false })
 
 const DESKTOP_LOAD_MARGIN = 220
-const DESKTOP_PREFETCH_MARGIN = "1600px 0px"
+const DESKTOP_PREFETCH_MARGIN = "600px 0px"
 const scenePrefetches = new Map<string, Promise<boolean>>()
 
 type NetworkInformation = {
@@ -85,7 +85,6 @@ export function SplineScene({
   const wrapperRef = useRef<HTMLDivElement>(null)
   const splineRef = useRef<Application | null>(null)
   const hasEnteredLoadZoneRef = useRef(!lazy)
-  const hasPreparedOffscreenRef = useRef(false)
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sceneKey = scene
 
@@ -97,7 +96,6 @@ export function SplineScene({
     setReady(false)
     splineRef.current = null
     hasEnteredLoadZoneRef.current = !lazy
-    hasPreparedOffscreenRef.current = false
     return () => {
       if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
     }
@@ -143,7 +141,6 @@ export function SplineScene({
 
     let cancelled = false
     let fetchIdleCallback: number | null = null
-    let prepareIdleCallback: number | null = null
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return
@@ -156,15 +153,7 @@ export function SplineScene({
 
         fetchIdleCallback = window.requestIdleCallback(
           () => {
-            void prefetchScene(scene).then((prefetched) => {
-              if (!prefetched || cancelled || hasEnteredLoadZoneRef.current) return
-
-              prepareIdleCallback = window.requestIdleCallback(() => {
-                if (cancelled || hasEnteredLoadZoneRef.current) return
-                hasPreparedOffscreenRef.current = true
-                setShouldLoad(true)
-              })
-            })
+            if (!cancelled && !hasEnteredLoadZoneRef.current) void prefetchScene(scene)
           },
           { timeout: 1500 },
         )
@@ -177,7 +166,6 @@ export function SplineScene({
       cancelled = true
       observer.disconnect()
       if (fetchIdleCallback !== null) window.cancelIdleCallback(fetchIdleCallback)
-      if (prepareIdleCallback !== null) window.cancelIdleCallback(prepareIdleCallback)
     }
   }, [isMemorySensitive, lazy, scene, shouldLoad])
 
@@ -221,8 +209,6 @@ export function SplineScene({
   useEffect(() => {
     if (!unloadWhenHidden || isVisible || !shouldLoad) return
     if (preloadOnIdle && !hasEnteredLoadZoneRef.current) return
-    if (hasPreparedOffscreenRef.current && !hasEnteredLoadZoneRef.current) return
-
     const timeout = window.setTimeout(() => {
       splineRef.current?.stop()
       splineRef.current = null
