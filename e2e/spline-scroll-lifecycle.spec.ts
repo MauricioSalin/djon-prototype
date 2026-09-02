@@ -48,6 +48,17 @@ async function waitReady(page: Page, id: string) {
   await expect(scene(page, id)).toHaveAttribute("data-spline-state", "ready", { timeout: 45_000 })
   await expect(scene(page, id).locator("canvas")).toBeVisible()
   await expect(scene(page, id).locator("canvas")).toHaveCSS("opacity", "1")
+  await expect(scene(page, id).locator("..")).toHaveCSS("opacity", "1", { timeout: 30_000 })
+  const frame = await scene(page, id).evaluate((element) => {
+    const canvas = element.querySelector("canvas")!
+    return {
+      width: element.clientWidth, height: element.clientHeight,
+      canvasWidth: canvas.clientWidth, canvasHeight: canvas.clientHeight,
+    }
+  })
+  // CSS may scale the section, but changing Spline's layout frame changes its camera.
+  expect(frame.canvasWidth).toBe(frame.width)
+  expect(frame.canvasHeight).toBe(frame.height)
 }
 
   test.describe("Spline scroll lifecycle - iPhone", () => {
@@ -76,6 +87,7 @@ async function waitReady(page: Page, id: string) {
         await waitReady(page, id)
         await expect.poll(async () => (await metrics(page)).live).toBe(1)
         expect((await metrics(page)).peak).toBe(1)
+        await page.screenshot({ path: testInfo.outputPath(`${id}.png`) })
       }
       await page.locator("#cursos").scrollIntoViewIfNeeded()
       await expect.poll(async () => (await metrics(page)).live).toBe(0)

@@ -86,22 +86,8 @@ export function SplineScene({
 
     setState({ version, scene, status: "loading" })
     const exclusive = isMemorySensitiveDevice()
-    const resizeSurface = () => {
-      const wrapper = wrapperRef.current
-      if (!wrapper || !exclusive || !wrapper.clientWidth) return
-      // Mobile artwork uses large desktop frames scaled down with CSS. Render at
-      // its displayed size instead of allocating a 900px frame at the phone's DPR.
-      const scale = Math.min(1, wrapper.getBoundingClientRect().width / wrapper.clientWidth)
-      if (scale <= 0) return
-      surface.style.width = `${scale * 100}%`
-      surface.style.height = `${scale * 100}%`
-      surface.style.transformOrigin = "top left"
-      surface.style.transform = `scale(${1 / scale})`
-    }
-    resizeSurface()
-    const resizeObserver = new ResizeObserver(resizeSurface)
-    if (wrapperRef.current) resizeObserver.observe(wrapperRef.current)
-    window.addEventListener("resize", resizeSurface)
+    // Preserve the authored layout frame: Spline uses it to frame the camera.
+    // The section's CSS transform already scales the complete scene for mobile.
     const canvas = document.createElement("canvas")
     Object.assign(canvas.style, {
       display: "block", width: "100%", height: "100%",
@@ -151,8 +137,6 @@ export function SplineScene({
     sessionRef.current = session
 
     return () => {
-      resizeObserver.disconnect()
-      window.removeEventListener("resize", resizeSurface)
       clearTimeout(revealTimer)
       cancelAnimationFrame(revealFrame)
       cancelAnimationFrame(rotationFrame)
