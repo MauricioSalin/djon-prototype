@@ -1,8 +1,28 @@
 "use client";
 
-import { Toaster } from "sonner";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+
+const Toaster = dynamic(
+  () => import("sonner").then((module) => module.Toaster),
+  { ssr: false },
+);
 
 export function AppToaster() {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const enable = () => setEnabled(true);
+    window.addEventListener("pointerdown", enable, { once: true, passive: true });
+    window.addEventListener("keydown", enable, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", enable);
+      window.removeEventListener("keydown", enable);
+    };
+  }, []);
+
+  if (!enabled) return null;
+
   return (
     <Toaster
       className="app-toaster"

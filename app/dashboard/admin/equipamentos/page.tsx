@@ -144,7 +144,10 @@ export default function EquipmentsAdminPage() {
     }
     await store.saveEquipment(
       {
-        ...availabilityTarget,
+        name: availabilityTarget.name,
+        description: availabilityTarget.description,
+        unitId: availabilityTarget.unitId,
+        active: availabilityTarget.active,
         unavailableWeekdays: periodMode ? [] : unavailableWeekdays,
         unavailableFrom: periodMode ? unavailableFrom : null,
         unavailableUntil: periodMode ? unavailableUntil : null,

@@ -36,39 +36,6 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   const startTimeRef = useRef<number | null>(null)
   const animationIdRef = useRef<number | null>(null)
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const parent = canvas.parentElement
-    if (!parent) return
-
-    let resizeTimeout: ReturnType<typeof setTimeout>
-
-    const resizeCanvas = () => {
-      const { width, height } = parent.getBoundingClientRect()
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width
-        canvas.height = height
-      }
-    }
-
-    const handleResize = () => {
-      clearTimeout(resizeTimeout)
-      resizeTimeout = setTimeout(resizeCanvas, 100)
-    }
-
-    const ro = new ResizeObserver(handleResize)
-    ro.observe(parent)
-
-    resizeCanvas()
-
-    return () => {
-      ro.disconnect()
-      clearTimeout(resizeTimeout)
-    }
-  }, [])
-
   const easeFunc = useCallback(
     (t: number) => {
       switch (easing) {
@@ -157,7 +124,13 @@ const ClickSpark: React.FC<ClickSparkProps> = ({
   const handleClick = (e: React.MouseEvent<HTMLDivElement>): void => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
+    const parent = canvas.parentElement
+    if (!parent) return
+    const rect = parent.getBoundingClientRect()
+    if (canvas.width !== Math.round(rect.width) || canvas.height !== Math.round(rect.height)) {
+      canvas.width = Math.round(rect.width)
+      canvas.height = Math.round(rect.height)
+    }
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 

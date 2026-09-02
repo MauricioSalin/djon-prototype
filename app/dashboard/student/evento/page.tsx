@@ -229,10 +229,10 @@ export default function StudentEventPage() {
                       <Music2 size={18} className="text-djon-accent" />
                     </div>
                     <div className="flex items-center gap-1">
-                      <button aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:brightness-110 transition-all">
+                      <button type="button" aria-label={`Editar evento ${ev.title}`} onClick={() => openEdit(ev)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-djon-accent/10 text-djon-accent transition-[filter] hover:brightness-110">
                         <Edit2 size={13} />
                       </button>
-                      <button aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="cursor-pointer w-8 h-8 rounded-lg bg-djon-text/5 flex items-center justify-center text-djon-text/30 hover:brightness-110 transition-all">
+                      <button type="button" aria-label={`Excluir evento ${ev.title}`} onClick={() => void handleDelete(ev)} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg bg-djon-warning-red/10 text-djon-warning-red transition-[filter] hover:brightness-110">
                         <Trash2 size={13} />
                       </button>
                     </div>

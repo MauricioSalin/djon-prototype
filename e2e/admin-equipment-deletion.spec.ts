@@ -12,7 +12,13 @@ const equipment = {
   unavailableUntil: null,
 };
 
-async function mockEquipments(page: Page, onDelete: () => void) {
+async function mockEquipments(
+  page: Page,
+  handlers: {
+    onDelete?: () => void;
+    onPatch?: (payload: Record<string, unknown>) => void;
+  },
+) {
   let equipments = [equipment];
   await page.addInitScript(() => {
     window.localStorage.setItem("djon_access_token", "token-e2e");
@@ -37,9 +43,16 @@ async function mockEquipments(page: Page, onDelete: () => void) {
       await route.fulfill({ json: equipments });
       return;
     }
+    if (path === `/equipments/${equipment.id}` && request.method() === "PATCH") {
+      const payload = request.postDataJSON() as Record<string, unknown>;
+      equipments = [{ ...equipment, ...payload }];
+      handlers.onPatch?.(payload);
+      await route.fulfill({ json: equipments[0] });
+      return;
+    }
     if (path === `/equipments/${equipment.id}` && request.method() === "DELETE") {
       equipments = [];
-      onDelete();
+      handlers.onDelete?.();
       await route.fulfill({ json: equipment });
       return;
     }
@@ -73,8 +86,10 @@ test("exclui definitivamente até um equipamento que já estava inativo", async 
   page,
 }) => {
   let deleteRequests = 0;
-  await mockEquipments(page, () => {
-    deleteRequests += 1;
+  await mockEquipments(page, {
+    onDelete: () => {
+      deleteRequests += 1;
+    },
   });
 
   await page.goto("/dashboard/admin/equipamentos");
@@ -89,4 +104,54 @@ test("exclui definitivamente até um equipamento que já estava inativo", async 
 
   await expect.poll(() => deleteRequests).toBe(1);
   await expect(page.getByText("DDJ-FLX10", { exact: true })).toHaveCount(0);
+});
+
+test("salva a indisponibilidade sem enviar campos somente de leitura", async ({
+  page,
+}) => {
+  const payloads: Record<string, unknown>[] = [];
+  await mockEquipments(page, {
+    onPatch: (payload) => payloads.push(payload),
+  });
+
+  await page.goto("/dashboard/admin/equipamentos");
+  await page
+    .getByRole("button", {
+      name: "Configurar indisponibilidade de DDJ-FLX10",
+    })
+    .click();
+  await page.getByRole("button", { name: "Segunda", exact: true }).click();
+  await page
+    .getByRole("button", { name: "SALVAR INDISPONIBILIDADE" })
+    .click();
+
+  await expect.poll(() => payloads).toHaveLength(1);
+  expect(payloads[0]).toMatchObject({
+    unavailableWeekdays: [1],
+    unavailableFrom: null,
+    unavailableUntil: null,
+  });
+  expect(payloads[0]).not.toHaveProperty("id");
+  expect(payloads[0]).not.toHaveProperty("unitLabel");
+
+  await page
+    .getByRole("button", {
+      name: "Configurar indisponibilidade de DDJ-FLX10",
+    })
+    .click();
+  await page.getByRole("button", { name: "Por dia e horário" }).click();
+  await page.getByLabel("INÍCIO").fill("2026-09-10T10:00");
+  await page.getByLabel("FIM").fill("2026-09-10T12:00");
+  await page
+    .getByRole("button", { name: "SALVAR INDISPONIBILIDADE" })
+    .click();
+
+  await expect.poll(() => payloads).toHaveLength(2);
+  expect(payloads[1]).toMatchObject({
+    unavailableWeekdays: [],
+    unavailableFrom: "2026-09-10T10:00",
+    unavailableUntil: "2026-09-10T12:00",
+  });
+  expect(payloads[1]).not.toHaveProperty("id");
+  expect(payloads[1]).not.toHaveProperty("unitLabel");
 });

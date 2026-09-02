@@ -23,12 +23,12 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
   const [selectedLocation, setSelectedLocation] = useState<AcademyLocationKey>("poa")
   const [open, setOpen] = useState(false)
   const [units, setUnits] = useState<Unit[]>([])
+  const unitsRequestedRef = useRef(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const backendLocation = units.find((unit) => unit.key === selectedLocation)
   const location = backendLocation ?? academyLocations[selectedLocation] ?? academyLocations.poa
 
   useEffect(() => {
-    store.getPublicUnits().then(setUnits).catch(() => undefined)
     const storedLocation = window.localStorage.getItem(academyLocationStorageKey)
     if (isAcademyLocationKey(storedLocation)) {
       setSelectedLocation(storedLocation)
@@ -56,6 +56,13 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
     }
   }, [])
 
+  const toggleOpen = () => {
+    setOpen((value) => !value)
+    if (unitsRequestedRef.current) return
+    unitsRequestedRef.current = true
+    store.getPublicUnits().then(setUnits).catch(() => undefined)
+  }
+
   useEffect(() => {
     if (!open) return
 
@@ -80,7 +87,7 @@ export function LocationDropdown({ className = "", align = "right", mobile = fal
     <div ref={rootRef} className={`relative ${mobile ? "w-full" : "w-auto"} ${className}`}>
       <motion.button
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleOpen}
         className={`group flex items-center justify-between gap-3 rounded-full border border-djon-text/15 bg-djon-surface-4/90 px-5 py-2.5 text-left font-black text-djon-text shadow-djon-soft outline-none backdrop-blur-md transition-colors hover:brightness-110 ${
           mobile ? "w-full" : "min-w-[188px]"
         }`}
