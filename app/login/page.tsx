@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -14,6 +14,29 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [sessionChecking, setSessionChecking] = useState(true)
+
+  useEffect(() => {
+    let active = true
+
+    store
+      .restoreSession()
+      .then((user) => {
+        if (!active) return
+        if (user) {
+          router.replace(getDashboardHome(user))
+          return
+        }
+        setSessionChecking(false)
+      })
+      .catch(() => {
+        if (active) setSessionChecking(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [router])
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -81,8 +104,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <motion.button type="submit" disabled={loading} className="w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-              {loading ? (
+            <motion.button type="submit" disabled={loading || sessionChecking} className="w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+              {loading || sessionChecking ? (
                 <motion.div className="w-4 h-4 border-2 border-djon-ink border-t-transparent rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} />
               ) : (
                 <><LogIn size={15} /> ENTRAR</>
