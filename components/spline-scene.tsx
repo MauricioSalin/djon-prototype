@@ -1,48 +1,15 @@
 "use client"
 
 import type { CSSProperties } from "react"
-import { useCallback, useEffect, useRef, useState } from "react"
-import dynamic from "next/dynamic"
+import { useEffect, useRef, useState } from "react"
 import type { Application } from "@splinetool/runtime"
-
-const Spline = dynamic(() => import("@splinetool/react-spline"), { ssr: false })
-
-const DESKTOP_LOAD_MARGIN = 220
-const DESKTOP_PREFETCH_MARGIN = "600px 0px"
-const scenePrefetches = new Map<string, Promise<boolean>>()
-
-type NetworkInformation = {
-  effectiveType?: string
-  saveData?: boolean
-}
+import { createSplineRuntimeSession } from "@/lib/spline-runtime-session"
 
 function isMemorySensitiveDevice() {
-  const ua = window.navigator.userAgent
-  const platform = window.navigator.platform
-  const maxTouchPoints = window.navigator.maxTouchPoints || 0
-  const isIOS = /iPad|iPhone|iPod/.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1)
-  const isSmallTouchDevice = window.matchMedia("(max-width: 768px) and (pointer: coarse)").matches
-
-  return isIOS || isSmallTouchDevice
-}
-
-function prefetchScene(scene: string) {
-  const existingPrefetch = scenePrefetches.get(scene)
-  if (existingPrefetch) return existingPrefetch
-
-  const prefetch = fetch(scene, { cache: "force-cache" })
-    .then((response) => {
-      if (!response.ok) throw new Error(`Unable to prefetch Spline scene: ${response.status}`)
-      return response.arrayBuffer()
-    })
-    .then(() => true)
-    .catch(() => {
-      scenePrefetches.delete(scene)
-      return false
-    })
-
-  scenePrefetches.set(scene, prefetch)
-  return prefetch
+  const { userAgent, platform, maxTouchPoints } = window.navigator
+  return /iPad|iPhone|iPod/.test(userAgent)
+    || (platform === "MacIntel" && maxTouchPoints > 1)
+    || window.matchMedia("(pointer: coarse)").matches
 }
 
 type SplineSceneProps = {
@@ -52,12 +19,8 @@ type SplineSceneProps = {
   onLoad?: (spline: Application) => void
   transparent?: boolean
   revealDelay?: number
-  lazy?: boolean
   lazyThreshold?: number
-  unloadWhenHidden?: boolean
   globalEvents?: boolean
-  preloadOnIdle?: boolean
-  preloadIdleTimeout?: number
   rotationObject?: string
   rotationSpeed?: number
 }
@@ -69,222 +32,144 @@ export function SplineScene({
   onLoad,
   transparent = true,
   revealDelay = 650,
-  lazy = true,
   lazyThreshold = 0.12,
-  unloadWhenHidden = true,
   globalEvents = false,
-  preloadOnIdle = false,
-  preloadIdleTimeout = 2500,
   rotationObject,
   rotationSpeed = 0.45,
 }: SplineSceneProps) {
-  const [ready, setReady] = useState(false)
-  const [shouldLoad, setShouldLoad] = useState(!lazy)
-  const [isMemorySensitive, setIsMemorySensitive] = useState(false)
-  const [isVisible, setIsVisible] = useState(!lazy)
+  const [{ active: visible, version }, setVisibility] = useState({ active: false, version: 0 })
+  const [state, setState] = useState<{
+    version: number; scene: string; status: "loading" | "ready" | "error"
+  }>({ version: -1, scene: "", status: "loading" })
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const splineRef = useRef<Application | null>(null)
-  const hasEnteredLoadZoneRef = useRef(!lazy)
-  const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const sceneKey = scene
+  const surfaceRef = useRef<HTMLDivElement>(null)
+  const onLoadRef = useRef(onLoad)
+  const sessionRef = useRef<ReturnType<typeof createSplineRuntimeSession> | null>(null)
+
+  useEffect(() => { onLoadRef.current = onLoad }, [onLoad])
 
   useEffect(() => {
-    setIsMemorySensitive(isMemorySensitiveDevice())
-  }, [])
-
-  useEffect(() => {
-    setReady(false)
-    splineRef.current = null
-    hasEnteredLoadZoneRef.current = !lazy
-    return () => {
-      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
-    }
-  }, [lazy, sceneKey])
-
-  useEffect(() => {
-    if (!lazy) {
-      setShouldLoad(true)
-      return
-    }
-
     const element = wrapperRef.current
     if (!element) return
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting)
-
-        if (entry.isIntersecting) {
-          hasEnteredLoadZoneRef.current = true
-          setShouldLoad(true)
-        }
-      },
-      { rootMargin: isMemorySensitive ? "80px 0px" : "220px 0px", threshold: lazyThreshold },
-    )
-
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [isMemorySensitive, lazy, lazyThreshold])
-
-  useEffect(() => {
-    if (!lazy || shouldLoad || isMemorySensitive || isMemorySensitiveDevice()) return
-
-    const connection = (
-      window.navigator as Navigator & {
-        connection?: NetworkInformation
-      }
-    ).connection
-    if (connection?.saveData || connection?.effectiveType?.includes("2g")) return
-
-    const element = wrapperRef.current
-    if (!element) return
-
-    let cancelled = false
-    let fetchIdleCallback: number | null = null
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return
-        observer.disconnect()
-
-        const rect = element.getBoundingClientRect()
-        const isAlreadyInLoadZone =
-          rect.bottom >= -DESKTOP_LOAD_MARGIN && rect.top <= window.innerHeight + DESKTOP_LOAD_MARGIN
-        if (isAlreadyInLoadZone) return
-
-        fetchIdleCallback = window.requestIdleCallback(
-          () => {
-            if (!cancelled && !hasEnteredLoadZoneRef.current) void prefetchScene(scene)
-          },
-          { timeout: 1500 },
-        )
-      },
-      { rootMargin: DESKTOP_PREFETCH_MARGIN, threshold: 0 },
-    )
+    let intersecting = false
+    let pageActive = true
+    const updateVisibility = () => {
+      const active = intersecting && pageActive && !document.hidden
+      // A hiding/freezing page must release resources before React gets another turn.
+      if (!active) sessionRef.current?.dispose()
+      setVisibility((previous) => previous.active === active
+        ? previous
+        : { active, version: previous.version + 1 })
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      intersecting = entry.isIntersecting && entry.intersectionRatio > 0
+      updateVisibility()
+    }, { rootMargin: "0px", threshold: [0, lazyThreshold] })
+    const hide = () => { pageActive = false; updateVisibility() }
+    const show = () => { pageActive = true; updateVisibility() }
 
     observer.observe(element)
+    document.addEventListener("visibilitychange", updateVisibility)
+    window.addEventListener("pagehide", hide)
+    window.addEventListener("pageshow", show)
     return () => {
-      cancelled = true
       observer.disconnect()
-      if (fetchIdleCallback !== null) window.cancelIdleCallback(fetchIdleCallback)
+      document.removeEventListener("visibilitychange", updateVisibility)
+      window.removeEventListener("pagehide", hide)
+      window.removeEventListener("pageshow", show)
     }
-  }, [isMemorySensitive, lazy, scene, shouldLoad])
+  }, [lazyThreshold])
 
   useEffect(() => {
-    if (!preloadOnIdle || !lazy || shouldLoad || isMemorySensitive) return
-    if (hasEnteredLoadZoneRef.current) return
+    const surface = surfaceRef.current
+    if (!visible || !surface) return
 
-    const loadScene = () => setShouldLoad(true)
-    const idleCallback = window.requestIdleCallback(loadScene, { timeout: preloadIdleTimeout })
-    return () => window.cancelIdleCallback(idleCallback)
-  }, [isMemorySensitive, lazy, preloadIdleTimeout, preloadOnIdle, shouldLoad])
-
-  useEffect(() => {
-    const spline = splineRef.current
-    if (!spline) return
-
-    if (isVisible) {
-      spline.play()
-    } else if (!preloadOnIdle || hasEnteredLoadZoneRef.current) {
-      spline.stop()
+    setState({ version, scene, status: "loading" })
+    const exclusive = isMemorySensitiveDevice()
+    const resizeSurface = () => {
+      const wrapper = wrapperRef.current
+      if (!wrapper || !exclusive || !wrapper.clientWidth) return
+      // Mobile artwork uses large desktop frames scaled down with CSS. Render at
+      // its displayed size instead of allocating a 900px frame at the phone's DPR.
+      const scale = Math.min(1, wrapper.getBoundingClientRect().width / wrapper.clientWidth)
+      if (scale <= 0) return
+      surface.style.width = `${scale * 100}%`
+      surface.style.height = `${scale * 100}%`
+      surface.style.transformOrigin = "top left"
+      surface.style.transform = `scale(${1 / scale})`
     }
+    resizeSurface()
+    const resizeObserver = new ResizeObserver(resizeSurface)
+    if (wrapperRef.current) resizeObserver.observe(wrapperRef.current)
+    window.addEventListener("resize", resizeSurface)
+    const canvas = document.createElement("canvas")
+    Object.assign(canvas.style, {
+      display: "block", width: "100%", height: "100%",
+      background: transparent ? "transparent" : undefined,
+      opacity: "0", transition: "opacity 350ms ease",
+    })
+    surface.appendChild(canvas)
+    let revealTimer: ReturnType<typeof setTimeout> | undefined
+    let revealFrame = 0
+    let rotationFrame = 0
 
-    if (!isVisible || !rotationObject) return
-
-    const object = spline.findObjectByName(rotationObject)
-    if (!object) return
-
-    let previousTime = performance.now()
-    let animationFrame = 0
-    const rotate = (currentTime: number) => {
-      const elapsedSeconds = Math.min((currentTime - previousTime) / 1000, 0.05)
-      previousTime = currentTime
-      object.rotation.y += rotationSpeed * elapsedSeconds
-      animationFrame = requestAnimationFrame(rotate)
-    }
-
-    animationFrame = requestAnimationFrame(rotate)
-    return () => cancelAnimationFrame(animationFrame)
-  }, [isVisible, preloadOnIdle, ready, rotationObject, rotationSpeed])
-
-  useEffect(() => {
-    if (!unloadWhenHidden || isVisible || !shouldLoad) return
-    if (preloadOnIdle && !hasEnteredLoadZoneRef.current) return
-    const timeout = window.setTimeout(() => {
-      splineRef.current?.stop()
-      splineRef.current = null
-      setReady(false)
-      setShouldLoad(false)
-    }, isMemorySensitive ? 900 : 3200)
-
-    return () => window.clearTimeout(timeout)
-  }, [isMemorySensitive, isVisible, preloadOnIdle, shouldLoad, unloadWhenHidden])
-
-  const handleLoad = useCallback(
-    (spline: Application) => {
-      if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
-
-      splineRef.current = spline
-      spline.setGlobalEvents(globalEvents)
-
-      if (!isVisible && (!preloadOnIdle || hasEnteredLoadZoneRef.current)) spline.stop()
-
-      if (transparent) {
-        spline.canvas.style.background = "transparent"
-        spline.canvas.style.backgroundColor = "transparent"
-
-        requestAnimationFrame(() => {
-          spline.canvas.style.background = "transparent"
-          spline.canvas.style.backgroundColor = "transparent"
-        })
-      }
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          spline.canvas.style.background = "transparent"
-          spline.canvas.style.backgroundColor = "transparent"
-          window.dispatchEvent(new Event("resize"))
-
-          revealTimeoutRef.current = setTimeout(() => {
-            setReady(true)
-            onLoad?.(spline)
+    const session = createSplineRuntimeSession({
+      canvas,
+      scene,
+      exclusive,
+      onError: (error) => {
+        console.error("[Spline] Scene lifecycle failed", scene, error)
+        if (!session.signal.aborted) setState({ version, scene, status: "error" })
+      },
+      onLoad: (application) => {
+        application.setGlobalEvents(globalEvents)
+        if (transparent) application.setBackgroundColor("transparent")
+        revealFrame = requestAnimationFrame(() => {
+          if (session.signal.aborted) return
+          revealTimer = setTimeout(() => {
+            if (session.signal.aborted) return
+            canvas.style.opacity = "1"
+            setState({ version, scene, status: "ready" })
+            onLoadRef.current?.(application)
           }, revealDelay)
         })
-      })
-    },
-    [globalEvents, isVisible, onLoad, preloadOnIdle, revealDelay, transparent],
-  )
+
+        const object = rotationObject ? application.findObjectByName(rotationObject) : null
+        if (object) {
+          let previousTime = performance.now()
+          const rotate = (time: number) => {
+            if (session.signal.aborted) return
+            object.rotation.y += rotationSpeed * Math.min((time - previousTime) / 1000, 0.05)
+            previousTime = time
+            application.requestRender()
+            rotationFrame = requestAnimationFrame(rotate)
+          }
+          rotationFrame = requestAnimationFrame(rotate)
+        }
+      },
+    })
+    sessionRef.current = session
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener("resize", resizeSurface)
+      clearTimeout(revealTimer)
+      cancelAnimationFrame(revealFrame)
+      cancelAnimationFrame(rotationFrame)
+      session.dispose()
+      if (sessionRef.current === session) sessionRef.current = null
+    }
+  }, [globalEvents, revealDelay, rotationObject, rotationSpeed, scene, transparent, version, visible])
 
   return (
     <div
       ref={wrapperRef}
+      data-spline-scene={scene}
+      data-spline-state={!visible ? "idle" : state.version === version && state.scene === scene ? state.status : "loading"}
       className={className}
-      style={{
-        ...style,
-        background: "transparent",
-      }}
+      style={{ ...style, background: "transparent" }}
     >
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-        }}
-      >
-        {shouldLoad && (
-          <Spline
-            key={sceneKey}
-            scene={scene}
-            onLoad={handleLoad}
-            renderOnDemand
-            style={{
-              width: "100%",
-              height: "100%",
-              background: "transparent",
-              opacity: ready ? 1 : 0,
-              transition: "opacity 350ms ease",
-            }}
-          />
-        )}
-      </div>
+      <div ref={surfaceRef} style={{ width: "100%", height: "100%" }} />
     </div>
   )
 }

@@ -702,7 +702,7 @@ test.describe("landing em iPhone", () => {
     isMobile: true,
   });
 
-  test("adia o Spline até a ativação sem fallback visual", async ({ page }) => {
+  test("inicializa o Spline automaticamente sem fallback visual", async ({ page }) => {
     const splineRequests: string[] = [];
     await page.route("https://prod.spline.design/**", async (route) => {
       splineRequests.push(route.request().url());
@@ -711,18 +711,14 @@ test.describe("landing em iPhone", () => {
     await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1_500);
-    expect(splineRequests).toHaveLength(0);
     await expect(
       page.locator('iframe[title="Sincronização da sessão do portal"]'),
     ).toHaveCount(0);
-
-    const activate3d = page.getByRole("button", { name: "ATIVAR EXPERIÊNCIA 3D" });
-    await expect(activate3d).toBeVisible();
-    await activate3d.click();
+    await expect(page.getByRole("button", { name: "ATIVAR EXPERIÊNCIA 3D" })).toHaveCount(0);
     await expect
       .poll(() => splineRequests.length, { timeout: 20_000 })
       .toBeGreaterThan(0);
+    await expect(page.locator("#hero canvas").first()).toBeVisible({ timeout: 20_000 });
 
     await expect(page.locator("[data-spline-fallback]")).toHaveCount(0);
   });

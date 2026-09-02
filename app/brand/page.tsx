@@ -470,7 +470,6 @@ export default function BrandPage() {
           <div className="relative min-h-[460px] sm:min-h-[560px]">
             <SplineScene
               scene="https://prod.spline.design/mZzZrAV9qXxQ452n/scene.splinecode"
-              preloadOnIdle
               rotationObject="realistic_headphone"
               style={{ width: "100%", height: "min(640px, 82svh)" }}
             />

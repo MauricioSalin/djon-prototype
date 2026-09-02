@@ -11,7 +11,6 @@ import { useLandingSection } from "@/components/landing/landing-content-provider
 export function HeroSection() {
   const { data, canEdit, edit } = useLandingSection("hero")
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const [hero3dEnabled, setHero3dEnabled] = useState(false)
   const [splineLoaded, setSplineLoaded] = useState(false)
 
   useEffect(() => {
@@ -128,49 +127,8 @@ export function HeroSection() {
             <motion.div
               className="relative !-mt-6 h-[300px] w-full overflow-visible min-[390px]:h-[330px] sm:!-mt-4 sm:h-[390px] lg:hidden"
             >
-              {!splineLoaded ? (
-                <button
-                  type="button"
-                  disabled={hero3dEnabled}
-                  onClick={() => setHero3dEnabled(true)}
-                  className="absolute left-1/2 top-1/2 z-10 min-h-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-djon-accent/45 bg-djon-black/75 px-5 text-[10px] font-black tracking-[0.18em] text-djon-accent backdrop-blur-sm transition-opacity hover:opacity-80 disabled:cursor-wait"
-                >
-                  {hero3dEnabled ? "CARREGANDO 3D..." : "ATIVAR EXPERIÊNCIA 3D"}
-                </button>
-              ) : null}
-              {hero3dEnabled ? (
-                <motion.div
-                  className="absolute left-1/2 top-[40%] h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] transform-gpu min-[360px]:scale-[0.46] min-[390px]:top-[42%] min-[390px]:scale-[0.5] sm:top-[44%] sm:scale-[0.58]"
-                  initial={false}
-                  animate={{ opacity: splineLoaded ? 1 : 0 }}
-                  transition={{ duration: 0.45, ease: "easeOut" }}
-                >
-                  <SplineScene
-                    scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
-                    lazyThreshold={0.01}
-                    onLoad={revealSpline}
-                    style={{ width: "100%", height: "100%" }}
-                  />
-                </motion.div>
-              ) : null}
-            </motion.div>
-          </motion.div>
-
-          {/* Right side — Spline 3D scene */}
-          <div className="relative hidden lg:block" style={{ height: "calc(100vh - 80px)" }}>
-            {!splineLoaded ? (
-              <button
-                type="button"
-                disabled={hero3dEnabled}
-                onClick={() => setHero3dEnabled(true)}
-                className="absolute left-1/2 top-1/2 z-10 min-h-11 -translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-djon-accent/45 bg-djon-black/75 px-5 text-[10px] font-black tracking-[0.18em] text-djon-accent backdrop-blur-sm transition-opacity hover:opacity-80 disabled:cursor-wait"
-              >
-                {hero3dEnabled ? "CARREGANDO 3D..." : "ATIVAR EXPERIÊNCIA 3D"}
-              </button>
-            ) : null}
-            {hero3dEnabled ? (
               <motion.div
-                className="h-full w-full"
+                className="absolute left-1/2 top-[40%] h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] transform-gpu min-[360px]:scale-[0.46] min-[390px]:top-[42%] min-[390px]:scale-[0.5] sm:top-[44%] sm:scale-[0.58]"
                 initial={false}
                 animate={{ opacity: splineLoaded ? 1 : 0 }}
                 transition={{ duration: 0.45, ease: "easeOut" }}
@@ -182,7 +140,24 @@ export function HeroSection() {
                   style={{ width: "100%", height: "100%" }}
                 />
               </motion.div>
-            ) : null}
+            </motion.div>
+          </motion.div>
+
+          {/* Right side — Spline 3D scene */}
+          <div className="relative hidden lg:block" style={{ height: "calc(100vh - 80px)" }}>
+            <motion.div
+              className="h-full w-full"
+              initial={false}
+              animate={{ opacity: splineLoaded ? 1 : 0 }}
+              transition={{ duration: 0.45, ease: "easeOut" }}
+            >
+              <SplineScene
+                scene="https://prod.spline.design/aToMIxq-essPCx39/scene.splinecode"
+                lazyThreshold={0.01}
+                onLoad={revealSpline}
+                style={{ width: "100%", height: "100%" }}
+              />
+            </motion.div>
           </div>
         </div>
 
