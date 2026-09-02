@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { useEffect, useRef, useState } from "react"
+import { motion, useInView } from "framer-motion"
 import {
   academyLocationChangeEvent,
   academyLocationStorageKey,
@@ -34,10 +34,12 @@ export function SocialSection() {
   const { data, canEdit, edit } = useLandingSection("history")
   const [selectedLocation, setSelectedLocation] = useState<AcademyLocationKey>("poa")
   const [units, setUnits] = useState<Unit[]>([])
+  const sectionRef = useRef<HTMLElement>(null)
+  const unitsRequestedRef = useRef(false)
+  const isInView = useInView(sectionRef, { once: true, margin: "300px" })
   const location = units.find((unit) => unit.key === selectedLocation) ?? academyLocations[selectedLocation] ?? academyLocations.poa
 
   useEffect(() => {
-    store.getPublicUnits().then(setUnits).catch(() => undefined)
     const storedLocation = window.localStorage.getItem(academyLocationStorageKey)
     if (isAcademyLocationKey(storedLocation)) {
       setSelectedLocation(storedLocation)
@@ -65,9 +67,15 @@ export function SocialSection() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!isInView || unitsRequestedRef.current) return
+    unitsRequestedRef.current = true
+    store.getPublicUnits().then(setUnits).catch(() => undefined)
+  }, [isInView])
+
 
   return (
-    <section id="historia" className="relative py-16 bg-djon-text overflow-hidden">
+    <section ref={sectionRef} id="historia" className="relative py-16 bg-djon-text overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left: Text */}

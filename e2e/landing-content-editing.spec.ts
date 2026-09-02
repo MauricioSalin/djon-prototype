@@ -126,6 +126,7 @@ test("edita as sete seções e mantém o contato derivado da unidade", async ({ 
     page.getByAltText("Segredo", { exact: true }),
     "/images/djon-team-segredo.png",
   );
+  await page.locator("#contato").scrollIntoViewIfNeeded();
   await expect(page.getByText("(51) 99999-1111", { exact: true })).toBeVisible();
   await expect(page.getByText("poa@djon.test", { exact: true })).toBeVisible();
   await expect(page.getByText("Segunda a sábado, das 10h às 20h", { exact: true })).toHaveCount(2);
