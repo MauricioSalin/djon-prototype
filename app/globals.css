@@ -5,8 +5,8 @@
 
 :root {
   /* DJ ON design tokens: altere a marca aqui */
-  --djon-font-sans: var(--font-raleway), "Raleway Fallback", system-ui, sans-serif;
-  --djon-font-mono: var(--font-raleway), "Raleway Fallback", ui-monospace, monospace;
+  --djon-font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --djon-font-mono: ui-monospace, "Cascadia Mono", monospace;
   --djon-font-display: var(--font-bowlby-one-sc), Impact, sans-serif;
   --djon-font-titling: "Big Noodle Titling", var(--font-barlow-condensed), "Arial Narrow", sans-serif;
 
@@ -450,9 +450,15 @@
 }
 
 @media (max-width: 767px) {
+  html:has(.landing-page),
+  body:has(.landing-page) {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
   .landing-page {
     --djon-font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
     --djon-font-mono: ui-monospace, "Cascadia Mono", monospace;
+    --djon-font-display: Impact, Haettenschweiler, sans-serif;
     --djon-font-titling: "Arial Narrow", "Roboto Condensed", sans-serif;
     font-family: var(--djon-font-sans);
   }

@@ -502,15 +502,9 @@ export default function AgendarPage() {
               {...fadeUp(0.2)}
             >
               <Calendar size={48} className="text-djon-text/12 mx-auto mb-4" />
-              <p className="text-djon-text/25 text-sm font-bold mb-6">
+              <p className="text-djon-text/25 text-sm font-bold">
                 Nenhum agendamento solicitado
               </p>
-              <button
-                onClick={() => openRequest()}
-                className="inline-flex items-center gap-2 bg-djon-accent text-djon-ink px-7 py-3 rounded-full font-black text-sm tracking-widest transition-[filter] hover:brightness-90"
-              >
-                <Plus size={14} /> SOLICITAR TREINO
-              </button>
             </motion.div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

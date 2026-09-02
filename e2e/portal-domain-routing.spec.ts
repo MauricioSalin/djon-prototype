@@ -9,6 +9,15 @@ const configuredPortalOrigin =
 const portalHostname = new URL(configuredPortalOrigin).hostname
 const redirectedPortalOrigin = `https://${portalHostname}`
 
+function metadataContent(html: string, attribute: "property" | "name", key: string) {
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  const tag = html.match(
+    new RegExp(`<meta[^>]+${attribute}=["']${escapedKey}["'][^>]*>`, "i"),
+  )?.[0]
+
+  return tag?.match(/content=["']([^"']+)["']/i)?.[1]
+}
+
 test("redirects portal routes from the public host to the portal host", async ({
   request,
 }) => {
@@ -63,6 +72,36 @@ test("keeps public and authenticated routes on their intended hosts", async ({
 
   expect(publicResponse.status()).toBe(200)
   expect(portalResponse.status()).toBe(200)
+})
+
+test("uses the principal social image on the portal and both public hostnames", async ({
+  request,
+}) => {
+  const [wwwResponse, apexResponse, portalResponse] = await Promise.all([
+    request.get("/", { headers: { host: "www.djonacademy.com" } }),
+    request.get("/", { headers: { host: "djonacademy.com" } }),
+    request.get("/login", { headers: { host: portalHostname } }),
+  ])
+
+  expect(wwwResponse.ok()).toBe(true)
+  expect(apexResponse.ok()).toBe(true)
+  expect(portalResponse.ok()).toBe(true)
+
+  const [wwwHtml, apexHtml, portalHtml] = await Promise.all([
+    wwwResponse.text(),
+    apexResponse.text(),
+    portalResponse.text(),
+  ])
+  const principalImage = metadataContent(wwwHtml, "property", "og:image")
+
+  expect(principalImage).toBeTruthy()
+  expect(metadataContent(apexHtml, "property", "og:image")).toBe(principalImage)
+  expect(metadataContent(portalHtml, "property", "og:image")).toBe(
+    `${publicSiteOrigin}/opengraph-image`,
+  )
+  expect(metadataContent(portalHtml, "name", "twitter:image")).toBe(
+    `${publicSiteOrigin}/opengraph-image`,
+  )
 })
 
 test("keeps the public site crawlable and blocks the portal host", async ({

@@ -39,6 +39,7 @@ export function Footer() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [units, setUnits] = useState<Unit[]>([])
   const footerRef = useRef(null)
+  const unitsRequestedRef = useRef(false)
   const isInView = useInView(footerRef, { once: true, margin: "-100px" })
   const unit = units.find((item) => item.key === selectedLocation)
   const fallbackLocation = academyLocations[selectedLocation] ?? academyLocations.poa
@@ -50,7 +51,6 @@ export function Footer() {
   const openingHours = unit?.openingHours ?? fallbackLocation.openingHours ?? ""
 
   useEffect(() => {
-    store.getPublicUnits().then(setUnits).catch(() => undefined)
     const storedLocation = window.localStorage.getItem(academyLocationStorageKey)
     if (isAcademyLocationKey(storedLocation)) {
       setSelectedLocation(storedLocation)
@@ -77,6 +77,12 @@ export function Footer() {
       window.removeEventListener("storage", handleStorageChange)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isInView || unitsRequestedRef.current) return
+    unitsRequestedRef.current = true
+    store.getPublicUnits().then(setUnits).catch(() => undefined)
+  }, [isInView])
 
 
   const handleSubmit = async (e: React.FormEvent) => {

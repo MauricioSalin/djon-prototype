@@ -726,6 +726,49 @@ test.describe("landing em iPhone", () => {
 
     await expect(page.locator("[data-spline-fallback]")).toHaveCount(0);
   });
+
+  test("adia unidades e toaster até a primeira interação", async ({ page }) => {
+    let unitRequests = 0;
+    await page.route("**/api/v1/**", (route) => {
+      if (new URL(route.request().url()).pathname.endsWith("/units")) {
+        unitRequests += 1;
+      }
+      return route.fulfill({ json: [] });
+    });
+
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1_000);
+    expect(unitRequests).toBe(0);
+    await expect(page.locator("[data-sonner-toaster]")).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
+    await expect(page.locator("[data-sonner-toaster]")).toBeVisible();
+    await page.getByRole("button", { name: /UNIDADE/ }).click();
+    await expect.poll(() => unitRequests).toBe(1);
+  });
+});
+
+test("aluno mantém somente o botão superior no estado vazio de agendamentos", async ({
+  page,
+}) => {
+  await mockPortal(page, "student");
+  await page.goto("/dashboard/student/agendar");
+
+  const section = page.locator("section").filter({
+    has: page.getByRole("heading", {
+      name: "Próximos Agendamentos",
+      exact: true,
+    }),
+  });
+  await expect(
+    section.getByRole("button", { name: "SOLICITAR TREINO" }),
+  ).toHaveCount(1);
+
+  const emptyState = section
+    .getByText("Nenhum agendamento solicitado", { exact: true })
+    .locator("..");
+  await expect(emptyState).toBeVisible();
+  await expect(emptyState.getByRole("button")).toHaveCount(0);
 });
 
 for (const viewport of [
