@@ -62,6 +62,7 @@ export function Navigation() {
   const [sessionBridgeEnabled, setSessionBridgeEnabled] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement>(null)
+  const navigationRef = useRef<HTMLElement>(null)
   const sessionBridgeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
@@ -170,7 +171,8 @@ export function Navigation() {
   const scrollToSection = (id: string) => {
     const element = document.querySelector<HTMLElement>(id)
     if (element) {
-      const top = element.getBoundingClientRect().top + window.scrollY - 100
+      const headerHeight = navigationRef.current?.getBoundingClientRect().height ?? 76
+      const top = element.getBoundingClientRect().top + window.scrollY - headerHeight - 24
       window.scrollTo({ top, behavior: "smooth" })
     }
     setMobileMenuOpen(false)
@@ -213,7 +215,9 @@ export function Navigation() {
         />
       ) : null}
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        ref={navigationRef}
+        aria-label="Navegação principal"
+        className={`fixed top-0 left-0 right-0 z-50 pt-[var(--djon-safe-area-top)] transition-all duration-500 ${
           mobileMenuOpen
             ? "bg-djon-page border-b border-djon-text/10"
             : scrolled
@@ -351,7 +355,7 @@ export function Navigation() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] as const }}
-            className="djon-scroll fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto border-t border-djon-text/10 bg-djon-page md:hidden"
+            className="djon-scroll fixed inset-x-0 bottom-0 top-[var(--djon-public-header-offset)] z-40 overflow-y-auto border-t border-djon-text/10 bg-djon-page md:hidden"
             data-lenis-prevent
           >
             <div className="min-h-full space-y-5 px-4 py-6 pb-10 sm:px-6">

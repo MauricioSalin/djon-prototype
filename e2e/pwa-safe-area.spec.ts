@@ -97,3 +97,82 @@ test("desktop mantem header compacto sem area segura", async ({ page }) => {
   await expect(page.locator("main")).toHaveCSS("padding-top", "64px");
   await expect(page.getByRole("button", { name: "Abrir menu", exact: true })).toBeHidden();
 });
+
+async function mockPublicPage(page: Page) {
+  await page.addInitScript(() => {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url = input instanceof Request ? input.url : String(input);
+      return url.startsWith("https://prod.spline.design/")
+        ? new Promise<Response>(() => {})
+        : originalFetch(input, init);
+    };
+  });
+  await page.context().route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
+}
+
+for (const inset of [0, 59]) {
+  test(`site principal protege header e menu com area segura de ${inset}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: inset } });
+    await mockPublicPage(page);
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Navegação principal" });
+    await expect(nav).toHaveCSS("padding-top", `${inset}px`);
+    const row = nav.locator(":scope > div");
+    await expect(row).toHaveCSS("height", "76px");
+    await expect.poll(async () => (await row.boundingBox())?.y).toBe(inset);
+    const content = page.locator("#hero > div.relative");
+    await expect(content).toHaveCSS("padding-top", `${128 + inset}px`);
+    await expect(nav).toHaveClass(/bg-djon-ink\/60/);
+    await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
+    const menu = page.getByRole("dialog", { name: "Menu do site" });
+    await expect(menu).toHaveCSS("top", `${76 + inset}px`);
+    await expect(nav).toHaveClass(/bg-djon-page/);
+    await page.getByRole("button", { name: "Fechar menu", exact: true }).click();
+    await expect(menu).toBeHidden();
+    await page.screenshot({ path: testInfo.outputPath("public-safe-area.png") });
+    await page.getByRole("button", { name: "VER CURSOS", exact: true }).click();
+    await expect.poll(async () => Math.round((await page.locator("#cursos").boundingBox())?.y ?? -1), { timeout: 10_000 }).toBe(100 + inset);
+    await expect(nav).toHaveClass(/bg-djon-ink\/95/);
+    await expect(nav).toHaveCSS("padding-top", `${inset}px`);
+    await expect.poll(async () => (await row.boundingBox())?.y).toBe(inset);
+  });
+
+  for (const path of ["/login", "/recuperar-senha", "/redefinir-senha?token=safe-area-test"]) {
+    test(`${path} respeita area segura de ${inset}px inclusive em tela baixa`, async ({ page }, testInfo) => {
+      await page.setViewportSize({ width: 390, height: 844 });
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send("Emulation.setSafeAreaInsetsOverride", { insets: { top: inset } });
+      await mockPublicPage(page);
+      await page.goto(path);
+      const screen = page.locator(".noise-overlay").filter({ has: page.locator("h1") });
+      await expect(screen).toHaveCSS("padding-top", `${24 + inset}px`);
+      const background = screen.locator(":scope > div.absolute");
+      await expect(background).toHaveCSS("top", `${inset}px`);
+      await expect(screen).toHaveCSS("background-color", "rgb(18, 18, 18)");
+      if (path === "/login") {
+        await expect(page.getByRole("button", { name: "VOLTAR" })).toHaveCSS("top", `${16 + inset}px`);
+      }
+      await page.screenshot({ path: testInfo.outputPath("auth-safe-area.png") });
+      await page.setViewportSize({ width: 390, height: 400 });
+      const logo = page.getByRole("img", { name: "DJ ON Academy", exact: true });
+      await expect.poll(async () => (await logo.boundingBox())?.y ?? -1).toBeGreaterThanOrEqual(24 + inset);
+      await page.locator("input").first().fill(path.includes("redefinir") ? "test-password" : "pwa@example.test");
+      await expect(page.locator("input").first()).toBeFocused();
+      await expect(page.locator('button[type="submit"]')).toBeEnabled();
+    });
+  }
+}
+
+test("site e login preservam espacos de desktop sem recorte", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockPublicPage(page);
+  await page.goto("/");
+  await expect(page.getByRole("navigation", { name: "Navegação principal" })).toHaveCSS("padding-top", "0px");
+  await expect(page.locator("#hero > div.relative")).toHaveCSS("padding-top", "96px");
+  await page.goto("/login");
+  await expect(page.locator(".noise-overlay").filter({ has: page.locator("h1") })).toHaveCSS("padding-top", "40px");
+  await expect(page.getByRole("button", { name: "VOLTAR" })).toHaveCSS("top", "24px");
+});

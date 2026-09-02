@@ -49,8 +49,8 @@ function ResetPasswordForm() {
 
 export default function RedefinirSenhaPage() {
   return (
-    <div className="min-h-svh flex items-center justify-center px-4 py-6 sm:py-10 relative overflow-hidden noise-overlay bg-djon-page">
-      <div className="absolute inset-0"><Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-25" priority /><div className="absolute inset-0 bg-djon-black/75" /></div>
+    <div className="min-h-svh flex items-center justify-center px-4 pb-6 pt-[calc(1.5rem+var(--djon-safe-area-top))] sm:pb-10 sm:pt-[calc(2.5rem+var(--djon-safe-area-top))] relative overflow-hidden noise-overlay bg-djon-page">
+      <div className="absolute inset-x-0 bottom-0 top-[var(--djon-safe-area-top)]"><Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-25" priority /><div className="absolute inset-0 bg-djon-black/75" /></div>
       <motion.div className="relative z-10 w-full max-w-md" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}>
         <div className="mb-6 flex justify-center sm:mb-10"><Image src="/images/djon-verde.png" alt="DJ ON Academy" width={221} height={56} className="h-11 w-[174px] sm:h-14 sm:w-[221px]" priority /></div>
         <div className="rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-6 sm:p-8"><p className="mb-2 text-xs font-bold tracking-wide text-djon-accent">SEGURANÇA</p><h1 className="mb-2 text-3xl font-black tracking-tighter text-djon-text">Crie uma nova senha</h1><p className="mb-8 text-sm leading-relaxed text-djon-text/45">Use pelo menos 8 caracteres e escolha uma senha que só você conhece.</p><Suspense fallback={<p className="text-sm text-djon-text/50">Carregando...</p>}><ResetPasswordForm /></Suspense></div>

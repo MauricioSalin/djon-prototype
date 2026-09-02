@@ -46,7 +46,7 @@ export function HeroSection() {
 
 
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-12 w-full sm:px-6 lg:pt-24">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-[calc(8rem+var(--djon-safe-area-top))] pb-12 w-full sm:px-6 lg:pt-[calc(6rem+var(--djon-safe-area-top))]">
         <div className="grid lg:grid-cols-[5fr_7fr] gap-4 items-center">
           {/* Text Content */}
           <motion.div className="space-y-6 relative z-20">
@@ -125,7 +125,7 @@ export function HeroSection() {
             </motion.div>
 
             <motion.div
-              className="relative !-mt-6 h-[300px] w-full overflow-visible min-[390px]:h-[330px] sm:!-mt-4 sm:h-[390px] lg:hidden"
+              className="relative !mt-2 h-[300px] w-full overflow-visible min-[390px]:h-[330px] sm:!mt-4 sm:h-[390px] lg:hidden"
             >
               <motion.div
                 className="absolute left-1/2 top-[40%] h-[650px] w-[820px] -translate-x-1/2 -translate-y-1/2 scale-[0.42] transform-gpu min-[360px]:scale-[0.46] min-[390px]:top-[42%] min-[390px]:scale-[0.5] sm:top-[44%] sm:scale-[0.58]"

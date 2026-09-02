@@ -9,6 +9,8 @@ for (const width of [369, 390]) {
       await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }))
       await page.goto("/", { waitUntil: "domcontentloaded" })
       const scene = page.locator('#hero [data-spline-scene]:visible')
+      // Only spacing changed: move the existing frame down 32px (-24px -> 8px).
+      await expect(scene.locator("../..")).toHaveCSS("margin-top", "8px")
       await expect(scene).toHaveAttribute("data-spline-state", "ready", { timeout: 60_000 })
       const canvas = scene.locator("canvas")
       await expect(canvas).toHaveCSS("opacity", "1")

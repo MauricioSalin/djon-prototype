@@ -71,13 +71,13 @@ export default function LoginPage() {
   const fieldClass = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:brightness-110 transition-all"
 
   return (
-    <div className="min-h-svh flex flex-col items-center justify-center px-4 py-6 sm:py-10 relative overflow-x-clip noise-overlay bg-djon-page">
-      <div className="absolute inset-0 z-0">
+    <div className="min-h-svh flex flex-col items-center justify-center px-4 pb-6 pt-[calc(1.5rem+var(--djon-safe-area-top))] sm:pb-10 sm:pt-[calc(2.5rem+var(--djon-safe-area-top))] relative overflow-x-clip noise-overlay bg-djon-page">
+      <div className="absolute inset-x-0 bottom-0 top-[var(--djon-safe-area-top)] z-0">
         <Image src="/images/djon-hero.png" alt="" fill className="object-cover opacity-25" priority />
         <div className="absolute inset-0 bg-djon-black/75" />
       </div>
 
-      <button type="button" onClick={() => router.push(publicSiteHref("/", isStandalonePwa()))} className="absolute top-4 left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-6 sm:left-6">
+      <button type="button" onClick={() => router.push(publicSiteHref("/", isStandalonePwa()))} className="absolute top-[calc(1rem+var(--djon-safe-area-top))] left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-[calc(1.5rem+var(--djon-safe-area-top))] sm:left-6">
         <ArrowLeft size={14} />
         <span className="hidden min-[360px]:inline">VOLTAR</span>
       </button>

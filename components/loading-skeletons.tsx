@@ -797,7 +797,7 @@ export function DashboardShellSkeleton() {
 
 function LoginSkeleton() {
   return (
-    <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-djon-page px-4 py-8">
+    <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-djon-page px-4 pb-8 pt-[calc(2rem+var(--djon-safe-area-top))]">
       <ShimmerSkeleton className="absolute inset-0 rounded-none border-0 bg-djon-text/[0.035]" />
       <div className="relative w-full max-w-md space-y-10">
         <ShimmerSkeleton className="mx-auto h-14 w-40 rounded-xl" />
@@ -821,7 +821,7 @@ function LoginSkeleton() {
 function LandingSkeleton() {
   return (
     <div className="min-h-svh bg-djon-page">
-      <header className="flex h-20 items-center gap-8 border-b border-djon-text/8 px-4 sm:px-8">
+      <header className="flex h-[calc(5rem+var(--djon-safe-area-top))] pt-[var(--djon-safe-area-top)] items-center gap-8 border-b border-djon-text/8 px-4 sm:px-8">
         <ShimmerSkeleton className="h-12 w-36 rounded-xl" />
         <div className="ml-auto hidden gap-3 md:flex">
           {Array.from({ length: 5 }, (_, index) => (
@@ -830,7 +830,7 @@ function LandingSkeleton() {
         </div>
         <ShimmerSkeleton className="h-11 w-32 rounded-full" />
       </header>
-      <section className="relative flex min-h-[calc(100svh-5rem)] items-center overflow-hidden bg-djon-black">
+      <section className="relative flex min-h-[calc(100svh-5rem-var(--djon-safe-area-top))] items-center overflow-hidden bg-djon-black">
         <ShimmerSkeleton className="absolute inset-0 rounded-none border-0 bg-djon-text/[0.035]" />
         <div className="relative mx-auto w-full max-w-7xl space-y-5 px-4 py-20 sm:px-8">
           <ShimmerSkeleton className="h-3 w-40 rounded-full" />
