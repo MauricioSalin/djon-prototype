@@ -16,7 +16,8 @@ const raleway = Raleway({
   subsets: ["latin"],
   style: "normal",
   variable: "--font-raleway",
-  display: "swap",
+  display: "optional",
+  preload: false,
 })
 
 const bowlbyOneSc = Bowlby_One_SC({
@@ -31,7 +32,7 @@ const barlowCondensed = Barlow_Condensed({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   style: "normal",
   variable: "--font-barlow-condensed",
-  display: "swap",
+  display: "optional",
   preload: false,
 })
 

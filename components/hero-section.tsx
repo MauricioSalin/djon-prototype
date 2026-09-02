@@ -70,10 +70,10 @@ export function HeroSection() {
           src="/images/djon-hero.png"
           alt="DJ ON Academy"
           fill
-          className="object-cover opacity-30"
+          className="hidden object-cover opacity-30 sm:block"
           sizes="100vw"
           quality={50}
-          loading="eager"
+          loading="lazy"
           fetchPriority="low"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
