@@ -86,6 +86,17 @@ export default function AlunosPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [removalAction, removingUser]);
 
+  useEffect(() => {
+    if (!showForm) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [showForm]);
+
   const openNew = () => {
     setForm({ ...emptyForm, unitId: units[0]?.id ?? "" });
     setEditingId(null);
@@ -207,13 +218,16 @@ export default function AlunosPage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-djon-black/70 p-4 backdrop-blur-sm sm:p-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="djon-scroll my-4 max-h-[calc(100svh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:my-6 sm:p-6"
+              className="djon-scroll max-h-full w-full max-w-md overflow-y-auto overscroll-contain rounded-2xl border border-djon-text/10 bg-djon-surface-2 p-5 sm:p-6"
+              data-lenis-prevent
+              data-lenis-prevent-wheel
+              data-lenis-prevent-touch
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
