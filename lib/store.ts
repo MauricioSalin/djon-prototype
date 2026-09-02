@@ -1026,6 +1026,7 @@ function failWithFeedback(message: string, status: number): never {
 
 class ApiStore {
   private currentUser: User | null = null;
+  private currentUserHydrated = false;
   private users: User[] = [];
   private events: DJEvent[] = [];
   private bookings: Booking[] = [];
@@ -1070,6 +1071,8 @@ class ApiStore {
     localStorage.setItem(TOKEN_KEY, result.accessToken);
     sessionExpirationAnnounced = false;
     this.currentUser = normalizeUser(result.user);
+    // Login returns identity only, without the editable profile fields.
+    this.currentUserHydrated = false;
     notifySuccess("Login realizado", `Bem-vindo(a), ${this.currentUser.name}.`);
     return this.currentUser;
   }
@@ -1083,7 +1086,7 @@ class ApiStore {
   async bootstrap(force = false): Promise<User | null> {
     if (!this.hasSession()) return null;
 
-    if (!force && this.currentUser && this.hasBootstrapData) {
+    if (!force && this.currentUser && this.currentUserHydrated && this.hasBootstrapData) {
       if (
         Date.now() - this.bootstrapLoadedAt > PORTAL_CACHE_MAX_AGE_MS &&
         !this.bootstrapPromise
@@ -1104,14 +1107,14 @@ class ApiStore {
   }
 
   private async bootstrapPortal(force: boolean) {
-    const me = this.currentUser ?? (await this.restoreSession(true));
+    const me = await this.restoreSession();
     if (!me) return null;
     if (!force && this.hydratePortalCache(me)) return me;
     return this.loadAll(me);
   }
 
   async restoreSession(force = false): Promise<User | null> {
-    if (this.currentUser && !force) return this.currentUser;
+    if (this.currentUser && this.currentUserHydrated && !force) return this.currentUser;
     if (!this.hasSession()) return null;
     if (this.restoreSessionPromise) return this.restoreSessionPromise;
 
@@ -1119,7 +1122,8 @@ class ApiStore {
       .then((raw) => {
         const user = normalizeUser(raw);
         this.currentUser = user;
-        this.users = this.uniqueUsers([user, ...this.users]);
+        this.currentUserHydrated = true;
+        this.users = this.uniqueUsers([...this.users, user]);
         return user;
       })
       .catch((error: unknown) => {
@@ -1596,6 +1600,7 @@ class ApiStore {
     ]);
     if (id === this.currentUser?.id) {
       this.currentUser = user;
+      this.currentUserHydrated = true;
       window.dispatchEvent(new Event(CURRENT_USER_UPDATED_EVENT));
     }
     notifySuccess(
@@ -2680,6 +2685,7 @@ class ApiStore {
   private reset() {
     clearPortalCache();
     this.currentUser = null;
+    this.currentUserHydrated = false;
     this.users = [];
     this.events = [];
     this.bookings = [];
