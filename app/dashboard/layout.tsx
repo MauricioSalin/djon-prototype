@@ -49,6 +49,7 @@ import {
 import { useConfirmation } from "@/components/confirmation-provider";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import { buildLoginHref } from "@/lib/auth-routing";
+import { notifyError } from "@/lib/feedback";
 import {
   NotificationItem,
   TrainingRequestActions,
@@ -176,6 +177,61 @@ type SearchResult =
   | { kind: "event"; item: DJEvent }
   | { kind: "material"; item: Material };
 
+type PushState =
+  | "hidden"
+  | "available"
+  | "enabling"
+  | "enabled"
+  | "needs-install"
+  | "denied"
+  | "error";
+
+function supportsWebPush() {
+  return (
+    "Notification" in window &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window
+  );
+}
+
+function isIosDevice() {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  );
+}
+
+function isStandalonePwa() {
+  const iosNavigator = navigator as Navigator & { standalone?: boolean };
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    iosNavigator.standalone === true
+  );
+}
+
+function decodeApplicationServerKey(publicKey: string) {
+  const padding = "=".repeat((4 - (publicKey.length % 4)) % 4);
+  const raw = atob(
+    (publicKey + padding).replace(/-/g, "+").replace(/_/g, "/"),
+  );
+  return Uint8Array.from(
+    [...raw].map((character) => character.charCodeAt(0)),
+  );
+}
+
+function subscriptionUsesKey(
+  subscription: PushSubscription,
+  applicationServerKey: Uint8Array<ArrayBuffer>,
+) {
+  const currentKey = subscription.options.applicationServerKey;
+  if (!currentKey) return true;
+  const currentBytes = new Uint8Array(currentKey);
+  return (
+    currentBytes.length === applicationServerKey.length &&
+    currentBytes.every((value, index) => value === applicationServerKey[index])
+  );
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -196,9 +252,7 @@ export default function DashboardLayout({
   const [notifications, setNotifications] = useState<PortalNotification[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [sessionError, setSessionError] = useState("");
-  const [pushState, setPushState] = useState<
-    "hidden" | "available" | "enabled" | "error"
-  >("hidden");
+  const [pushState, setPushState] = useState<PushState>("hidden");
   const [desktopNavState, setDesktopNavState] = useState({
     hasOverflow: false,
     canScrollLeft: false,
@@ -487,16 +541,54 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
-    if (
-      !user ||
-      !publicKey ||
-      !("serviceWorker" in navigator) ||
-      !("PushManager" in window)
-    )
+    if (!user || !publicKey) {
+      setPushState("hidden");
       return;
-    setPushState(
-      Notification.permission === "granted" ? "enabled" : "available",
-    );
+    }
+    if (isIosDevice() && !isStandalonePwa()) {
+      setPushState("needs-install");
+      return;
+    }
+    if (!supportsWebPush()) {
+      setPushState("hidden");
+      return;
+    }
+    if (Notification.permission === "denied") {
+      setPushState("denied");
+      return;
+    }
+    if (Notification.permission !== "granted") {
+      setPushState("available");
+      return;
+    }
+
+    let cancelled = false;
+    const restoreExistingSubscription = async () => {
+      try {
+        const registration =
+          await navigator.serviceWorker.getRegistration("/");
+        const subscription =
+          await registration?.pushManager.getSubscription();
+        if (cancelled) return;
+        if (!subscription) {
+          setPushState("available");
+          return;
+        }
+        const applicationServerKey = decodeApplicationServerKey(publicKey);
+        if (!subscriptionUsesKey(subscription, applicationServerKey)) {
+          setPushState("available");
+          return;
+        }
+        await store.subscribePush(subscription.toJSON(), { silent: true });
+        if (!cancelled) setPushState("enabled");
+      } catch {
+        if (!cancelled) setPushState("error");
+      }
+    };
+    void restoreExistingSubscription();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Close search bar on Escape
@@ -770,28 +862,65 @@ export default function DashboardLayout({
   const enablePush = async () => {
     const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
     if (!publicKey) return;
+    if (isIosDevice() && !isStandalonePwa()) {
+      setPushState("needs-install");
+      notifyError(
+        "Abra o DJ ON pela Tela de Início",
+        "No iPhone, toque em Compartilhar, escolha Adicionar à Tela de Início e abra o app instalado para ativar os alertas.",
+      );
+      return;
+    }
+    if (!supportsWebPush()) return;
+    if (Notification.permission === "denied") {
+      setPushState("denied");
+      notifyError(
+        "Alertas bloqueados no dispositivo",
+        "Libere as notificações do DJ ON nos ajustes do sistema e tente novamente.",
+      );
+      return;
+    }
+
+    setPushState("enabling");
     try {
-      const permission = await Notification.requestPermission();
+      const permission =
+        Notification.permission === "granted"
+          ? "granted"
+          : await Notification.requestPermission();
       if (permission !== "granted") {
-        setPushState("error");
+        setPushState(permission === "denied" ? "denied" : "available");
+        notifyError(
+          "Permissão de alertas não concedida",
+          "Autorize as notificações do DJ ON para receber avisos neste dispositivo.",
+        );
         return;
       }
-      const registration = await navigator.serviceWorker.register("/sw.js");
-      const padding = "=".repeat((4 - (publicKey.length % 4)) % 4);
-      const raw = atob(
-        (publicKey + padding).replace(/-/g, "+").replace(/_/g, "/"),
-      );
-      const key = Uint8Array.from(
-        [...raw].map((character) => character.charCodeAt(0)),
-      );
-      const subscription = await registration.pushManager.subscribe({
+      await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
+        updateViaCache: "none",
+      });
+      const registration = await navigator.serviceWorker.ready;
+      const applicationServerKey = decodeApplicationServerKey(publicKey);
+      let subscription = await registration.pushManager.getSubscription();
+      if (
+        subscription &&
+        !subscriptionUsesKey(subscription, applicationServerKey)
+      ) {
+        await subscription.unsubscribe();
+        subscription = null;
+      }
+      subscription ??= await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: key,
+        applicationServerKey,
       });
       await store.subscribePush(subscription.toJSON());
       setPushState("enabled");
-    } catch {
+    } catch (error) {
       setPushState("error");
+      console.error("DJ ON push subscription failed", error);
+      notifyError(
+        "Não foi possível ativar os alertas",
+        "Confira a permissão de notificações e tente novamente com o app conectado à internet.",
+      );
     }
   };
 
@@ -972,12 +1101,20 @@ export default function DashboardLayout({
                       </div>
                       {pushState !== "hidden" && pushState !== "enabled" && (
                         <button
+                          type="button"
                           onClick={() => void enablePush()}
+                          disabled={pushState === "enabling"}
                           className="mx-3 mt-3 w-[calc(100%-1.5rem)] rounded-xl border border-djon-accent/20 bg-djon-accent/5 px-3 py-2 text-xs font-black text-djon-accent transition-[filter] hover:brightness-110"
                         >
-                          {pushState === "error"
-                            ? "TENTAR ATIVAR ALERTAS NOVAMENTE"
-                            : "ATIVAR ALERTAS NESTE DISPOSITIVO"}
+                          {pushState === "enabling"
+                            ? "ATIVANDO ALERTAS..."
+                            : pushState === "needs-install"
+                              ? "INSTALE A PWA PARA ATIVAR ALERTAS"
+                              : pushState === "denied"
+                                ? "LIBERE ALERTAS NOS AJUSTES"
+                                : pushState === "error"
+                                  ? "TENTAR ATIVAR ALERTAS NOVAMENTE"
+                                  : "ATIVAR ALERTAS NESTE DISPOSITIVO"}
                         </button>
                       )}
                       {totalNotifications === 0 ? (

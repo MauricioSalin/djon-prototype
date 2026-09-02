@@ -2520,7 +2520,10 @@ class ApiStore {
     return normalized;
   }
 
-  async subscribePush(subscription: PushSubscriptionJSON) {
+  async subscribePush(
+    subscription: PushSubscriptionJSON,
+    options: { silent?: boolean } = {},
+  ) {
     const result = await request(
       "/notifications/push-subscriptions",
       json("POST", {
@@ -2529,10 +2532,12 @@ class ApiStore {
         auth: subscription.keys?.auth,
       }),
     );
-    notifySuccess(
-      "Alertas ativados",
-      "Você receberá avisos importantes neste dispositivo.",
-    );
+    if (!options.silent) {
+      notifySuccess(
+        "Alertas ativados",
+        "Você receberá avisos importantes neste dispositivo.",
+      );
+    }
     return result;
   }
 
