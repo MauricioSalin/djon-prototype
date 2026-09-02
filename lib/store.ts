@@ -2522,7 +2522,7 @@ class ApiStore {
 
   async subscribePush(
     subscription: PushSubscriptionJSON,
-    options: { silent?: boolean } = {},
+    options: { silent?: boolean; confirmActivation?: boolean } = {},
   ) {
     const result = await request(
       "/notifications/push-subscriptions",
@@ -2530,6 +2530,7 @@ class ApiStore {
         endpoint: subscription.endpoint,
         p256dh: subscription.keys?.p256dh,
         auth: subscription.keys?.auth,
+        confirmActivation: options.confirmActivation === true,
       }),
     );
     if (!options.silent) {

@@ -57,86 +57,102 @@ async function mockPortal(page: Page) {
 
 async function mockPushPlatform(
   page: Page,
-  options: { userAgent: string; standalone: boolean },
+  options: {
+    userAgent: string;
+    standalone: boolean;
+    permission?: NotificationPermission;
+    existingSubscription?: boolean;
+  },
 ) {
-  await page.addInitScript(({ userAgent, standalone }) => {
-    const audit = {
-      permissionRequests: 0,
-      readySubscriptions: 0,
-      prematureSubscriptions: 0,
-    };
-    Object.assign(window, { __pushAudit: audit });
+  await page.addInitScript(
+    ({
+      userAgent,
+      standalone,
+      permission: initialPermission = "granted",
+      existingSubscription = false,
+    }) => {
+      const audit = {
+        permissionRequests: 0,
+        readySubscriptions: 0,
+        prematureSubscriptions: 0,
+      };
+      Object.assign(window, { __pushAudit: audit });
 
-    Object.defineProperty(navigator, "userAgent", {
-      configurable: true,
-      get: () => userAgent,
-    });
-    Object.defineProperty(navigator, "platform", {
-      configurable: true,
-      get: () => (userAgent.includes("iPhone") ? "iPhone" : "Linux armv8l"),
-    });
-    Object.defineProperty(navigator, "standalone", {
-      configurable: true,
-      get: () => standalone,
-    });
+      Object.defineProperty(navigator, "userAgent", {
+        configurable: true,
+        get: () => userAgent,
+      });
+      Object.defineProperty(navigator, "platform", {
+        configurable: true,
+        get: () => (userAgent.includes("iPhone") ? "iPhone" : "Linux armv8l"),
+      });
+      Object.defineProperty(navigator, "standalone", {
+        configurable: true,
+        get: () => standalone,
+      });
 
-    let permission: NotificationPermission = "granted";
-    Object.defineProperty(window, "Notification", {
-      configurable: true,
-      value: {
-        get permission() {
-          return permission;
+      let permission: NotificationPermission = initialPermission;
+      Object.defineProperty(window, "Notification", {
+        configurable: true,
+        value: {
+          get permission() {
+            return permission;
+          },
+          async requestPermission() {
+            audit.permissionRequests += 1;
+            permission = "granted";
+            return permission;
+          },
         },
-        async requestPermission() {
-          audit.permissionRequests += 1;
-          permission = "granted";
-          return permission;
-        },
-      },
-    });
-    Object.defineProperty(window, "PushManager", {
-      configurable: true,
-      value: function PushManager() {},
-    });
+      });
+      Object.defineProperty(window, "PushManager", {
+        configurable: true,
+        value: function PushManager() {},
+      });
 
-    let subscription: PushSubscription | null = null;
-    const readyRegistration = {
-      pushManager: {
-        getSubscription: async () => subscription,
-        subscribe: async () => {
-          audit.readySubscriptions += 1;
-          subscription = {
-            endpoint: "https://web.push.apple.com/mock-device",
-            options: { applicationServerKey: null },
-            toJSON: () => ({
-              endpoint: "https://web.push.apple.com/mock-device",
-              keys: { p256dh: "mock-p256dh", auth: "mock-auth" },
-            }),
-            unsubscribe: async () => true,
-          } as unknown as PushSubscription;
-          return subscription;
+      const savedSubscription = {
+        endpoint: "https://web.push.apple.com/mock-device",
+        options: { applicationServerKey: null },
+        toJSON: () => ({
+          endpoint: "https://web.push.apple.com/mock-device",
+          keys: { p256dh: "mock-p256dh", auth: "mock-auth" },
+        }),
+        unsubscribe: async () => true,
+      } as unknown as PushSubscription;
+      let subscription: PushSubscription | null = existingSubscription
+        ? savedSubscription
+        : null;
+      const readyRegistration = {
+        pushManager: {
+          getSubscription: async () => subscription,
+          subscribe: async () => {
+            audit.readySubscriptions += 1;
+            subscription = savedSubscription;
+            return subscription;
+          },
         },
-      },
-    } as ServiceWorkerRegistration;
-    const installingRegistration = {
-      update: async () => undefined,
-      pushManager: {
-        getSubscription: async () => null,
-        subscribe: async () => {
-          audit.prematureSubscriptions += 1;
-          throw new Error("service worker ainda não está ativo");
+      } as ServiceWorkerRegistration;
+      const installingRegistration = {
+        update: async () => undefined,
+        pushManager: {
+          getSubscription: async () => null,
+          subscribe: async () => {
+            audit.prematureSubscriptions += 1;
+            throw new Error("service worker ainda não está ativo");
+          },
         },
-      },
-    } as unknown as ServiceWorkerRegistration;
-    Object.defineProperty(navigator, "serviceWorker", {
-      configurable: true,
-      value: {
-        register: async () => installingRegistration,
-        getRegistration: async () => readyRegistration,
-        ready: Promise.resolve(readyRegistration),
-      },
-    });
-  }, options);
+      } as unknown as ServiceWorkerRegistration;
+      Object.defineProperty(navigator, "serviceWorker", {
+        configurable: true,
+        value: {
+          register: async () => installingRegistration,
+          getRegistration: async () => readyRegistration,
+          ready: Promise.resolve(readyRegistration),
+        },
+      });
+    },
+    options,
+  );
 }
 
 async function openNotifications(page: Page) {
@@ -153,27 +169,44 @@ for (const platform of [
     userAgent:
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148",
     standalone: true,
+    permission: "default" as const,
   },
   {
     name: "Android",
     userAgent:
       "Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/140.0.0.0 Mobile Safari/537.36",
     standalone: false,
+    permission: "granted" as const,
   },
 ]) {
   test(`ativa alertas no ${platform.name} somente após o service worker ficar pronto`, async ({
     page,
   }) => {
     let subscriptionBody: unknown;
+    let confirmed = false;
+    const activationNotice = {
+      id: "507f1f77bcf86cd799439009",
+      type: "push.activated",
+      title: "Notificações push ativadas",
+      body: "Pronto! Agora você pode receber notificações push do DJ ON neste dispositivo.",
+      url: "/dashboard/notificacoes",
+      metadata: {},
+      createdAt: new Date().toISOString(),
+    };
     await mockPushPlatform(page, platform);
     await mockPortal(page);
-    await page.context().route(
-      "**/api/v1/notifications/push-subscriptions",
-      async (route) => {
+    await page
+      .context()
+      .route("**/api/v1/notifications/push-subscriptions", async (route) => {
         subscriptionBody = route.request().postDataJSON();
+        confirmed = true;
         await route.fulfill({ json: { saved: true } });
-      },
-    );
+      });
+    await page
+      .context()
+      .route("**/api/v1/notifications", (route) =>
+        route.fulfill({ json: confirmed ? [activationNotice] : [] }),
+      );
 
     await openNotifications(page);
     const activate = page.getByRole("button", {
@@ -184,30 +217,75 @@ for (const platform of [
 
     await expect(page.getByText("Alertas ativados")).toBeVisible();
     await expect(activate).toHaveCount(0);
+    await expect(
+      page.getByText(activationNotice.title, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(activationNotice.body, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("1 item pendente", { exact: true }),
+    ).toBeVisible();
     expect(subscriptionBody).toEqual({
       endpoint: "https://web.push.apple.com/mock-device",
       p256dh: "mock-p256dh",
       auth: "mock-auth",
+      confirmActivation: true,
     });
     await expect
       .poll(() =>
         page.evaluate(
           () =>
-            (window as typeof window & {
-              __pushAudit: {
-                readySubscriptions: number;
-                prematureSubscriptions: number;
-              };
-            }).__pushAudit,
+            (
+              window as typeof window & {
+                __pushAudit: {
+                  readySubscriptions: number;
+                  prematureSubscriptions: number;
+                };
+              }
+            ).__pushAudit,
         ),
       )
       .toEqual({
-        permissionRequests: 0,
+        permissionRequests: platform.permission === "default" ? 1 : 0,
         readySubscriptions: 1,
         prematureSubscriptions: 0,
       });
   });
 }
+
+test("sincroniza uma assinatura existente sem pedir outra confirmação de ativação", async ({
+  page,
+}) => {
+  await mockPushPlatform(page, {
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X)",
+    standalone: true,
+    existingSubscription: true,
+  });
+  await mockPortal(page);
+  const syncRequest = page.waitForRequest(
+    (request) =>
+      request.url().includes("/notifications/push-subscriptions") &&
+      request.method() === "POST",
+  );
+
+  await openNotifications(page);
+  expect((await syncRequest).postDataJSON()).toMatchObject({
+    confirmActivation: false,
+  });
+  await expect(
+    page.getByRole("button", { name: "ATIVAR ALERTAS NESTE DISPOSITIVO" }),
+  ).toHaveCount(0);
+  await expect(page.getByText("Alertas ativados", { exact: true })).toHaveCount(
+    0,
+  );
+  await expect(
+    page.getByText("Notificações push ativadas", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Nenhuma notificação.", { exact: true }),
+  ).toBeVisible();
+});
 
 test("orienta a instalação antes de pedir alertas no Safari do iPhone", async ({
   page,
@@ -226,16 +304,20 @@ test("orienta a instalação antes de pedir alertas no Safari do iPhone", async 
   await expect(install).toBeVisible();
   await install.click();
 
-  await expect(page.getByText("Abra o DJ ON pela Tela de Início")).toBeVisible();
+  await expect(
+    page.getByText("Abra o DJ ON pela Tela de Início"),
+  ).toBeVisible();
   await expect(
     page.getByText(/Compartilhar.*Adicionar à Tela de Início/),
   ).toBeVisible();
   expect(
     await page.evaluate(
       () =>
-        (window as typeof window & {
-          __pushAudit: { readySubscriptions: number };
-        }).__pushAudit.readySubscriptions,
+        (
+          window as typeof window & {
+            __pushAudit: { readySubscriptions: number };
+          }
+        ).__pushAudit.readySubscriptions,
     ),
   ).toBe(0);
 });

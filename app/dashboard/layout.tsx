@@ -912,8 +912,14 @@ export default function DashboardLayout({
         userVisibleOnly: true,
         applicationServerKey,
       });
-      await store.subscribePush(subscription.toJSON());
+      await store.subscribePush(subscription.toJSON(), {
+        confirmActivation: true,
+      });
       setPushState("enabled");
+      void store
+        .refreshNotifications(true)
+        .then(setNotifications)
+        .catch(() => undefined);
     } catch (error) {
       setPushState("error");
       console.error("DJ ON push subscription failed", error);
