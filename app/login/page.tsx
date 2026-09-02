@@ -7,6 +7,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, LogIn } from "lucide-react"
 import { publicSiteHref } from "@/lib/site-urls"
+import { sanitizePortalRedirect } from "@/lib/auth-routing"
 import { getDashboardHome, store } from "@/lib/store"
 
 export default function LoginPage() {
@@ -24,7 +25,10 @@ export default function LoginPage() {
       .then((user) => {
         if (!active) return
         if (user) {
-          router.replace(getDashboardHome(user))
+          const requestedDestination = sanitizePortalRedirect(
+            new URLSearchParams(window.location.search).get("redirect"),
+          )
+          router.replace(requestedDestination ?? getDashboardHome(user))
           return
         }
         setSessionChecking(false)
@@ -48,13 +52,19 @@ export default function LoginPage() {
         : `/dashboard/perfil/${user.id}`
       const destination = user.passwordChangeRequired
         ? `${profileDestination}?changePassword=required`
-        : getDashboardHome(user)
+        : sanitizePortalRedirect(
+            new URLSearchParams(window.location.search).get("redirect"),
+          ) ?? getDashboardHome(user)
       router.push(destination)
     } catch {
       // O cliente HTTP já apresenta o erro de forma padronizada.
     } finally {
       setLoading(false)
     }
+  }
+
+  if (sessionChecking) {
+    return <div className="min-h-svh bg-djon-page" aria-busy="true" />
   }
 
   const fieldClass = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-3 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 focus:brightness-110 transition-all"
@@ -104,8 +114,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <motion.button type="submit" disabled={loading || sessionChecking} className="w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-              {loading || sessionChecking ? (
+            <motion.button type="submit" disabled={loading} className="w-full bg-djon-accent text-djon-ink rounded-xl py-3.5 font-black text-sm tracking-wide flex items-center justify-center gap-2 disabled:opacity-60" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+              {loading ? (
                 <motion.div className="w-4 h-4 border-2 border-djon-ink border-t-transparent rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} />
               ) : (
                 <><LogIn size={15} /> ENTRAR</>

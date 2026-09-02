@@ -47,6 +47,7 @@ import {
   type Notification as PortalNotification,
 } from "@/lib/store";
 import { useConfirmation } from "@/components/confirmation-provider";
+import { buildLoginHref } from "@/lib/auth-routing";
 import {
   NotificationItem,
   TrainingRequestActions,
@@ -218,6 +219,12 @@ export default function DashboardLayout({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimerRef = useRef<number | null>(null);
 
+  const redirectToLogin = useCallback(() => {
+    router.replace(
+      buildLoginHref(pathname, window.location.search, window.location.hash),
+    );
+  }, [pathname, router]);
+
   const updateDesktopNavState = useCallback(() => {
     const navigation = desktopNavRef.current;
     if (!navigation) return;
@@ -273,12 +280,12 @@ export default function DashboardLayout({
       setUser(null);
       setPortalReady(false);
       setSessionError("Sua sessão expirou. Entre novamente.");
-      router.replace("/login");
+      redirectToLogin();
     };
     window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
     return () =>
       window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
-  }, [router]);
+  }, [redirectToLogin]);
 
   useEffect(() => {
     const syncCurrentUser = () => setUser(store.getCurrentUser());
@@ -295,7 +302,7 @@ export default function DashboardLayout({
       .then((authenticatedUser) => {
         if (!active) return;
         if (!authenticatedUser) {
-          router.replace("/login");
+          redirectToLogin();
           return;
         }
         setUser(authenticatedUser);
@@ -313,7 +320,7 @@ export default function DashboardLayout({
     return () => {
       active = false;
     };
-  }, [bootstrapVersion, router]);
+  }, [bootstrapVersion, redirectToLogin]);
 
   useEffect(() => {
     let active = true;
