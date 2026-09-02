@@ -1067,7 +1067,7 @@ export default function DashboardLayout({
                 <AnimatePresence>
                   {notificationsOpen && (
                     <motion.div
-                      className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(360px,calc(100vw-1rem))] rounded-2xl overflow-hidden border border-djon-text/10 bg-djon-calendar-cell/95 backdrop-blur-xl shadow-2xl max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:w-auto"
+                      className="absolute right-0 top-[calc(100%+18px)] z-50 w-[min(360px,calc(100vw-1rem))] rounded-2xl overflow-hidden border border-djon-text/10 bg-djon-calendar-cell/[98%] backdrop-blur-xl shadow-2xl max-sm:fixed max-sm:left-2 max-sm:right-2 max-sm:top-[4.5rem] max-sm:w-auto"
                       initial={{ opacity: 0, y: -6, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -6, scale: 0.98 }}
