@@ -142,6 +142,13 @@
   --page-scrollbar-border: var(--djon-color-scroll-track);
 }
 
+@media (min-width: 768px) {
+  :root {
+    --djon-font-sans: var(--font-raleway), "Raleway Fallback", system-ui, sans-serif;
+    --djon-font-mono: var(--font-raleway), "Raleway Fallback", ui-monospace, monospace;
+  }
+}
+
 .dark {
   color-scheme: dark;
 }

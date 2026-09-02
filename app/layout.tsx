@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Barlow_Condensed, Bowlby_One_SC } from "next/font/google"
+import { Barlow_Condensed, Bowlby_One_SC, Raleway } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { LenisProvider } from "@/components/lenis-provider"
 import ClickSpark from "@/components/click-spark"
@@ -11,6 +11,14 @@ import { ConfirmationProvider } from "@/components/confirmation-provider"
 import { publicSiteOrigin } from "@/lib/site-urls"
 import { homeDescription, homeTitle, siteName } from "@/lib/seo"
 import "./globals.css"
+
+const raleway = Raleway({
+  subsets: ["latin"],
+  style: "normal",
+  variable: "--font-raleway",
+  display: "optional",
+  preload: false,
+})
 
 const bowlbyOneSc = Bowlby_One_SC({
   subsets: ["latin"],
@@ -104,7 +112,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={`bg-djon-page ${bowlbyOneSc.variable} ${barlowCondensed.variable}`}>
+    <html lang="pt-BR" className={`bg-djon-page ${raleway.variable} ${bowlbyOneSc.variable} ${barlowCondensed.variable}`}>
       <head>
         <meta httpEquiv="Content-Type" content="text/html; charset=utf-8" />
         <meta name="application-name" content="DJ ON" />
