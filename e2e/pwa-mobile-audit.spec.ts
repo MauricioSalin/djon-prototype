@@ -346,6 +346,9 @@ test.describe("PWA real", () => {
     expect(serviceWorker.ok()).toBe(true);
     expect(serviceWorker.headers()["content-type"]).toContain("application/javascript");
     expect(serviceWorker.headers()["cache-control"]).toContain("no-store");
+    const serviceWorkerSource = await serviceWorker.text();
+    expect(serviceWorkerSource).not.toContain('addEventListener("fetch"');
+    expect(serviceWorkerSource).not.toContain("respondWith");
 
     const manifestResponse = await request.get("/manifest.webmanifest");
     expect(manifestResponse.ok()).toBe(true);
@@ -414,18 +417,18 @@ test.describe("landing em iPhone", () => {
     isMobile: true,
   });
 
-  test("não inicializa cenas WebGL pesadas", async ({ page }) => {
+  test("inicializa o Spline sem fallback visual", async ({ page }) => {
     const splineRequests: string[] = [];
-    page.on("request", (request) => {
-      if (request.url().includes("prod.spline.design")) splineRequests.push(request.url());
+    await page.route("https://prod.spline.design/**", async (route) => {
+      splineRequests.push(route.request().url());
+      await route.continue();
     });
     await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect(page.locator("[data-spline-fallback]").first()).toBeVisible();
-    await page.waitForTimeout(500);
+    await expect.poll(() => splineRequests.length).toBeGreaterThan(0);
 
-    expect(splineRequests).toEqual([]);
+    await expect(page.locator("[data-spline-fallback]")).toHaveCount(0);
   });
 });
 

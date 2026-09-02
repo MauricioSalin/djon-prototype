@@ -50,7 +50,6 @@ type SplineSceneProps = {
   className?: string
   style?: CSSProperties
   onLoad?: (spline: Application) => void
-  onFallback?: () => void
   transparent?: boolean
   revealDelay?: number
   lazy?: boolean
@@ -68,7 +67,6 @@ export function SplineScene({
   className,
   style,
   onLoad,
-  onFallback,
   transparent = true,
   revealDelay = 650,
   lazy = true,
@@ -83,19 +81,16 @@ export function SplineScene({
   const [ready, setReady] = useState(false)
   const [shouldLoad, setShouldLoad] = useState(!lazy)
   const [isMemorySensitive, setIsMemorySensitive] = useState(false)
-  const [deviceProfileResolved, setDeviceProfileResolved] = useState(false)
   const [isVisible, setIsVisible] = useState(!lazy)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const splineRef = useRef<Application | null>(null)
   const hasEnteredLoadZoneRef = useRef(!lazy)
   const hasPreparedOffscreenRef = useRef(false)
-  const hasShownFallbackRef = useRef(false)
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sceneKey = scene
 
   useEffect(() => {
     setIsMemorySensitive(isMemorySensitiveDevice())
-    setDeviceProfileResolved(true)
   }, [])
 
   useEffect(() => {
@@ -103,19 +98,10 @@ export function SplineScene({
     splineRef.current = null
     hasEnteredLoadZoneRef.current = !lazy
     hasPreparedOffscreenRef.current = false
-    hasShownFallbackRef.current = false
     return () => {
       if (revealTimeoutRef.current) clearTimeout(revealTimeoutRef.current)
     }
   }, [lazy, sceneKey])
-
-  useEffect(() => {
-    if (!deviceProfileResolved || !isMemorySensitive || hasShownFallbackRef.current) return
-
-    hasShownFallbackRef.current = true
-    setReady(true)
-    onFallback?.()
-  }, [deviceProfileResolved, isMemorySensitive, onFallback])
 
   useEffect(() => {
     if (!lazy) {
@@ -297,18 +283,7 @@ export function SplineScene({
           height: "100%",
         }}
       >
-        {deviceProfileResolved && isMemorySensitive ? (
-          <div
-            data-spline-fallback
-            aria-hidden="true"
-            style={{
-              width: "100%",
-              height: "100%",
-              background:
-                "radial-gradient(circle at 50% 45%, rgba(204, 255, 0, 0.2), rgba(204, 255, 0, 0.04) 34%, transparent 68%)",
-            }}
-          />
-        ) : deviceProfileResolved && shouldLoad ? (
+        {shouldLoad && (
           <Spline
             key={sceneKey}
             scene={scene}
@@ -322,7 +297,7 @@ export function SplineScene({
               transition: "opacity 350ms ease",
             }}
           />
-        ) : null}
+        )}
       </div>
     </div>
   )

@@ -8,13 +8,6 @@ export function PWARegister() {
 
     const register = async () => {
       try {
-        const response = await fetch("/sw.js", { cache: "no-store" })
-
-        if (!response.ok) {
-          console.warn("DJ ON PWA service worker is not available yet")
-          return
-        }
-
         const registration = await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
           updateViaCache: "none",

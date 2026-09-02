@@ -1,4 +1,4 @@
-const SW_VERSION = "djon-pwa-v3"
+const SW_VERSION = "djon-pwa-v4"
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting())
@@ -17,11 +17,6 @@ self.addEventListener("message", (event) => {
   if (event.data === "version") {
     event.source?.postMessage(SW_VERSION)
   }
-})
-
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return
-  event.respondWith(fetch(event.request))
 })
 
 self.addEventListener("push", (event) => {
