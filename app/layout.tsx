@@ -8,6 +8,7 @@ import { PWARegister } from "@/components/pwa-register"
 import { PageTitleManager } from "@/components/page-title-manager"
 import { AppToaster } from "@/components/app-toaster"
 import { ConfirmationProvider } from "@/components/confirmation-provider"
+import { publicSiteOrigin } from "@/lib/site-urls"
 import "./globals.css"
 
 const raleway = Raleway({
@@ -33,7 +34,7 @@ const barlowCondensed = Barlow_Condensed({
 })
 
 const siteName = "DJ ON"
-const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://djonacademy.com")
+const siteUrl = new URL(publicSiteOrigin)
 const defaultTitle = "DJ ON Academy | Música, palco e performance"
 const defaultDescription =
   "A DJ ON Academy é a fronteira entre o sonho e a realização. Aprenda DJ, produção musical e performance com uma comunidade feita para transformar sonho em palco."

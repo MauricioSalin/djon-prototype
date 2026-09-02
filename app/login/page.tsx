@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowLeft, LogIn } from "lucide-react"
+import { publicSiteHref } from "@/lib/site-urls"
 import { getDashboardHome, store } from "@/lib/store"
 
 export default function LoginPage() {
@@ -42,7 +43,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-djon-black/75" />
       </div>
 
-      <button type="button" onClick={() => router.push("/")} className="absolute top-4 left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-6 sm:left-6">
+      <button type="button" onClick={() => router.push(publicSiteHref("/"))} className="absolute top-4 left-4 z-10 flex min-h-11 items-center gap-2 rounded-lg px-2 text-xs font-bold tracking-wide text-djon-text opacity-50 transition-opacity hover:opacity-100 sm:top-6 sm:left-6">
         <ArrowLeft size={14} />
         <span className="hidden min-[360px]:inline">VOLTAR</span>
       </button>

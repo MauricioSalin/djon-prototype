@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
+import { portalOrigin } from "@/lib/site-urls"
 
 const title = "Acessar Portal | DJ ON"
 const description =
@@ -12,12 +13,12 @@ export const metadata: Metadata = {
   },
   description,
   alternates: {
-    canonical: "/login",
+    canonical: `${portalOrigin}/login`,
   },
   openGraph: {
     title,
     description,
-    url: "/login",
+    url: `${portalOrigin}/login`,
     images: [
       {
         url: image,

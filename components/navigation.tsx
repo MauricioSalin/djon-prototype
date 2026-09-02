@@ -9,11 +9,12 @@ import { ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-rea
 import { LocationDropdown } from "@/components/location-dropdown"
 import { store, type User } from "@/lib/store"
 import { ShimmerSkeleton } from "@/components/loading-skeletons"
+import { portalHref } from "@/lib/site-urls"
 
 function portalHomeForRole(role: User["role"]) {
-  if (role === "admin") return "/dashboard/admin"
-  if (role === "professor") return "/dashboard/professor"
-  return "/dashboard/student"
+  if (role === "admin") return portalHref("/dashboard/admin")
+  if (role === "professor") return portalHref("/dashboard/professor")
+  return portalHref("/dashboard/student")
 }
 
 function roleLabelFor(role: User["role"]) {
@@ -242,7 +243,7 @@ export function Navigation() {
               </AnimatePresence>
             </div>
           ) : (
-            <Link href="/login">
+            <Link href={portalHref("/login")}>
               <motion.div
                 className="flex items-center gap-1.5 border border-djon-text/20 text-djon-text/70 hover:brightness-110 px-4 py-2.5 rounded-full font-black text-xs tracking-widest transition-colors"
                 whileHover={{ scale: 1.05 }}
@@ -326,7 +327,7 @@ export function Navigation() {
                   </div>
                 </motion.div>
               ) : (
-                <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Link href={portalHref("/login")} onClick={() => setMobileMenuOpen(false)}>
                   <motion.div
                     className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-djon-text/20 px-6 py-3 text-xs font-black tracking-widest text-djon-text/70"
                     initial={{ opacity: 0, y: 20 }}
