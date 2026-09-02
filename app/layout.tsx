@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Barlow_Condensed, Bowlby_One_SC, Raleway } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { LenisProvider } from "@/components/lenis-provider"
 import ClickSpark from "@/components/click-spark"
 import { PWARegister } from "@/components/pwa-register"
 import { PageTitleManager } from "@/components/page-title-manager"
@@ -134,7 +133,7 @@ export default function RootLayout({
           easing="ease-out"
         >
           <ConfirmationProvider>
-            <LenisProvider>{children}</LenisProvider>
+            {children}
           </ConfirmationProvider>
         </ClickSpark>
         <PageTitleManager />

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { useLenis } from "lenis/react"
 import { ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react"
 import { LocationDropdown } from "@/components/location-dropdown"
 import { store, type User } from "@/lib/store"
@@ -62,7 +61,6 @@ export function Navigation() {
   const [accountOpen, setAccountOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement>(null)
   const sessionBridgeRef = useRef<HTMLIFrameElement>(null)
-  const lenis = useLenis()
 
   useEffect(() => {
     const enableSessionBridge = () => setSessionBridgeEnabled(true)
@@ -169,8 +167,9 @@ export function Navigation() {
 
   const scrollToSection = (id: string) => {
     const element = document.querySelector<HTMLElement>(id)
-    if (element && lenis) {
-      lenis.scrollTo(element, { offset: -100 })
+    if (element) {
+      const top = element.getBoundingClientRect().top + window.scrollY - 100
+      window.scrollTo({ top, behavior: "smooth" })
     }
     setMobileMenuOpen(false)
   }

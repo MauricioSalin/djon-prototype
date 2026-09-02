@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { motion } from "framer-motion"
-import { useLenis } from "lenis/react"
 import Image from "next/image"
 import Link from "next/link"
 import {
@@ -45,7 +44,6 @@ interface ProfileViewProps {
 
 export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileViewProps) {
   usePageTitle(user.projectName || user.name)
-  const lenis = useLenis()
 
   const events = store.getEventsByUser(user.id).sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -95,12 +93,9 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
   const scrollToEditor = useCallback((section: EditableSection) => {
     const editor = document.getElementById(`${section}-editor`)
     if (!editor) return
-    if (lenis) {
-      lenis.scrollTo(editor, { offset: -80 })
-      return
-    }
-    editor.scrollIntoView({ behavior: "smooth", block: "start" })
-  }, [lenis])
+    const top = editor.getBoundingClientRect().top + window.scrollY - 80
+    window.scrollTo({ top, behavior: "smooth" })
+  }, [])
 
   useEffect(() => {
     if (!editingSection) return

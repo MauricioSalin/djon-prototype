@@ -1,6 +1,6 @@
 "use client"
 
-import { motion, useScroll, useTransform, useSpring } from "framer-motion"
+import { motion } from "framer-motion"
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { SplineScene } from "@/components/spline-scene"
@@ -8,44 +8,11 @@ import { LandingEditButton } from "@/components/landing/landing-edit-button"
 import { useLandingSection } from "@/components/landing/landing-content-provider"
 
 
-const springConfig = { stiffness: 100, damping: 30, restDelta: 0.001 }
-
-const fadeUpVariants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: {
-      delay: i * 0.1,
-      duration: 0.8,
-      ease: [0.25, 0.4, 0.25, 1] as const,
-    },
-  }),
-}
-
-
 export function HeroSection() {
   const { data, canEdit, edit } = useLandingSection("hero")
-  const ref = useRef(null)
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [hero3dEnabled, setHero3dEnabled] = useState(false)
   const [splineLoaded, setSplineLoaded] = useState(false)
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  })
-
-  const rawY = useTransform(scrollYProgress, [0, 1], [0, 200])
-  const y = useSpring(rawY, springConfig)
-
-  const rawTextX1 = useTransform(scrollYProgress, [0, 1], [0, -100])
-  const textX1 = useSpring(rawTextX1, springConfig)
-
-  const rawTextX2 = useTransform(scrollYProgress, [0, 1], [0, 100])
-  const textX2 = useSpring(rawTextX2, springConfig)
-
-  const rawScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.9])
-  const scale = useSpring(rawScale, springConfig)
 
   useEffect(() => {
     return () => {
@@ -61,7 +28,6 @@ export function HeroSection() {
   return (
     <section
       id="hero"
-      ref={ref}
       className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-djon-ink noise-overlay"
     >
       {/* Background image */}
@@ -90,7 +56,6 @@ export function HeroSection() {
                 {data.title.split("\n").map((line, index) => (
                   <motion.span
                     key={`${index}:${line}`}
-                    style={{ x: index % 2 === 0 ? textX1 : textX2 }}
                     className={`block ${index === 0 ? "text-djon-text" : "text-djon-accent"}`}
                   >
                     {line}
@@ -105,10 +70,6 @@ export function HeroSection() {
             </div>
 
             <motion.div
-              variants={fadeUpVariants}
-              initial="hidden"
-              animate="visible"
-              custom={4}
               className="flex flex-wrap gap-3 pt-2"
             >
               <motion.a
@@ -151,19 +112,12 @@ export function HeroSection() {
             </motion.div>
 
             <motion.div
-              variants={fadeUpVariants}
-              initial="hidden"
-              animate="visible"
-              custom={5}
               className="flex flex-wrap gap-4 pt-2"
             >
-              {data.tags.map((benefit, i) => (
+              {data.tags.map((benefit) => (
                 <motion.div
                   key={benefit}
                   className="flex items-center gap-2 text-xs text-djon-text/50"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 + i * 0.1 }}
                 >
                   <div className="w-1.5 h-1.5 bg-djon-accent rounded-full" />
                   {benefit}
@@ -172,10 +126,6 @@ export function HeroSection() {
             </motion.div>
 
             <motion.div
-              variants={fadeUpVariants}
-              initial="hidden"
-              animate="visible"
-              custom={6}
               className="relative !-mt-6 h-[300px] w-full overflow-visible min-[390px]:h-[330px] sm:!-mt-4 sm:h-[390px] lg:hidden"
             >
               {!splineLoaded ? (
