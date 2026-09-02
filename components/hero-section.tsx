@@ -71,7 +71,7 @@ export function HeroSection() {
           fill
           className="object-cover opacity-30"
           sizes="100vw"
-          priority
+          preload
         />
         <div className="absolute inset-0 bg-gradient-to-r from-djon-black via-djon-black/80 to-djon-black/40" />
       </div>
@@ -83,17 +83,21 @@ export function HeroSection() {
           {/* Text Content */}
           <motion.div className="space-y-6 relative z-20">
             <div className="space-y-1 overflow-hidden">
-              {data.title.split("\n").map((line, index) => (
-                <motion.h1
-                  key={`${index}:${line}`}
-                  style={{ x: index % 2 === 0 ? textX1 : textX2 }}
-                  className={`djon-hero-title font-black ${index === 0 ? "text-djon-text" : "text-djon-accent"}`}
-                >
-                  <motion.span variants={fadeUpVariants} initial="hidden" animate="visible" custom={index + 1} className="inline-block">
+              <motion.h1 className="djon-hero-title font-black">
+                {data.title.split("\n").map((line, index) => (
+                  <motion.span
+                    key={`${index}:${line}`}
+                    style={{ x: index % 2 === 0 ? textX1 : textX2 }}
+                    variants={fadeUpVariants}
+                    initial="hidden"
+                    animate="visible"
+                    custom={index + 1}
+                    className={`block ${index === 0 ? "text-djon-text" : "text-djon-accent"}`}
+                  >
                     {line}
                   </motion.span>
-                </motion.h1>
-              ))}
+                ))}
+              </motion.h1>
               <motion.p
                 variants={fadeUpVariants}
                 initial="hidden"

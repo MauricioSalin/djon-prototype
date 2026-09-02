@@ -4,6 +4,10 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { LandingEditButton } from "@/components/landing/landing-edit-button"
 import { useLandingSection } from "@/components/landing/landing-content-provider"
+import {
+  passthroughImageLoader,
+  shouldBypassImageOptimization,
+} from "@/lib/image-optimization"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,7 +49,15 @@ export function LifestyleSection() {
                 whileHover={{ scale: 1.03 }}
                 className="relative aspect-square rounded-2xl overflow-hidden"
               >
-                <Image loader={({ src }) => src} unoptimized src={item.image} alt={`${item.label} — DJ ON Academy`} fill sizes="(max-width: 1024px) 50vw, 25vw" className="object-cover" />
+                <Image
+                  loader={shouldBypassImageOptimization(item.image) ? passthroughImageLoader : undefined}
+                  unoptimized={shouldBypassImageOptimization(item.image)}
+                  src={item.image}
+                  alt={`${item.label} — DJ ON Academy`}
+                  fill
+                  sizes="(max-width: 1024px) 50vw, 25vw"
+                  className="object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-djon-black/80 to-transparent" />
                 <div className="absolute bottom-3 left-3">
                   <span className="text-djon-text font-black text-xs tracking-wide">{item.label}</span>

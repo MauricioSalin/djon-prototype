@@ -1,4 +1,10 @@
-import { expect, test, type Page, type Route } from "@playwright/test";
+import {
+  expect,
+  test,
+  type Locator,
+  type Page,
+  type Route,
+} from "@playwright/test";
 import { landingDefaults, type LandingSectionKey } from "../lib/landing-content";
 
 const editor = {
@@ -27,6 +33,18 @@ const unit = {
   timezone: "America/Sao_Paulo",
   active: true,
 };
+
+async function expectImageSource(image: Locator, expectedPath: string) {
+  await expect(image).toBeVisible();
+  await expect
+    .poll(async () => {
+      const source = await image.getAttribute("src");
+      if (!source) return "";
+      const parsed = new URL(source, "http://localhost");
+      return parsed.searchParams.get("url") ?? parsed.pathname;
+    })
+    .toBe(expectedPath);
+}
 
 async function mockLanding(
   page: Page,
@@ -88,24 +106,24 @@ test("edita as sete seções e mantém o contato derivado da unidade", async ({ 
   await page.goto("/");
 
   await expect(page.getByRole("button", { name: "EDITAR", exact: true })).toHaveCount(7);
-  await expect(page.getByAltText("Formação DJ — DJ ON Academy")).toHaveAttribute(
-    "src",
+  await expectImageSource(
+    page.getByAltText("Formação DJ — DJ ON Academy"),
     "/images/djon-course-dj.png",
   );
-  await expect(page.getByAltText("Produção Musical — DJ ON Academy")).toHaveAttribute(
-    "src",
+  await expectImageSource(
+    page.getByAltText("Produção Musical — DJ ON Academy"),
     "/images/djon-course-producao.png",
   );
-  await expect(page.getByAltText("Formação DJ", { exact: true })).toHaveAttribute(
-    "src",
+  await expectImageSource(
+    page.getByAltText("Formação DJ", { exact: true }),
     "/images/djon-course-dj.png",
   );
-  await expect(page.getByAltText("SHOWCASE — Evento Oficial DJ ON")).toHaveAttribute(
-    "src",
+  await expectImageSource(
+    page.getByAltText("SHOWCASE — Evento Oficial DJ ON"),
     "/images/djon-showcase.png",
   );
-  await expect(page.getByAltText("Segredo", { exact: true })).toHaveAttribute(
-    "src",
+  await expectImageSource(
+    page.getByAltText("Segredo", { exact: true }),
     "/images/djon-team-segredo.png",
   );
   await expect(page.getByText("(51) 99999-1111", { exact: true })).toBeVisible();

@@ -23,6 +23,12 @@ export function proxy(request: NextRequest) {
   const hostname = requestHostname(request)
   const { pathname } = request.nextUrl
 
+  if (hostname === PORTAL_HOSTNAME && pathname === "/robots.txt") {
+    return new NextResponse("User-agent: *\nDisallow: /\n", {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    })
+  }
+
   if (hostname === PORTAL_HOSTNAME && pathname === "/") {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = "/login"
@@ -47,5 +53,6 @@ export const config = {
     "/recuperar-senha/:path*",
     "/redefinir-senha/:path*",
     "/dashboard/:path*",
+    "/robots.txt",
   ],
 }

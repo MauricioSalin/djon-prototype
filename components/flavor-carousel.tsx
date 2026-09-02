@@ -8,6 +8,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { LandingEditButton } from "@/components/landing/landing-edit-button"
 import { useLandingSection } from "@/components/landing/landing-content-provider"
 import { landingColor } from "@/lib/landing-content"
+import {
+  passthroughImageLoader,
+  shouldBypassImageOptimization,
+} from "@/lib/image-optimization"
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -166,8 +170,8 @@ export function FlavorCarousel() {
                         src={currentCourse.image}
                         alt={currentCourse.title}
                         fill
-                        loader={({ src }) => src}
-                        unoptimized
+                        loader={shouldBypassImageOptimization(currentCourse.image) ? passthroughImageLoader : undefined}
+                        unoptimized={shouldBypassImageOptimization(currentCourse.image)}
                         sizes="(max-width: 768px) 100vw, 50vw"
                         className="object-cover"
                       />

@@ -696,7 +696,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 <form onSubmit={handleReleaseSave} className="grid max-w-3xl gap-6 md:grid-cols-[220px_1fr] md:gap-8">
                   <div>
                     <button type="button" onClick={() => releaseCoverRef.current?.click()} className="group relative aspect-square w-full overflow-hidden rounded-2xl border border-djon-text/10 bg-djon-surface-2">
-                      <Image src={releaseForm.cover || DEFAULT_RELEASE_COVER} alt="Prévia da capa" fill sizes="220px" className="object-cover transition-[filter] group-hover:brightness-75" />
+                      <Image loader={({ src }) => src} unoptimized src={releaseForm.cover || DEFAULT_RELEASE_COVER} alt="Prévia da capa" fill sizes="220px" className="object-cover transition-[filter] group-hover:brightness-75" />
                       <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"><span className="flex items-center gap-2 rounded-full bg-djon-black/75 px-4 py-2 text-xs font-black text-djon-text"><Upload size={14} /> TROCAR CAPA</span></span>
                     </button>
                     <input ref={releaseCoverRef} type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={(e) => e.target.files?.[0] && handleReleaseCoverUpload(e.target.files[0])} />
@@ -715,7 +715,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 <SectionHeading eyebrow="NOVIDADE" title="Último Lançamento" isOwner={isOwner && !user.passwordChangeRequired} onEdit={() => startEditing("release")} />
                 <div className="max-w-3xl overflow-hidden rounded-3xl border border-djon-text/10 bg-djon-surface-2 shadow-djon-soft sm:flex">
                   <div className="relative aspect-square w-full shrink-0 overflow-hidden sm:w-64">
-                    <Image src={user.latestRelease?.cover || DEFAULT_RELEASE_COVER} alt={`Capa de ${user.latestRelease?.title || "último lançamento"}`} fill sizes="(min-width: 640px) 256px, 100vw" className="object-cover" />
+                    <Image loader={({ src }) => src} unoptimized src={user.latestRelease?.cover || DEFAULT_RELEASE_COVER} alt={`Capa de ${user.latestRelease?.title || "último lançamento"}`} fill sizes="(min-width: 640px) 256px, 100vw" className="object-cover" />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col justify-center p-6 sm:p-8">
                     <span className="mb-3 text-xs font-black tracking-[0.2em] text-djon-accent">LANÇAMENTO MAIS RECENTE</span>
@@ -1042,6 +1042,8 @@ function CourseProgressCard({ course, index }: { course: StudentCourseProgress; 
       <div className="relative h-36 overflow-hidden bg-djon-muted-panel">
         {course.coverImage && !imageFailed ? (
           <Image
+            loader={({ src }) => src}
+            unoptimized
             src={course.coverImage}
             alt={`Capa do curso ${course.name}`}
             fill

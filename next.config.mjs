@@ -4,9 +4,6 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    unoptimized: true,
-  },
   async headers() {
     return [
       {
@@ -26,6 +23,21 @@ const nextConfig = {
           },
         ],
       },
+      ...[
+        "/brand",
+        "/login",
+        "/recuperar-senha",
+        "/redefinir-senha",
+        "/dashboard/:path*",
+      ].map((source) => ({
+        source,
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive",
+          },
+        ],
+      })),
     ]
   },
 }

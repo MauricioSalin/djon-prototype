@@ -9,6 +9,7 @@ import { PageTitleManager } from "@/components/page-title-manager"
 import { AppToaster } from "@/components/app-toaster"
 import { ConfirmationProvider } from "@/components/confirmation-provider"
 import { publicSiteOrigin } from "@/lib/site-urls"
+import { homeDescription, homeTitle, siteName } from "@/lib/seo"
 import "./globals.css"
 
 const raleway = Raleway({
@@ -33,35 +34,22 @@ const barlowCondensed = Barlow_Condensed({
   display: "swap",
 })
 
-const siteName = "DJ ON"
 const siteUrl = new URL(publicSiteOrigin)
-const defaultTitle = "DJ ON Academy | Música, palco e performance"
-const defaultDescription =
-  "A DJ ON Academy é a fronteira entre o sonho e a realização. Aprenda DJ, produção musical e performance com uma comunidade feita para transformar sonho em palco."
-const defaultImage = "/images/djon-hero.png"
+const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim()
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
   applicationName: siteName,
   manifest: "/manifest.webmanifest",
   title: {
-    default: defaultTitle,
+    default: homeTitle,
     template: `%s | ${siteName}`,
   },
-  description: defaultDescription,
-  keywords: [
-    "curso de DJ",
-    "produção musical",
-    "DJ Academy",
-    "DJ ON",
-    "Porto Alegre",
-    "Camboriú",
-    "Ableton Live",
-    "Rekordbox",
-  ],
-  authors: [{ name: siteName }],
+  description: homeDescription,
+  authors: [{ name: siteName, url: "/" }],
   creator: siteName,
   publisher: siteName,
+  category: "education",
   icons: {
     icon: [
       { url: "/favicon.png", type: "image/png" },
@@ -84,24 +72,28 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     url: "/",
     siteName,
-    title: defaultTitle,
-    description: defaultDescription,
-    images: [
-      {
-        url: defaultImage,
-        width: 1200,
-        height: 630,
-        alt: "DJ ON Academy - Curso de DJ e Produção Musical",
-      },
-    ],
+    title: homeTitle,
+    description: homeDescription,
   },
   twitter: {
     card: "summary_large_image",
-    title: defaultTitle,
-    description: defaultDescription,
-    images: [defaultImage],
+    title: homeTitle,
+    description: homeDescription,
   },
-  generator: "v0.app",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  verification: googleSiteVerification
+    ? { google: googleSiteVerification }
+    : undefined,
 }
 
 export const viewport: Viewport = {

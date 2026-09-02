@@ -46,3 +46,22 @@ test("keeps public and authenticated routes on their intended hosts", async ({
   expect(publicResponse.status()).toBe(200)
   expect(portalResponse.status()).toBe(200)
 })
+
+test("keeps the public site crawlable and blocks the portal host", async ({
+  request,
+}) => {
+  const publicRobots = await request.get("/robots.txt", {
+    headers: { host: "www.djonacademy.com" },
+  })
+  const portalRobots = await request.get("/robots.txt", {
+    headers: { host: "portal.djonacademy.com" },
+  })
+
+  expect(publicRobots.ok()).toBe(true)
+  expect(await publicRobots.text()).toContain("Allow: /")
+  expect(await publicRobots.text()).toContain(
+    "Sitemap: https://www.djonacademy.com/sitemap.xml",
+  )
+  expect(portalRobots.ok()).toBe(true)
+  expect(await portalRobots.text()).toBe("User-agent: *\nDisallow: /\n")
+})

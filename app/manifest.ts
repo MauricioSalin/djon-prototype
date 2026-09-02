@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next"
+import { homeDescription } from "@/lib/seo"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
     name: "DJ ON",
     short_name: "DJ ON",
-    description: "Portal e proposta digital da DJ ON Academy.",
+    description: homeDescription,
     start_url: "/login",
     scope: "/",
     display: "standalone",

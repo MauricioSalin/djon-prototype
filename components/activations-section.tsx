@@ -9,6 +9,10 @@ import { LandingEditButton } from "@/components/landing/landing-edit-button"
 import { useLandingSection } from "@/components/landing/landing-content-provider"
 import { LandingIconView } from "@/components/landing/landing-options"
 import { landingColor, type TeamLandingData } from "@/lib/landing-content"
+import {
+  passthroughImageLoader,
+  shouldBypassImageOptimization,
+} from "@/lib/image-optimization"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -63,8 +67,8 @@ export function ActivationsSection() {
               transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as const }}
             >
               <Image
-                loader={({ src }) => src}
-                unoptimized
+                loader={shouldBypassImageOptimization(showcase.data.image) ? passthroughImageLoader : undefined}
+                unoptimized={shouldBypassImageOptimization(showcase.data.image)}
                 src={showcase.data.image}
                 alt="SHOWCASE — Evento Oficial DJ ON"
                 fill
@@ -261,8 +265,8 @@ export function ActivationsSection() {
               >
                 <div className="relative aspect-square overflow-hidden">
                   <Image
-                    loader={({ src }) => src}
-                    unoptimized
+                    loader={shouldBypassImageOptimization(member.image) ? passthroughImageLoader : undefined}
+                    unoptimized={shouldBypassImageOptimization(member.image)}
                     src={member.image}
                     alt={member.name}
                     fill
