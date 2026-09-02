@@ -299,14 +299,6 @@
     cursor: not-allowed !important;
   }
 
-  @media (max-width: 767px) {
-    input,
-    textarea,
-    select {
-      font-size: var(--djon-form-mobile-text);
-    }
-  }
-
   *,
   *::before,
   *::after {
@@ -377,6 +369,22 @@
   }
   body {
     @apply bg-djon-page text-djon-text;
+  }
+}
+
+/* Keep this outside Tailwind layers so text-sm/text-xs cannot restore focus zoom.
+   Coarse pointers also cover phones in landscape and touch tablets/PWAs. */
+@media (max-width: 767px), (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="hidden"], [type="button"], [type="submit"], [type="reset"], [type="image"]),
+  textarea,
+  select,
+  [contenteditable="true"],
+  [contenteditable=""],
+  [contenteditable="plaintext-only"],
+  [data-slot="select-trigger"],
+  [data-slot="select-value"],
+  [data-slot="select-item"] {
+    font-size: var(--djon-form-mobile-text);
   }
 }
 
