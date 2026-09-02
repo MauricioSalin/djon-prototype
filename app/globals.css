@@ -7,7 +7,6 @@
   /* Keep fixed headers below the device's status bar/notch without UA detection. */
   --djon-safe-area-top: env(safe-area-inset-top, 0px);
   --djon-header-offset: calc(4rem + var(--djon-safe-area-top));
-  --djon-public-header-offset: calc(4.75rem + var(--djon-safe-area-top));
 
   /* DJ ON design tokens: altere a marca aqui */
   --djon-font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -459,11 +458,6 @@
   .djon-skeleton::after {
     animation: none;
   }
-}
-
-/* Anchor targets must remain below the public header, including its safe area. */
-.landing-page > section {
-  scroll-margin-top: calc(var(--djon-public-header-offset) + 1.5rem);
 }
 
 /* Mantém o HTML completo da landing para SEO e acessibilidade, mas evita

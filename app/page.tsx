@@ -11,6 +11,7 @@ import { LandingContentProvider } from "@/components/landing/landing-content-pro
 import { academyLocations } from "@/lib/locations"
 import { homeDescription, homeTitle, siteName } from "@/lib/seo"
 import { publicSiteOrigin } from "@/lib/site-urls"
+import styles from "./page.module.css"
 
 const organizationId = `${publicSiteOrigin}/#organization`
 const websiteId = `${publicSiteOrigin}/#website`
@@ -99,7 +100,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main className="landing-page min-h-screen bg-background">
+    <main className={`landing-page min-h-screen bg-background ${styles.landingPage}`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

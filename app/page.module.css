@@ -1,0 +1,8 @@
+.landingPage {
+  --djon-public-header-offset: calc(4.75rem + var(--djon-safe-area-top));
+}
+
+/* Keep anchor targets below the public header, including the device safe area. */
+.landingPage > section {
+  scroll-margin-top: calc(var(--djon-public-header-offset) + 1.5rem);
+}
