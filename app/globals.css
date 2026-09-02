@@ -1014,6 +1014,9 @@
   pointer-events: none;
   position: absolute;
 }
+.material-editor [data-video-layout][data-video-kind="embed"] > [data-video-text]:has(> p:only-child > br:only-child)::before {
+  content: "Escreva ao lado do iframe...";
+}
 .material-editor [data-video-layout] {
   cursor: pointer;
 }
