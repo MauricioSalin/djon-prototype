@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { PortalLoadError } from "@/components/portal/portal-load-error";
 import { notifyError } from "@/lib/feedback";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import {
@@ -81,6 +82,8 @@ export default function CoursesPage() {
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [editorCourse, setEditorCourse] = useState<Course | "new" | null>(null);
   const [courseForm, setCourseForm] = useState<CourseForm>(emptyCourse);
   const [temporaryCoverId, setTemporaryCoverId] = useState("");
@@ -101,8 +104,14 @@ export default function CoursesPage() {
   }, [router]);
 
   useEffect(() => {
-    void load().finally(() => setLoading(false));
-  }, [load]);
+    let active = true;
+    setLoading(true);
+    setLoadError(null);
+    void load()
+      .catch((error: unknown) => { if (active) setLoadError(error); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [load, loadAttempt]);
 
   const openCreate = () => {
     setCourseForm(emptyCourse);
@@ -210,6 +219,7 @@ export default function CoursesPage() {
     }
   };
 
+  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
   if (loading || !user)
     return <DashboardPageSkeleton variant="courses" rows={5} />;
 

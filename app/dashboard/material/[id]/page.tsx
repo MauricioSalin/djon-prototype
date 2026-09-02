@@ -15,6 +15,7 @@ import {
   Edit2,
 } from "lucide-react";
 import {
+  ApiError,
   canEditMaterial,
   store,
   type Material,
@@ -22,6 +23,7 @@ import {
   type User,
 } from "@/lib/store";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { PortalLoadError } from "@/components/portal/portal-load-error";
 import { usePageTitle } from "@/components/page-title-manager";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
@@ -167,6 +169,8 @@ function ImageLightbox({
 }
 
 export default function MaterialDetailPage() {
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
@@ -188,20 +192,27 @@ export default function MaterialDetailPage() {
     }
     setUser(u);
     let active = true;
+    setLoaded(false);
+    setMaterial(null);
+    setLoadError(null);
+    setCoverError(false);
     store
       .fetchMaterialById(id)
       .then((item) => {
         if (active) setMaterial(item);
       })
-      .catch(() => undefined)
+      .catch((error: unknown) => {
+        if (active && !(error instanceof ApiError && error.status === 404)) setLoadError(error);
+      })
       .finally(() => {
         if (active) setLoaded(true);
       });
     return () => {
       active = false;
     };
-  }, [id, router]);
+  }, [id, router, loadAttempt]);
 
+  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
   if (!user || !loaded) return <DashboardPageSkeleton variant="article" />;
 
   if (!material) {

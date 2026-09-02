@@ -1085,21 +1085,18 @@ class ApiStore {
 
   async bootstrap(force = false): Promise<User | null> {
     if (!this.hasSession()) return null;
+    if (this.bootstrapPromise) return this.bootstrapPromise;
 
-    if (!force && this.currentUser && this.currentUserHydrated && this.hasBootstrapData) {
-      if (
-        Date.now() - this.bootstrapLoadedAt > PORTAL_CACHE_MAX_AGE_MS &&
-        !this.bootstrapPromise
-      ) {
-        this.bootstrapPromise = this.loadAll(this.currentUser).finally(() => {
-          this.bootstrapPromise = null;
-        });
-        void this.bootstrapPromise.catch(() => undefined);
-      }
+    if (
+      !force && this.currentUser && this.currentUserHydrated &&
+      this.hasBootstrapData &&
+      Date.now() - this.bootstrapLoadedAt <= PORTAL_CACHE_MAX_AGE_MS
+    ) {
       return this.currentUser;
     }
 
-    if (this.bootstrapPromise) return this.bootstrapPromise;
+    // Callers copy data into React state after awaiting this promise.
+    // An expired snapshot must finish refreshing before they read the store.
     this.bootstrapPromise = this.bootstrapPortal(force).finally(() => {
       this.bootstrapPromise = null;
     });

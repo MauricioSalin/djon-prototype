@@ -21,6 +21,7 @@ import {
 import { academyLocationStorageKey } from "@/lib/locations";
 import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { PortalLoadError } from "@/components/portal/portal-load-error";
 import { DjonSelect } from "@/components/djon-select";
 import {
   ListPagination,
@@ -71,6 +72,8 @@ export default function AgendarPage() {
   const [trainingBalance, setTrainingBalance] =
     useState<TrainingBalance | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   useBodyScrollLock(showForm);
   const [form, setForm] = useState({
     title: "",
@@ -128,6 +131,8 @@ export default function AgendarPage() {
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
+    setLoadError(null);
 
     const initialize = async () => {
       await store.bootstrap();
@@ -158,14 +163,14 @@ export default function AgendarPage() {
     };
 
     void initialize()
-      .catch(() => undefined)
+      .catch((error: unknown) => { if (active) setLoadError(error); })
       .finally(() => {
         if (active) setLoading(false);
       });
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadAttempt]);
 
   const openRequest = (booking?: Booking) => {
     setReschedulingFrom(booking ?? null);
@@ -251,6 +256,7 @@ export default function AgendarPage() {
       year: "numeric",
     });
 
+  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
   if (loading) return <DashboardPageSkeleton variant="student-agenda" />;
 
   return (

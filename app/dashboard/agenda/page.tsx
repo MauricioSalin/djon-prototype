@@ -41,6 +41,7 @@ import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { BookingDetailsDialog } from "@/components/booking-details-dialog";
 import { CohortDetailDialog } from "@/components/cohort-detail-dialog";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { PortalLoadError } from "@/components/portal/portal-load-error";
 import { notifyRequestError } from "@/lib/feedback";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 import type { Cohort } from "@/lib/store";
@@ -730,6 +731,8 @@ export default function AgendaPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(today.getFullYear());
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const pickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -771,6 +774,8 @@ export default function AgendaPage() {
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
+    setLoadError(null);
     void store
       .bootstrap()
       .then((user) => {
@@ -786,13 +791,14 @@ export default function AgendaPage() {
         setCurrentUser(user);
         loadBookings();
       })
+      .catch((error: unknown) => { if (mounted) setLoadError(error); })
       .finally(() => {
         if (mounted) setLoading(false);
       });
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [router, loadAttempt]);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
@@ -967,6 +973,7 @@ export default function AgendaPage() {
     setShowNewForm(false);
   };
 
+  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
   if (loading) return <DashboardPageSkeleton variant="agenda" />;
 
   return (

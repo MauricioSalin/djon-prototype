@@ -20,6 +20,7 @@ import {
   type BookingWithUser,
 } from "@/components/booking-details-dialog";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
+import { PortalLoadError } from "@/components/portal/portal-load-error";
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
 import { UpcomingEventsSection } from "@/components/portal/upcoming-events-section";
 import {
@@ -71,6 +72,8 @@ function professorBookings(allBookings: Booking[], professor: User) {
 }
 
 export default function ProfessorHomePage() {
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -82,6 +85,7 @@ export default function ProfessorHomePage() {
 
   useEffect(() => {
     let mounted = true;
+    setLoadError(null);
     void store.bootstrap().then(async (u) => {
       if (!mounted) return;
       if (!u) {
@@ -114,12 +118,13 @@ export default function ProfessorHomePage() {
       setEquipments(
         store.getEquipments().filter((equipment) => equipment.active),
       );
-    });
+    }).catch((error: unknown) => { if (mounted) setLoadError(error); });
     return () => {
       mounted = false;
     };
-  }, [router]);
+  }, [router, loadAttempt]);
 
+  if (loadError) return <PortalLoadError error={loadError} onRetry={() => setLoadAttempt((value) => value + 1)} />;
   if (!user) return <DashboardPageSkeleton variant="dashboard" />;
 
   const upcoming = bookings
