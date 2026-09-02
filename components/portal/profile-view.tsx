@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
@@ -43,6 +44,7 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileViewProps) {
+  const dataRevision = usePortalRevision("users", "courses", "events");
   usePageTitle(user.projectName || user.name)
 
   const events = store.getEventsByUser(user.id).sort(
@@ -129,7 +131,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         if (active) setObservationsLoading(false)
       })
     return () => { active = false }
-  }, [mayViewStudentObservations, user.id])
+  }, [mayViewStudentObservations, user.id, dataRevision])
 
   useEffect(() => {
     if (user.role !== "student") {
@@ -146,10 +148,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       .then((items) => {
         if (!active) return
         setCourseProgress(items)
-        setCourseVisibilityForm({
-          show: user.showAcademicProgress !== false,
-          courseIds: items.filter((item) => item.visible).map((item) => item.id),
-        })
+
       })
       .catch(() => {
         if (active) setCourseProgressError(true)
@@ -158,7 +157,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         if (active) setCourseProgressLoading(false)
       })
     return () => { active = false }
-  }, [user.id, user.role, user.showAcademicProgress])
+  }, [user.id, user.role, user.showAcademicProgress, dataRevision])
 
   const startEditing = async (section: EditableSection) => {
     if (user.passwordChangeRequired && section !== "password") return

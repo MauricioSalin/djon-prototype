@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useState } from "react";
 import {
   Building2,
@@ -42,6 +43,7 @@ const label =
   "mb-1.5 block text-djon-label font-black uppercase tracking-widest text-djon-text/40";
 
 export default function UnitsAdminPage() {
+  const dataRevision = usePortalRevision("units");
   const { confirm } = useConfirmation();
   const [units, setUnits] = useState<Unit[]>([]);
   const [form, setForm] = useState<UnitForm>(empty);
@@ -57,7 +59,7 @@ export default function UnitsAdminPage() {
   }, [sync]);
   useEffect(() => {
     void load().finally(() => setLoading(false));
-  }, [load]);
+  }, [load, dataRevision]);
 
   const edit = (unit: Unit) => {
     const fallback = academyLocations[unit.key];

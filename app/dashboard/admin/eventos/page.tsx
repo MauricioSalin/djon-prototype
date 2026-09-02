@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Trash2, Edit2, X, Music2, MapPin, Clock, Instagram, Star, GraduationCap } from "lucide-react"
@@ -19,6 +20,7 @@ type FormState = { title: string; date: string; time: string; location: string; 
 const emptyForm: FormState = { title: "", date: "", time: "", location: "", instagram: "", description: "", type: "djOn" }
 
 export default function AdminEventosPage() {
+  const dataRevision = usePortalRevision("events", "users");
   const { confirm } = useConfirmation()
   const [events, setEvents] = useState<DJEvent[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -32,7 +34,7 @@ export default function AdminEventosPage() {
     setEvents(all)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [dataRevision])
 
   const openNew = () => { setForm({ ...emptyForm, type: tab }); setEditingId(null); setShowForm(true) }
 

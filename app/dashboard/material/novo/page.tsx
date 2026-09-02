@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -76,6 +77,7 @@ function snapshotOf(value: EditorSnapshot) {
 }
 
 export default function NovoMaterialPage() {
+  const dataRevision = usePortalRevision("users", "materials");
   const router = useRouter();
   const { confirm } = useConfirmation();
   const [user, setUser] = useState<User | null>(null);
@@ -195,6 +197,14 @@ export default function NovoMaterialPage() {
       }
     };
   }, [router]);
+
+  useEffect(() => {
+    setUser(store.getCurrentUser());
+    const requestedCategoryId = new URLSearchParams(window.location.search).get("categoryId");
+    setCategories(store.getMaterialCategoryRecords()
+      .filter((item) => item.type === "biblioteca" || item.id === requestedCategoryId)
+      .map((item) => item.name));
+  }, [dataRevision]);
 
   const currentSnapshot = useMemo(
     () =>

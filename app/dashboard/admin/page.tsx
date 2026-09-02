@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import Link from "next/link"
@@ -49,6 +50,7 @@ const bookingStatusMeta = {
 } as const
 
 export default function AdminPage() {
+  const dataRevision = usePortalRevision("users", "bookings", "events");
   const [loadError, setLoadError] = useState<unknown>(null)
   const [loadAttempt, setLoadAttempt] = useState(0)
   useLoadRecovery(loadError, setLoadAttempt)
@@ -85,7 +87,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     let mounted = true
-    setLoading(true)
     setLoadError(null)
     void store.bootstrap()
       .then((authenticatedUser) => {
@@ -121,7 +122,7 @@ export default function AdminPage() {
     return () => {
       mounted = false
     }
-  }, [loadAttempt])
+  }, [loadAttempt, dataRevision])
 
   const statCards = [
     { label: "Alunos", value: stats.users, accent: "var(--djon-color-accent)" },

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -169,6 +170,7 @@ function ImageLightbox({
 }
 
 export default function MaterialDetailPage() {
+  const dataRevision = usePortalRevision("materials", "users");
   const [loadError, setLoadError] = useState<unknown>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   useLoadRecovery(loadError, setLoadAttempt);
@@ -185,6 +187,9 @@ export default function MaterialDetailPage() {
 
   usePageTitle(material?.title);
 
+  useEffect(() => { setMaterial(null);
+    setLoaded(false); }, [id]);
+
   useEffect(() => {
     const u = store.getCurrentUser();
     if (!u) {
@@ -193,8 +198,6 @@ export default function MaterialDetailPage() {
     }
     setUser(u);
     let active = true;
-    setLoaded(false);
-    setMaterial(null);
     setLoadError(null);
     setCoverError(false);
     store
@@ -203,7 +206,9 @@ export default function MaterialDetailPage() {
         if (active) setMaterial(item);
       })
       .catch((error: unknown) => {
-        if (active && !(error instanceof ApiError && error.status === 404)) setLoadError(error);
+        if (!active) return;
+        if (error instanceof ApiError && error.status === 404) setMaterial(null);
+        else setLoadError(error);
       })
       .finally(() => {
         if (active) setLoaded(true);
@@ -211,7 +216,7 @@ export default function MaterialDetailPage() {
     return () => {
       active = false;
     };
-  }, [id, router, loadAttempt]);
+  }, [id, router, loadAttempt, dataRevision]);
 
   if (loadError || !user || !loaded) return <DashboardPageSkeleton variant="article" />;
 

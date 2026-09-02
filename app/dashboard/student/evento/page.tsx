@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Trash2, MapPin, Clock, Instagram, Music2, X, Edit2 } from "lucide-react"
@@ -27,6 +28,7 @@ type FormState = { title: string; date: string; time: string; location: string; 
 const emptyForm: FormState = { title: "", date: "", time: "", location: "", instagram: "", description: "" }
 
 export default function StudentEventPage() {
+  const dataRevision = usePortalRevision("users", "events");
   const { confirm } = useConfirmation()
   const [events, setEvents] = useState<DJEvent[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -39,7 +41,7 @@ export default function StudentEventPage() {
     if (u) setEvents(store.getEventsByUser(u.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [dataRevision])
 
   const openNew = () => { setForm(emptyForm); setEditingId(null); setShowForm(true) }
   const openEdit = (ev: DJEvent) => {

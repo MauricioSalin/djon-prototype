@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -35,6 +36,7 @@ export function UpcomingEventsSection({
 }: {
   background?: "page" | "muted";
 }) {
+  const dataRevision = usePortalRevision("events");
   const [events, setEvents] = useState<DJEvent[]>(() =>
     getUpcomingEvents(store.getEvents()),
   );
@@ -54,7 +56,7 @@ export function UpcomingEventsSection({
     return () => {
       active = false;
     };
-  }, []);
+  }, [dataRevision]);
 
   return (
     <section

@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
@@ -24,6 +25,7 @@ const fadeUp = (delay = 0) => ({
 })
 
 export default function StudentPage() {
+  const dataRevision = usePortalRevision("users", "events", "bookings");
   const [user, setUser] = useState<StoreUser | null>(null)
   const [bookings, setBookings] = useState<Booking[]>([])
   const [myEvents, setMyEvents] = useState<DJEvent[]>([])
@@ -35,7 +37,7 @@ export default function StudentPage() {
       setBookings(store.getBookingsByUser(u.id))
       setMyEvents(store.getEventsByUser(u.id))
     }
-  }, [])
+  }, [dataRevision])
 
   if (!user) return <DashboardPageSkeleton variant="dashboard" />
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -10,6 +11,7 @@ import { store, type User } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 
 export default function ProfessorProfessoresPage() {
+  const dataRevision = usePortalRevision("users");
   const router = useRouter()
   const [professors, setProfessors] = useState<User[]>([])
 
@@ -18,7 +20,7 @@ export default function ProfessorProfessoresPage() {
     if (!u) { router.replace("/login"); return }
     if (u.role === "student") { router.replace("/dashboard/student"); return }
     setProfessors(store.getProfessors())
-  }, [router])
+  }, [router, dataRevision])
   const pagination = useListPagination(professors)
 
   return (

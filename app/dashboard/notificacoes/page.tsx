@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -44,6 +45,7 @@ const searchInputClass =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 py-3 pl-11 pr-4 text-sm text-djon-text outline-none transition-colors placeholder:text-djon-text/20 focus:border-djon-accent/45";
 
 export default function NotificationsPage() {
+  const dataRevision = usePortalRevision("users", "notifications", "bookings");
   const router = useRouter();
   const { confirm } = useConfirmation();
   const [user, setUser] = useState<User | null>(() => store.getCurrentUser());
@@ -75,7 +77,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, dataRevision]);
 
   const tabCounts = useMemo(
     () =>

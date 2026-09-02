@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import {
@@ -121,8 +121,23 @@ export function CohortDetailView({
   );
   const [saving, setSaving] = useState(false);
 
+  const previousAttendance = useRef(initialAttendance);
   useEffect(() => {
-    setAttendanceDraft(initialAttendance);
+    const previous = previousAttendance.current;
+    previousAttendance.current = initialAttendance;
+    setAttendanceDraft((current) => Object.fromEntries(
+      Object.entries(initialAttendance).map(([key, fresh]) => {
+        const draft = current[key];
+        const before = previous[key];
+        if (!draft || !before) return [key, fresh];
+        return [key, {
+          ...fresh,
+          present: draft.present !== before.present ? draft.present : fresh.present,
+          materialReleased: draft.materialReleased !== before.materialReleased ? draft.materialReleased : fresh.materialReleased,
+          observation: draft.observation !== before.observation ? draft.observation : fresh.observation,
+        }];
+      }),
+    ));
   }, [initialAttendance]);
 
   const hasChanges = Object.entries(attendanceDraft).some(([key, draft]) => {

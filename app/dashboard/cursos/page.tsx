@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -77,6 +78,7 @@ function CourseThumb({ course }: { course: Course }) {
 }
 
 export default function CoursesPage() {
+  const dataRevision = usePortalRevision("users", "courses");
   const router = useRouter();
   const coverInputRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -106,13 +108,12 @@ export default function CoursesPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     setLoadError(null);
     void load()
       .catch((error: unknown) => { if (active) setLoadError(error); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [load, loadAttempt]);
+  }, [load, loadAttempt, dataRevision]);
 
   const openCreate = () => {
     setCourseForm(emptyCourse);

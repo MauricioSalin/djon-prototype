@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -153,6 +154,7 @@ const permissionGroups = [
 ] as const;
 
 export default function ProfessoresAdminPage() {
+  const dataRevision = usePortalRevision("users", "units");
   const [professors, setProfessors] = useState<User[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -184,7 +186,7 @@ export default function ProfessoresAdminPage() {
         setUnits(store.getUnits().filter((unit) => unit.active));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [dataRevision]);
 
   useEffect(() => {
     if (!removingUser || removalAction) return;

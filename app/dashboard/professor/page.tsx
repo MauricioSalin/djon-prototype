@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -72,6 +73,7 @@ function professorBookings(allBookings: Booking[], professor: User) {
 }
 
 export default function ProfessorHomePage() {
+  const dataRevision = usePortalRevision("users", "bookings", "units", "equipments");
   const [loadError, setLoadError] = useState<unknown>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
   useLoadRecovery(loadError, setLoadAttempt);
@@ -123,7 +125,7 @@ export default function ProfessorHomePage() {
     return () => {
       mounted = false;
     };
-  }, [router, loadAttempt]);
+  }, [router, loadAttempt, dataRevision]);
 
   if (loadError || !user) return <DashboardPageSkeleton variant="dashboard" />;
 

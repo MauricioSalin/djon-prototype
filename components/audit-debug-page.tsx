@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useState } from "react";
 import {
   ChevronLeft,
@@ -68,6 +69,7 @@ function EvidenceDetails({ entry }: { entry: AuditLogPage["items"][number] }) {
 }
 
 export function AuditDebugPage() {
+  const dataRevision = usePortalRevision("audit");
   const [result, setResult] = useState<AuditLogPage | null>(null);
   const [page, setPage] = useState(1);
   const [method, setMethod] = useState("all");
@@ -95,7 +97,7 @@ export function AuditDebugPage() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, dataRevision]);
 
   if (loading && !result) return <DashboardPageSkeleton variant="audit" />;
 

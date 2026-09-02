@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, Disc3 } from "lucide-react";
 import {
@@ -69,6 +70,7 @@ export function BookingDateTimeFields({
   onDurationChange,
   excludeBookingId,
 }: BookingDateTimeFieldsProps) {
+  const dataRevision = usePortalRevision("bookings", "units", "equipments");
   const ready = Boolean(
     unitId && equipmentId && (type === "treino" || professorId),
   );
@@ -122,15 +124,8 @@ export function BookingDateTimeFields({
   );
 
   useEffect(() => {
-    setAvailableDates(new Set());
-    setLoadedMonth("");
-    setDayAvailability({
-      availableTimes: [],
-      occupiedTimes: [],
-      occupiedEquipment: [],
-    });
     if (ready) void loadMonth(currentMonth(date));
-  }, [date, loadMonth, ready]);
+  }, [date, loadMonth, ready, dataRevision]);
 
   useEffect(() => {
     if (!ready || !date) {
@@ -164,7 +159,7 @@ export function BookingDateTimeFields({
     return () => {
       active = false;
     };
-  }, [date, durationMinutes, excludeBookingId, ready, resource, unitId]);
+  }, [date, durationMinutes, excludeBookingId, ready, resource, unitId, dataRevision]);
 
   useEffect(() => {
     if (time && !dayAvailability.availableTimes.includes(time))

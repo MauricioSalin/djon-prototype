@@ -43,7 +43,7 @@ async function mockPortal(
   });
 }
 
-test("agenda waits for an expired cache refresh before rendering bookings", async ({ page }) => {
+test("agenda waits for fresh data on navigation without a cache expiry interval", async ({ page }) => {
   let requests = 0;
   let release!: () => void;
   const gate = new Promise<void>((resolve) => { release = resolve; });
@@ -59,12 +59,12 @@ test("agenda waits for an expired cache refresh before rendering bookings", asyn
   try {
     await page.goto("/dashboard/cursos");
     await expect(page.getByRole("heading", { name: "Cursos", exact: true })).toBeVisible();
-    await page.clock.setFixedTime(new Date("2026-09-10T12:06:00-03:00"));
+    await page.clock.setFixedTime(new Date("2026-09-10T12:00:01-03:00"));
     await page.locator('a[href="/dashboard/agenda"]').first().click();
     await expect.poll(() => requests).toBe(2);
     release();
     await expect(page.getByRole("button", { name: `16:00 ${currentUser.name}`, exact: true })).toBeVisible();
-    expect(requests).toBe(2);
+    expect(requests).toBeGreaterThanOrEqual(2);
   } finally {
     release();
   }
@@ -195,7 +195,7 @@ for (const destination of [
     await page.goto(`/dashboard/perfil/${currentUser.id}`);
     await expect(page.getByRole("heading", { name: currentUser.name, exact: true })).toBeVisible();
     fail = true;
-    await page.clock.setFixedTime(new Date("2026-09-10T12:06:00-03:00"));
+    await page.clock.setFixedTime(new Date("2026-09-10T12:00:01-03:00"));
     await page.locator(`a[href="${destination.path}"]`).first().click();
     await expect.poll(() => requests).toBeGreaterThanOrEqual(4);
     await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);

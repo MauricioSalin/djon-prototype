@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { isRetryableLoadError, useLoadRecovery } from "@/hooks/use-load-recovery";
+import { usePortalSync } from "@/hooks/use-portal-sync";
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -243,14 +245,15 @@ export default function DashboardLayout({
   const { confirm } = useConfirmation();
   const [user, setUser] = useState<StoreUser | null>(null);
   const [portalReady, setPortalReady] = useState(false);
+  const [readyPath, setReadyPath] = useState("");
   const [bootstrapVersion, setBootstrapVersion] = useState(0);
   const [bootstrapError, setBootstrapError] = useState<unknown>(null);
-  const [resumeError, setResumeError] = useState<unknown>(null);
-  const [resumeVersion, setResumeVersion] = useState(0);
   useLoadRecovery(bootstrapError, setBootstrapVersion);
-  useLoadRecovery(resumeError, setResumeVersion);
+  usePortalSync(portalReady);
+  const dataRevision = usePortalRevision("users", "bookings", "notifications");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const searchRevision = usePortalRevision("users", "events", "materials");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchBarOpen, setSearchBarOpen] = useState(false);
@@ -368,6 +371,7 @@ export default function DashboardLayout({
           return;
         }
         setUser(authenticatedUser);
+        setReadyPath(pathname);
         setPortalReady(true);
       })
       .catch((error) => {
@@ -383,31 +387,13 @@ export default function DashboardLayout({
     return () => {
       active = false;
     };
-  }, [bootstrapVersion, redirectToLogin]);
+  }, [bootstrapVersion, redirectToLogin, pathname]);
 
   useEffect(() => {
-    let active = true;
-    const refreshPermissions = () => {
-      if (document.visibilityState !== "visible" || !store.hasSession()) return;
-      setResumeError(null);
-      void store
-        .restoreSession(true)
-        .then((authenticatedUser) => {
-          if (active && authenticatedUser) setUser(authenticatedUser);
-        })
-        .catch((error: unknown) => { if (active) setResumeError(error); });
-    };
-    if (resumeVersion > 0) refreshPermissions();
-    window.addEventListener("focus", refreshPermissions);
-    window.addEventListener("online", refreshPermissions);
-    document.addEventListener("visibilitychange", refreshPermissions);
-    return () => {
-      active = false;
-      window.removeEventListener("focus", refreshPermissions);
-      window.removeEventListener("online", refreshPermissions);
-      document.removeEventListener("visibilitychange", refreshPermissions);
-    };
-  }, [resumeVersion]);
+    setUser(store.getCurrentUser());
+    setNotifications(store.getNotifications());
+    syncPendingRequests();
+  }, [dataRevision, syncPendingRequests]);
 
   useEffect(() => {
     if (!user) return;
@@ -518,41 +504,6 @@ export default function DashboardLayout({
       navigation.removeEventListener("scroll", update);
     };
   }, [updateDesktopNavState, user]);
-
-  useEffect(() => {
-    if (!user || user.role === "student") return;
-    syncPendingRequests();
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") void loadPendingRequests();
-    };
-    void loadPendingRequests();
-    const interval = window.setInterval(refreshWhenVisible, 15000);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
-    };
-  }, [user, loadPendingRequests, syncPendingRequests]);
-
-  useEffect(() => {
-    if (!user) return;
-    setNotifications(store.getNotifications());
-    const load = () =>
-      store
-        .refreshNotifications()
-        .then(setNotifications)
-        .catch(() => undefined);
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") void load();
-    };
-    void load();
-    const interval = window.setInterval(refreshWhenVisible, 30000);
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
-    };
-  }, [user]);
 
   useEffect(() => {
     const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
@@ -806,7 +757,11 @@ export default function DashboardLayout({
     }, 250);
   }, []);
 
-  if (!user || !portalReady) {
+  useEffect(() => {
+    if (searchBarOpen) runSearch(searchQuery);
+  }, [searchRevision, searchBarOpen, searchQuery, runSearch]);
+
+  if (!user || !portalReady || readyPath !== pathname) {
     if (!sessionError || isRetryableLoadError(bootstrapError)) return <div className="min-h-svh bg-djon-page" />;
 
     return (

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -54,6 +55,7 @@ const emptyForm: FormState = {
 };
 
 export default function ProfessorAlunosPage() {
+  const dataRevision = usePortalRevision("users", "units");
   const router = useRouter();
   const [students, setStudents] = useState<AppUser[]>([]);
   const [search, setSearch] = useState("");
@@ -79,7 +81,7 @@ export default function ProfessorAlunosPage() {
       setUnits(availableUnits.filter((unit) => unit.active));
       load();
     });
-  }, [router]);
+  }, [router, dataRevision]);
 
   const openNew = () => {
     const professorUnitId = store.getCurrentUser()?.unitId;

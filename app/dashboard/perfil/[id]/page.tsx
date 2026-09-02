@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
@@ -10,6 +11,7 @@ import { useLoadRecovery } from "@/hooks/use-load-recovery"
 import { useCurrentUser } from "@/hooks/use-current-user"
 
 export default function PublicPerfilPage() {
+  const dataRevision = usePortalRevision("users");
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [viewedUser, setViewedUser] = useState<User | null>(null)
@@ -19,11 +21,12 @@ export default function PublicPerfilPage() {
   const [loadAttempt, setLoadAttempt] = useState(0)
   useLoadRecovery(loadError, setLoadAttempt)
 
+  useEffect(() => { setViewedUser(null) }, [id]);
+
   useEffect(() => {
     const cu = store.getCurrentUser()
     if (!cu) { router.replace("/login"); return }
     let active = true
-    setViewedUser(null)
     setLoadError(null)
     setNotFound(false)
     store.fetchUserById(id, true)
@@ -34,7 +37,7 @@ export default function PublicPerfilPage() {
         else setLoadError(error)
       })
     return () => { active = false }
-  }, [id, router, loadAttempt])
+  }, [id, router, loadAttempt, dataRevision])
 
   if (notFound) return <div className="min-h-[50vh] flex items-center justify-center text-djon-text/50 font-bold">Perfil não encontrado.</div>
   if (!viewedUser || !currentUser) return <DashboardPageSkeleton variant="profile" />

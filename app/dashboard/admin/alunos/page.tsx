@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -55,6 +56,7 @@ const emptyForm: FormState = {
 };
 
 export default function AlunosPage() {
+  const dataRevision = usePortalRevision("users", "units");
   const [students, setStudents] = useState<AppUser[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export default function AlunosPage() {
         load();
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [dataRevision]);
 
   useEffect(() => {
     if (!removingUser || removalAction) return;

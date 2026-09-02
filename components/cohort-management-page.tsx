@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -220,6 +221,7 @@ function CohortCard({
 }
 
 export function CohortManagementPage() {
+  const dataRevision = usePortalRevision("users", "courses", "materials", "units", "equipments");
   const [user, setUser] = useState<User | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [cohorts, setCohorts] = useState<Cohort[]>([]);
@@ -281,13 +283,12 @@ export function CohortManagementPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     setLoadError(null);
     void load()
       .catch((error: unknown) => { if (active) setLoadError(error); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [load, loadAttempt]);
+  }, [load, loadAttempt, dataRevision]);
 
   const openCohort = () => {
     if (!user) return;
@@ -503,6 +504,18 @@ export function CohortManagementPage() {
     );
     if ("date" in changes || "time" in changes) setScheduleConflicts([]);
   };
+
+  const detailId = detail?.id;
+  useEffect(() => {
+    if (!detailId) return;
+    let active = true;
+    void store.fetchCohort(detailId).then((updated) => {
+      if (active) setDetail(updated);
+    }).catch((error: unknown) => {
+      if (active && error instanceof ApiError && error.status === 404) setDetail(null);
+    });
+    return () => { active = false; };
+  }, [detailId, dataRevision]);
 
   const openDetail = async (cohort: Cohort) => {
     setDetail(await store.fetchCohort(cohort.id));

@@ -1,5 +1,7 @@
 "use client";
 
+import { beginDataWrite, dataEpoch, invalidateData, PORTAL_RESOURCES, resourcesForPath, retryDataRead, waitForDataWrites, type PortalResource } from "@/lib/portal-data";
+
 import {
   notifyRequestError,
   notifySuccess,
@@ -507,28 +509,8 @@ type ApiRecord = Record<string, unknown>;
 type ApiPage = { items: ApiRecord[]; total: number };
 type CategoryRecord = MaterialCategory;
 
-type PortalCacheSnapshot = {
-  version: number;
-  savedAt: number;
-  userId: string;
-  role: Role;
-  users: User[];
-  events: DJEvent[];
-  bookings: Booking[];
-  materials: Material[];
-  categories: CategoryRecord[];
-  notifications: Notification[];
-  units: Unit[];
-  equipments: Equipment[];
-  leads: Lead[];
-};
-
-const TOKEN_KEY = "djon_access_token";
+export const TOKEN_KEY = "djon_access_token";
 const PORTAL_CACHE_KEY = "djon_portal_cache_v1";
-const PORTAL_CACHE_VERSION = 1;
-const PORTAL_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
-const NOTIFICATIONS_STALE_MS = 10 * 1000;
-const BOOKINGS_STALE_MS = 4 * 1000;
 export const SESSION_EXPIRED_EVENT = "djon:session-expired";
 export const CURRENT_USER_UPDATED_EVENT = "djon:current-user-updated";
 let sessionExpirationAnnounced = false;
@@ -547,7 +529,7 @@ export class ApiError extends Error {
   }
 }
 
-function apiBase() {
+export function apiBase() {
   if (process.env.NEXT_PUBLIC_API_URL)
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
   if (typeof window !== "undefined")
@@ -560,8 +542,7 @@ function clearPortalCache() {
   try {
     sessionStorage.removeItem(PORTAL_CACHE_KEY);
   } catch {
-    // O cache de sessão é apenas uma otimização; armazenamento indisponível
-    // não pode interromper autenticação nem requisições da aplicação.
+    // Remove legacy snapshots without making storage availability a prerequisite.
   }
 }
 
@@ -965,49 +946,58 @@ async function request<T>(
   options: RequestInit = {},
   showError = true,
 ): Promise<T> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+  const method = (options.method ?? "GET").toUpperCase();
+  const resources = resourcesForPath(path);
+  const read = method === "GET";
+  const finishWrite = !read && resources.length ? beginDataWrite(resources) : undefined;
   const headers = new Headers(options.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  if (options.body && !(options.body instanceof FormData))
-    headers.set("Content-Type", "application/json");
-  let response: Response;
+  if (options.body && !(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
   try {
-    response = await fetchWithRetry(`${apiBase()}${path}`, {
-      ...options,
-      headers,
-      cache: "no-store",
-    });
-  } catch {
-    const error = new ApiError(
-      "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
-      0,
-    );
-    if (showError) notifyRequestError(error);
-    throw error;
-  }
-  const payload = (await response.json().catch(() => undefined)) as
-    ApiRecord | undefined;
-  if (!response.ok) {
-    if (response.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem(TOKEN_KEY);
-      if (token && !sessionExpirationAnnounced) {
-        sessionExpirationAnnounced = true;
-        window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    for (;;) {
+      if (read) await waitForDataWrites();
+      const epoch = dataEpoch(resources);
+      let response: Response;
+      try {
+        response = await fetchWithRetry(`${apiBase()}${path}`, {
+          ...options, headers, cache: "no-store",
+          signal: options.signal ?? AbortSignal.timeout(30_000),
+        });
+      } catch {
+        throw new ApiError("Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.", 0);
       }
+      const payload = (await response.json().catch(() => undefined)) as ApiRecord | undefined;
+      // A response belonging to an old account cannot log out or populate a new one.
+      if (typeof window !== "undefined" && token !== localStorage.getItem(TOKEN_KEY)) {
+        throw new ApiError("A sessão mudou durante o carregamento.", 409);
+      }
+      // A completed write or server invalidation makes every earlier read obsolete.
+      if (read && epoch !== dataEpoch(resources)) continue;
+      if (!response.ok) {
+        if (response.status === 401 && typeof window !== "undefined") {
+          localStorage.removeItem(TOKEN_KEY);
+          if (token && !sessionExpirationAnnounced) {
+            sessionExpirationAnnounced = true;
+            window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+          }
+        }
+        const rawMessage = payload?.message;
+        const message = Array.isArray(rawMessage) ? rawMessage.join(" ") : asString(rawMessage, "Não foi possível concluir a operação.");
+        throw new ApiError(message, response.status, payload);
+      }
+      if (payload === undefined && response.status !== 204) {
+        throw new ApiError("O servidor retornou uma resposta incompleta.", 503);
+      }
+      return payload as T;
     }
-    const rawMessage = payload?.message;
-    const message = Array.isArray(rawMessage)
-      ? rawMessage.join(" ")
-      : asString(rawMessage, "Não foi possível concluir a operação.");
-    const error = new ApiError(message, response.status, payload);
+  } catch (error) {
+    if (read && error instanceof ApiError && (error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500)) retryDataRead(resources);
     if (showError) notifyRequestError(error);
     throw error;
+  } finally {
+    finishWrite?.();
   }
-  if ((options.method ?? "GET").toUpperCase() !== "GET") {
-    clearPortalCache();
-  }
-  return payload as T;
 }
 
 function json(method: string, body?: unknown, keepalive = false): RequestInit {
@@ -1051,11 +1041,7 @@ class ApiStore {
     Promise<PortalHeroContent>
   >();
   private hasBootstrapData = false;
-  private bootstrapLoadedAt = 0;
-  private notificationsLoadedAt = 0;
-  private bookingsLoadedAt = 0;
-  private publicUnitsLoadedAt = 0;
-  private adminUsersLoadedAt = 0;
+  private loadedEpoch = "";
 
   hasSession() {
     return (
@@ -1068,6 +1054,8 @@ class ApiStore {
       "/auth/login",
       json("POST", { email, password }),
     );
+    this.reset();
+    invalidateData();
     localStorage.setItem(TOKEN_KEY, result.accessToken);
     sessionExpirationAnnounced = false;
     this.currentUser = normalizeUser(result.user);
@@ -1079,6 +1067,7 @@ class ApiStore {
 
   logout() {
     localStorage.removeItem(TOKEN_KEY);
+    invalidateData();
     sessionExpirationAnnounced = true;
     this.reset();
   }
@@ -1087,16 +1076,10 @@ class ApiStore {
     if (!this.hasSession()) return null;
     if (this.bootstrapPromise) return this.bootstrapPromise;
 
-    if (
-      !force && this.currentUser && this.currentUserHydrated &&
-      this.hasBootstrapData &&
-      Date.now() - this.bootstrapLoadedAt <= PORTAL_CACHE_MAX_AGE_MS
-    ) {
+    if (!force && this.currentUserHydrated && this.hasBootstrapData && this.loadedEpoch === dataEpoch()) {
       return this.currentUser;
     }
 
-    // Callers copy data into React state after awaiting this promise.
-    // An expired snapshot must finish refreshing before they read the store.
     this.bootstrapPromise = this.bootstrapPortal(force).finally(() => {
       this.bootstrapPromise = null;
     });
@@ -1104,9 +1087,9 @@ class ApiStore {
   }
 
   private async bootstrapPortal(force: boolean) {
-    const me = await this.restoreSession();
+    clearPortalCache();
+    const me = await this.restoreSession(force);
     if (!me) return null;
-    if (!force && this.hydratePortalCache(me)) return me;
     return this.loadAll(me);
   }
 
@@ -1140,10 +1123,11 @@ class ApiStore {
     return this.restoreSessionPromise;
   }
 
-  private async loadAll(authenticatedUser?: User) {
+  private async loadAll(authenticatedUser?: User, resources: readonly PortalResource[] = PORTAL_RESOURCES): Promise<User | null> {
+    const epoch = dataEpoch();
+    const includes = (resource: PortalResource) => resources.includes(resource);
     const me = authenticatedUser ?? (await this.restoreSession());
     if (!me) return null;
-    this.currentUser = me;
     const usersPath =
       me.role === "student" ? "/users?role=professor" : "/users";
     const [
@@ -1157,42 +1141,48 @@ class ApiStore {
       equipments,
       leads,
     ] = await Promise.all([
-      this.fetchAllPages(usersPath),
-      this.fetchAllPages("/events"),
-      this.fetchAllPages("/bookings"),
-      this.fetchAllPages("/materials"),
-      request<ApiRecord[]>("/materials/categories"),
-      request<ApiRecord[]>("/notifications"),
-      request<ApiRecord[]>("/units"),
-      request<ApiRecord[]>("/equipments"),
-      hasPermission(me, "leads.manage")
+      includes("users") ? this.fetchAllPages(usersPath) : null,
+      includes("events") ? this.fetchAllPages("/events") : null,
+      includes("bookings") ? this.fetchAllPages("/bookings") : null,
+      includes("materials") ? this.fetchAllPages("/materials") : null,
+      includes("materials") ? request<ApiRecord[]>("/materials/categories") : null,
+      includes("notifications") ? request<ApiRecord[]>("/notifications") : null,
+      includes("units") ? request<ApiRecord[]>("/units") : null,
+      includes("equipments") ? request<ApiRecord[]>("/equipments") : null,
+      includes("leads") && hasPermission(me, "leads.manage")
         ? request<ApiRecord[]>("/leads")
-        : Promise.resolve<ApiRecord[]>([]),
+        : null,
     ]);
-    this.users = this.uniqueUsers([...userItems.map(normalizeUser), me]);
-    this.events = eventItems.map(normalizeEvent);
-    this.bookings = bookingItems.map(normalizeBooking);
-    this.materials = materialItems.map(normalizeMaterial);
-    this.categories = categories.map((item) => ({
+    if (epoch !== dataEpoch()) return this.loadAll(await this.restoreSession(true) ?? undefined, resources);
+    this.currentUser = me;
+    if (userItems) this.users = this.uniqueUsers([...userItems.map(normalizeUser), me]);
+    if (eventItems) this.events = eventItems.map(normalizeEvent);
+    if (bookingItems) this.bookings = bookingItems.map(normalizeBooking);
+    if (materialItems) this.materials = materialItems.map(normalizeMaterial);
+    if (categories) this.categories = categories.map((item) => ({
       id: asString(item.id),
       name: asString(item.name),
       type: item.type === "curso" ? "curso" : "biblioteca",
       systemKey: asString(item.systemKey) || undefined,
     }));
-    this.notifications = notifications.map((item) =>
+    if (notifications) this.notifications = notifications.map((item) =>
       this.normalizeNotification(item),
     );
-    this.units = units.map(normalizeUnit);
-    this.equipments = equipments.map(normalizeEquipment);
-    this.leads = leads.map(normalizeLead);
-    const loadedAt = Date.now();
+    if (units) this.units = units.map(normalizeUnit);
+    if (equipments) this.equipments = equipments.map(normalizeEquipment);
+    if (leads) this.leads = leads.map(normalizeLead);
     this.hasBootstrapData = true;
-    this.bootstrapLoadedAt = loadedAt;
-    this.notificationsLoadedAt = loadedAt;
-    this.bookingsLoadedAt = loadedAt;
-    this.publicUnitsLoadedAt = loadedAt;
-    this.persistPortalCache();
+    this.loadedEpoch = epoch;
+    window.dispatchEvent(new Event(CURRENT_USER_UPDATED_EVENT));
     return me;
+  }
+
+  async synchronize(resources: readonly PortalResource[]) {
+    if (!this.hasSession()) return;
+    if (this.bootstrapPromise) await this.bootstrapPromise;
+    if (resources.includes("portal-content")) this.portalHeroes.clear();
+    const me = await this.restoreSession(resources.includes("users"));
+    if (me) await this.loadAll(me, resources);
   }
 
   getCurrentUser = () => this.currentUser;
@@ -1352,18 +1342,14 @@ class ApiStore {
     };
   }
 
-  async fetchUserById(id: string, force = false) {
-    if (id === this.currentUser?.id) return this.restoreSession(force);
-    const cached = this.getUserById(id);
-    if (cached && !force) return cached;
+  async fetchUserById(id: string, _force = false) {
+    if (id === this.currentUser?.id) return this.restoreSession(true);
     const user = normalizeUser(await request<ApiRecord>(`/users/${id}`));
     this.users = this.uniqueUsers([...this.users, user]);
     return user;
   }
 
-  async fetchMaterialById(id: string, force = false) {
-    const cached = this.getMaterialById(id);
-    if (cached && !force) return cached;
+  async fetchMaterialById(id: string, _force = false) {
     const material = normalizeMaterial(
       await request<ApiRecord>(`/materials/${id}`),
     );
@@ -1371,21 +1357,13 @@ class ApiStore {
     return material;
   }
 
-  async refreshNotifications(force = false) {
-    if (
-      !force &&
-      this.notificationsLoadedAt > 0 &&
-      Date.now() - this.notificationsLoadedAt < NOTIFICATIONS_STALE_MS
-    ) {
-      return this.getNotifications();
-    }
+  async refreshNotifications(_force = false) {
     if (this.notificationsPromise) return this.notificationsPromise;
     this.notificationsPromise = request<ApiRecord[]>("/notifications")
       .then((notifications) => {
         this.notifications = notifications.map((item) =>
           this.normalizeNotification(item),
         );
-        this.notificationsLoadedAt = Date.now();
         return this.getNotifications();
       })
       .finally(() => {
@@ -1418,19 +1396,11 @@ class ApiStore {
     );
   }
 
-  async refreshBookings(force = false) {
-    if (
-      !force &&
-      this.bookingsLoadedAt > 0 &&
-      Date.now() - this.bookingsLoadedAt < BOOKINGS_STALE_MS
-    ) {
-      return this.getBookings();
-    }
+  async refreshBookings(_force = false) {
     if (this.bookingsPromise) return this.bookingsPromise;
     this.bookingsPromise = this.fetchAllPages("/bookings")
       .then((bookings) => {
         this.bookings = bookings.map(normalizeBooking);
-        this.bookingsLoadedAt = Date.now();
         return this.getBookings();
       })
       .finally(() => {
@@ -1527,13 +1497,6 @@ class ApiStore {
   }
 
   async listAdminUsers(includeInactive = false) {
-    if (
-      includeInactive &&
-      this.adminUsersLoadedAt > 0 &&
-      Date.now() - this.adminUsersLoadedAt < PORTAL_CACHE_MAX_AGE_MS
-    ) {
-      return this.getUsers();
-    }
     if (includeInactive && this.adminUsersPromise) {
       return this.adminUsersPromise;
     }
@@ -1544,7 +1507,6 @@ class ApiStore {
         ...items.map(normalizeUser),
         ...(this.currentUser ? [this.currentUser] : []),
       ]);
-      if (includeInactive) this.adminUsersLoadedAt = Date.now();
       return this.getUsers();
     });
     if (!includeInactive) return load;
@@ -2339,17 +2301,10 @@ class ApiStore {
   }
 
   async getPublicUnits() {
-    if (
-      this.publicUnitsLoadedAt > 0 &&
-      Date.now() - this.publicUnitsLoadedAt < PORTAL_CACHE_MAX_AGE_MS
-    ) {
-      return this.getUnits();
-    }
     if (!this.publicUnitsPromise) {
       this.publicUnitsPromise = request<ApiRecord[]>("/units", {}, false)
         .then((items) => {
           this.units = items.map(normalizeUnit);
-          this.publicUnitsLoadedAt = Date.now();
           return this.getUnits();
         })
         .finally(() => {
@@ -2360,7 +2315,6 @@ class ApiStore {
   }
 
   async listAdminUnits() {
-    this.publicUnitsLoadedAt = 0;
     this.units = (await request<ApiRecord[]>("/units/admin/all")).map(
       normalizeUnit,
     );
@@ -2573,13 +2527,15 @@ class ApiStore {
     );
   }
 
-  private async fetchAllPages(path: string) {
+  private async fetchAllPages(path: string): Promise<ApiRecord[]> {
+    const epoch = dataEpoch(resourcesForPath(path));
     const items: ApiRecord[] = [];
     const separator = path.includes("?") ? "&" : "?";
     for (let page = 1; ; page += 1) {
       const result = await request<ApiPage>(
         `${path}${separator}page=${page}&limit=100`,
       );
+      if (epoch !== dataEpoch(resourcesForPath(path))) return this.fetchAllPages(path);
       items.push(...result.items);
       if (items.length >= result.total || result.items.length === 0)
         return items;
@@ -2605,84 +2561,6 @@ class ApiStore {
     };
   }
 
-  private hydratePortalCache(me: User) {
-    if (typeof window === "undefined") return false;
-    try {
-      const raw = sessionStorage.getItem(PORTAL_CACHE_KEY);
-      if (!raw) return false;
-      const snapshot = JSON.parse(raw) as Partial<PortalCacheSnapshot>;
-      const arrays = [
-        snapshot.users,
-        snapshot.events,
-        snapshot.bookings,
-        snapshot.materials,
-        snapshot.categories,
-        snapshot.notifications,
-        snapshot.units,
-        snapshot.equipments,
-        snapshot.leads,
-      ];
-      if (
-        snapshot.version !== PORTAL_CACHE_VERSION ||
-        snapshot.userId !== me.id ||
-        snapshot.role !== me.role ||
-        typeof snapshot.savedAt !== "number" ||
-        Date.now() - snapshot.savedAt > PORTAL_CACHE_MAX_AGE_MS ||
-        arrays.some((items) => !Array.isArray(items))
-      ) {
-        clearPortalCache();
-        return false;
-      }
-
-      this.currentUser = me;
-      this.users = this.uniqueUsers([
-        me,
-        ...(snapshot.users as User[]).filter((user) => user.id !== me.id),
-      ]);
-      this.events = snapshot.events as DJEvent[];
-      this.bookings = snapshot.bookings as Booking[];
-      this.materials = snapshot.materials as Material[];
-      this.categories = snapshot.categories as CategoryRecord[];
-      this.notifications = snapshot.notifications as Notification[];
-      this.units = snapshot.units as Unit[];
-      this.equipments = snapshot.equipments as Equipment[];
-      this.leads = snapshot.leads as Lead[];
-      this.hasBootstrapData = true;
-      this.bootstrapLoadedAt = snapshot.savedAt;
-      this.notificationsLoadedAt = snapshot.savedAt;
-      this.bookingsLoadedAt = snapshot.savedAt;
-      this.publicUnitsLoadedAt = snapshot.savedAt;
-      return true;
-    } catch {
-      clearPortalCache();
-      return false;
-    }
-  }
-
-  private persistPortalCache() {
-    if (typeof window === "undefined" || !this.currentUser) return;
-    const snapshot: PortalCacheSnapshot = {
-      version: PORTAL_CACHE_VERSION,
-      savedAt: this.bootstrapLoadedAt,
-      userId: this.currentUser.id,
-      role: this.currentUser.role,
-      users: this.users,
-      events: this.events,
-      bookings: this.bookings,
-      materials: this.materials,
-      categories: this.categories,
-      notifications: this.notifications,
-      units: this.units,
-      equipments: this.equipments,
-      leads: this.leads,
-    };
-    try {
-      sessionStorage.setItem(PORTAL_CACHE_KEY, JSON.stringify(snapshot));
-    } catch {
-      clearPortalCache();
-    }
-  }
-
   private reset() {
     clearPortalCache();
     this.currentUser = null;
@@ -2697,11 +2575,9 @@ class ApiStore {
     this.equipments = [];
     this.leads = [];
     this.hasBootstrapData = false;
-    this.bootstrapLoadedAt = 0;
-    this.notificationsLoadedAt = 0;
-    this.bookingsLoadedAt = 0;
-    this.publicUnitsLoadedAt = 0;
-    this.adminUsersLoadedAt = 0;
+    this.loadedEpoch = "";
+    this.portalHeroes.clear();
+    this.portalHeroPromises.clear();
     this.bootstrapPromise = null;
     this.restoreSessionPromise = null;
     this.publicUnitsPromise = null;

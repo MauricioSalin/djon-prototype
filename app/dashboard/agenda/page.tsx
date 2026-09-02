@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import {
   useEffect,
   useState,
@@ -689,6 +690,7 @@ function ListView({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function AgendaPage() {
+  const dataRevision = usePortalRevision("users", "bookings", "units", "equipments");
   const router = useRouter();
   const today = useMemo(() => new Date(), []);
 
@@ -775,7 +777,6 @@ export default function AgendaPage() {
 
   useEffect(() => {
     let mounted = true;
-    setLoading(true);
     setLoadError(null);
     void store
       .bootstrap()
@@ -799,7 +800,7 @@ export default function AgendaPage() {
     return () => {
       mounted = false;
     };
-  }, [router, loadAttempt]);
+  }, [router, loadAttempt, dataRevision]);
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {

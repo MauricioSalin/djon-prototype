@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Save, Instagram, Music, Youtube, Camera } from "lucide-react"
@@ -10,6 +11,8 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons"
 const inp = "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all"
 
 export default function AdminConfigPage() {
+  const dataRevision = usePortalRevision("users", "events", "bookings");
+  const dirty = useRef(false);
   const [user, setUser] = useState<User | null>(null)
   const [form, setForm] = useState({ name: "", bio: "", instagram: "", soundcloud: "", youtube: "" })
   const avatarRef = useRef<HTMLInputElement>(null)
@@ -18,10 +21,10 @@ export default function AdminConfigPage() {
   useEffect(() => {
     const u = store.getCurrentUser()
     setUser(u)
-    if (u) {
+    if (u && !dirty.current) {
       setForm({ name: u.name, bio: u.bio ?? "", instagram: u.socials?.instagram ?? "", soundcloud: u.socials?.soundcloud ?? "", youtube: u.socials?.youtube ?? "" })
     }
-  }, [])
+  }, [dataRevision])
 
   const handleImageUpload = async (file: File, field: "avatar" | "banner") => {
     if (!user) return
@@ -39,6 +42,7 @@ export default function AdminConfigPage() {
     e.preventDefault()
     if (!user) return
     const updated = await store.updateUser(user.id, { name: form.name, bio: form.bio, socials: { instagram: form.instagram, soundcloud: form.soundcloud, youtube: form.youtube } })
+    dirty.current = false
     setUser(updated)
   }
 
@@ -118,7 +122,7 @@ export default function AdminConfigPage() {
         <p className="text-djon-accent text-xs tracking-wide font-bold mb-1">PERFIL DA ACADEMIA</p>
         <h2 className="text-xl font-black text-djon-text tracking-tighter mb-4">Editar dados</h2>
 
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onChange={() => { dirty.current = true }} onSubmit={handleSave} className="space-y-4">
           <div>
             <label className="text-djon-text/40 text-xs font-bold tracking-wide mb-1.5 block">NOME</label>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inp} />

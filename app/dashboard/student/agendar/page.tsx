@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -61,6 +62,7 @@ function StatusBadge({ status }: { status: Booking["status"] }) {
 }
 
 export default function AgendarPage() {
+  const dataRevision = usePortalRevision("users", "bookings", "units", "equipments", "courses");
   const { confirm } = useConfirmation();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -132,7 +134,6 @@ export default function AgendarPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     setLoadError(null);
 
     const initialize = async () => {
@@ -159,7 +160,7 @@ export default function AgendarPage() {
         availableUnits.find((unit) => unit.key === selectedKey) ??
         availableUnits[0];
       if (preferred) {
-        setForm((current) => ({ ...current, unitId: preferred.id }));
+        setForm((current) => ({ ...current, unitId: current.unitId || preferred.id }));
       }
     };
 
@@ -171,7 +172,7 @@ export default function AgendarPage() {
     return () => {
       active = false;
     };
-  }, [loadAttempt]);
+  }, [loadAttempt, dataRevision]);
 
   const openRequest = (booking?: Booking) => {
     setReschedulingFrom(booking ?? null);

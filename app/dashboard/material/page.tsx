@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -108,6 +109,7 @@ function CourseThumb({ course }: { course: Course }) {
 }
 
 export default function MaterialPage() {
+  const dataRevision = usePortalRevision("materials", "courses", "users");
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -132,7 +134,6 @@ export default function MaterialPage() {
   const listScrollPosition = useRef(0);
   const selectedCourseRef = useRef<string | null>(null);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
-  const lastRefreshAtRef = useRef(0);
 
   const canAuthor = canAuthorMaterials(user);
   const canManageMaterials = hasPermission(user, "materials.manage");
@@ -159,11 +160,8 @@ export default function MaterialPage() {
     );
 
   const refreshMaterialData = useCallback(
-    (currentUser: User, force = false) => {
+    (currentUser: User, _force = false) => {
       if (refreshPromiseRef.current) return refreshPromiseRef.current;
-      if (!force && Date.now() - lastRefreshAtRef.current < 15_000) {
-        return Promise.resolve();
-      }
 
       setMaterialLoadError(false);
       const refresh = Promise.all([
@@ -179,7 +177,6 @@ export default function MaterialPage() {
               .map((category) => category.name),
           );
           setCourses(nextCourses);
-          lastRefreshAtRef.current = Date.now();
           setMaterialsLoaded(true);
           setCoursesLoaded(true);
         })
@@ -244,7 +241,7 @@ export default function MaterialPage() {
       setActiveCategory(DRAFTS_CATEGORY);
     }
     syncCourseFromUrl();
-  }, [refreshMaterialData, router, syncCourseFromUrl]);
+  }, [refreshMaterialData, router, syncCourseFromUrl, dataRevision]);
 
   useEffect(() => {
     if (!user) return;

@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useState } from "react";
 import {
   Edit2,
@@ -51,6 +52,7 @@ const formatAvailabilityDateTime = (value: string) => {
 };
 
 export default function EquipmentsAdminPage() {
+  const dataRevision = usePortalRevision("equipments", "units");
   const { confirm } = useConfirmation();
   const [equipments, setEquipments] = useState<Equipment[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -76,7 +78,7 @@ export default function EquipmentsAdminPage() {
 
   useEffect(() => {
     void load().finally(() => setLoading(false));
-  }, [load]);
+  }, [load, dataRevision]);
 
   const openNew = () => {
     setForm({

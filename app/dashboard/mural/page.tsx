@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useRef, useState } from "react"
 import { motion } from "framer-motion"
 import { Music2, RefreshCw, Search } from "lucide-react"
@@ -39,6 +40,7 @@ function normalizeSearchText(value: string) {
 }
 
 export default function MuralPage() {
+  const dataRevision = usePortalRevision("events", "users");
   const [djOnEvents, setDJOnEvents] = useState<DJEvent[]>(() =>
     sortUpcomingFirst(store.getDJOnEvents()),
   )
@@ -77,7 +79,7 @@ export default function MuralPage() {
       if (document.visibilityState === "visible") void syncEvents()
     }
 
-    if (!hasLoadedEvents.current) void syncEvents(true)
+    void syncEvents(true)
     window.addEventListener("focus", refreshWhenVisible)
     document.addEventListener("visibilitychange", refreshWhenVisible)
     return () => {
@@ -85,7 +87,7 @@ export default function MuralPage() {
       window.removeEventListener("focus", refreshWhenVisible)
       document.removeEventListener("visibilitychange", refreshWhenVisible)
     }
-  }, [reloadVersion])
+  }, [reloadVersion, dataRevision])
 
   const allEvents = sortUpcomingFirst([...djOnEvents, ...studentEvents, ...professorEvents])
   const eventsByType =

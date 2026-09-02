@@ -1,5 +1,6 @@
 "use client"
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { Inbox, Mail, MapPin, Phone, Save, Trash2 } from "lucide-react"
 import { academyLocations } from "@/lib/locations"
@@ -20,6 +21,7 @@ const statusLabels: Record<Lead["status"], string> = {
 }
 
 export default function LeadsAdminPage() {
+  const dataRevision = usePortalRevision("leads", "units", "users");
   const { confirm } = useConfirmation()
   const [leads, setLeads] = useState<Lead[]>([])
   const [units, setUnits] = useState<Unit[]>([])
@@ -30,7 +32,7 @@ export default function LeadsAdminPage() {
   useEffect(() => {
     void store.listLeads().then(load).catch(() => undefined).finally(() => setLoading(false))
     void store.getPublicUnits().then(setUnits).catch(() => undefined)
-  }, [])
+  }, [dataRevision])
 
   const updateLocal = (id: string, changes: Partial<Lead>) =>
     setLeads((current) => current.map((lead) => lead.id === id ? { ...lead, ...changes } : lead))

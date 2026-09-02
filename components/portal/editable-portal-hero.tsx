@@ -1,5 +1,6 @@
 "use client";
 
+import { usePortalRevision } from "@/hooks/use-portal-revision";
 import Image from "next/image";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
@@ -102,6 +103,7 @@ export function EditablePortalHero({
   showDivider = true,
   children,
 }: EditablePortalHeroProps) {
+  const dataRevision = usePortalRevision("portal-content", "users");
   const [contents, setContents] = useState<
     Partial<Record<PortalHeroKey, PortalHeroContent>>
   >(() => ({ [heroKey]: contentFromDefaults(heroKey, defaults) }));
@@ -155,7 +157,7 @@ export function EditablePortalHero({
     return () => {
       active = false;
     };
-  }, [bannerKey, editorSections, heroKey]);
+  }, [bannerKey, editorSections, heroKey, dataRevision]);
 
   const content =
     contents[heroKey] ?? contentFromDefaults(heroKey, defaultsFor(heroKey));
