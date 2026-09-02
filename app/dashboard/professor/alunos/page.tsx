@@ -21,6 +21,7 @@ import { SoundCloudIcon } from "@/components/social-icons";
 import { DjonSelect } from "@/components/djon-select";
 import { store, type Unit, type User as AppUser } from "@/lib/store";
 import { formatPhone, phoneMatchesSearch } from "@/lib/phone";
+import { formatCpf } from "@/lib/cpf";
 import {
   ListPagination,
   useListPagination,
@@ -298,11 +299,14 @@ export default function ProfessorAlunosPage() {
                           className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30"
                         />
                         <input
+                          type="tel"
                           value={form.cpf}
                           onChange={(e) =>
-                            setForm({ ...form, cpf: e.target.value })
+                            setForm({ ...form, cpf: formatCpf(e.target.value) })
                           }
                           placeholder="000.000.000-00"
+                          inputMode="numeric"
+                          maxLength={14}
                           className={`${inp} pl-10`}
                         />
                       </div>

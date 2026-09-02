@@ -25,6 +25,7 @@ import {
   useListPagination,
 } from "@/components/list-pagination";
 import { formatPhone, phoneMatchesSearch, whatsappUrl } from "@/lib/phone";
+import { formatCpf } from "@/lib/cpf";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 
 const inp =
@@ -109,7 +110,7 @@ export default function AlunosPage() {
       projectName: u.projectName ?? "",
       email: u.email,
       whatsapp: formatPhone(u.whatsapp),
-      cpf: u.cpf ?? "",
+      cpf: formatCpf(u.cpf),
       birthDate: u.birthDate ?? "",
       trainingHoursLimit: u.trainingHoursLimit ?? 15,
       unitId: u.unitId ?? units[0]?.id ?? "",
@@ -349,11 +350,14 @@ export default function AlunosPage() {
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-djon-text/30"
                     />
                     <input
+                      type="tel"
                       value={form.cpf}
                       onChange={(e) =>
-                        setForm({ ...form, cpf: e.target.value })
+                        setForm({ ...form, cpf: formatCpf(e.target.value) })
                       }
                       placeholder="000.000.000-00"
+                      inputMode="numeric"
+                      maxLength={14}
                       className={`${inp} pl-10`}
                     />
                   </div>
