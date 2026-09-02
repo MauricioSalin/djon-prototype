@@ -454,6 +454,7 @@
     --djon-font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
     --djon-font-mono: ui-monospace, "Cascadia Mono", monospace;
     --djon-font-titling: "Arial Narrow", "Roboto Condensed", sans-serif;
+    font-family: var(--djon-font-sans);
   }
 }
 
