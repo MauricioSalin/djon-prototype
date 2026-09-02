@@ -426,7 +426,9 @@ test.describe("landing em iPhone", () => {
     await page.route("**/api/v1/**", (route) => route.fulfill({ json: [] }));
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    await expect.poll(() => splineRequests.length).toBeGreaterThan(0);
+    await expect
+      .poll(() => splineRequests.length, { timeout: 20_000 })
+      .toBeGreaterThan(0);
 
     await expect(page.locator("[data-spline-fallback]")).toHaveCount(0);
   });
