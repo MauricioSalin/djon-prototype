@@ -289,6 +289,9 @@ async function expectMobileMenu(page: Page, role: PortalRole) {
   await expect
     .poll(() => page.evaluate(() => document.body.style.overflow))
     .toBe("hidden");
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.position))
+    .toBe("fixed");
 
   const geometry = await menu.evaluate((element) => {
     const rect = element.getBoundingClientRect();
@@ -322,6 +325,9 @@ async function expectMobileMenu(page: Page, role: PortalRole) {
   await expect(menu).toBeHidden();
   await expect
     .poll(() => page.evaluate(() => document.body.style.overflow))
+    .toBe("");
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.position))
     .toBe("");
 }
 
@@ -562,6 +568,8 @@ async function expectPublicMobileMenu(page: Page) {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("load");
   await page.waitForTimeout(300);
+  await page.evaluate(() => window.scrollTo(0, 500));
+  const lockedScrollY = await page.evaluate(() => window.scrollY);
   const openButton = page.getByRole("button", {
     name: "Abrir menu",
     exact: true,
@@ -576,10 +584,21 @@ async function expectPublicMobileMenu(page: Page) {
   await expect
     .poll(() => page.evaluate(() => document.body.style.overflow))
     .toBe("hidden");
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.position))
+    .toBe("fixed");
 
   await expect
-    .poll(() => menu.evaluate((element) => element.getBoundingClientRect().top))
-    .toBeCloseTo(64, 0);
+    .poll(async () => {
+      const [menuTop, headerBottom] = await Promise.all([
+        menu.evaluate((element) => element.getBoundingClientRect().top),
+        page
+          .getByRole("navigation", { name: "Navegação principal" })
+          .evaluate((element) => element.getBoundingClientRect().bottom),
+      ]);
+      return Math.abs(menuTop - headerBottom);
+    })
+    .toBeLessThanOrEqual(1);
   await expect
     .poll(() =>
       menu.evaluate(
@@ -594,6 +613,10 @@ async function expectPublicMobileMenu(page: Page) {
   await expect
     .poll(() => page.evaluate(() => document.body.style.overflow))
     .toBe("");
+  await expect
+    .poll(() => page.evaluate(() => document.body.style.position))
+    .toBe("");
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(lockedScrollY);
 }
 
 test.describe("PWA real", () => {
@@ -765,6 +788,15 @@ test("aluno mantém somente o botão superior no estado vazio de agendamentos", 
     .locator("..");
   await expect(emptyState).toBeVisible();
   await expect(emptyState.getByRole("button")).toHaveCount(0);
+});
+
+test("menu lateral do portal rola internamente e bloqueia o fundo", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await mockPortal(page, "admin");
+  await page.goto("/dashboard/admin");
+  await expectMobileMenu(page, "admin");
 });
 
 for (const viewport of [

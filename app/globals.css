@@ -6,6 +6,7 @@
 :root {
   /* Keep fixed headers below the device's status bar/notch without UA detection. */
   --djon-safe-area-top: env(safe-area-inset-top, 0px);
+  --djon-safe-area-bottom: env(safe-area-inset-bottom, 0px);
   --djon-header-offset: calc(4rem + var(--djon-safe-area-top));
 
   /* DJ ON design tokens: altere a marca aqui */

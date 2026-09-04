@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { isRetryableLoadError, useLoadRecovery } from "@/hooks/use-load-recovery";
 import { usePortalSync } from "@/hooks/use-portal-sync";
 import { usePortalRevision } from "@/hooks/use-portal-revision";
+import { PORTAL_RESOURCES, publishData } from "@/lib/portal-data";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -57,6 +58,7 @@ import {
   NotificationItem,
   TrainingRequestActions,
 } from "@/components/notification-item";
+import { DashboardShellSkeleton } from "@/components/loading-skeletons";
 
 const studentNav = [
   { label: "Início", href: "/dashboard/student", icon: Home },
@@ -245,7 +247,6 @@ export default function DashboardLayout({
   const { confirm } = useConfirmation();
   const [user, setUser] = useState<StoreUser | null>(null);
   const [portalReady, setPortalReady] = useState(false);
-  const [readyPath, setReadyPath] = useState("");
   const [bootstrapVersion, setBootstrapVersion] = useState(0);
   const [bootstrapError, setBootstrapError] = useState<unknown>(null);
   useLoadRecovery(bootstrapError, setBootstrapVersion);
@@ -371,8 +372,8 @@ export default function DashboardLayout({
           return;
         }
         setUser(authenticatedUser);
-        setReadyPath(pathname);
         setPortalReady(true);
+        publishData(PORTAL_RESOURCES);
       })
       .catch((error) => {
         if (!active) return;
@@ -761,8 +762,10 @@ export default function DashboardLayout({
     if (searchBarOpen) runSearch(searchQuery);
   }, [searchRevision, searchBarOpen, searchQuery, runSearch]);
 
-  if (!user || !portalReady || readyPath !== pathname) {
-    if (!sessionError || isRetryableLoadError(bootstrapError)) return <div className="min-h-svh bg-djon-page" />;
+  if (!user || !portalReady) {
+    if (!sessionError || isRetryableLoadError(bootstrapError)) {
+      return <DashboardShellSkeleton />;
+    }
 
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-djon-page px-4 text-center">
@@ -1482,7 +1485,7 @@ export default function DashboardLayout({
           >
             <motion.nav
               aria-label="Navegação do portal"
-              className="djon-scroll max-h-full overflow-y-auto border-t border-djon-text/8 bg-djon-page px-3 py-5 pb-10 sm:px-4"
+              className="djon-scroll h-full min-h-0 touch-pan-y overflow-y-auto overscroll-contain border-t border-djon-text/8 bg-djon-page px-3 py-5 pb-[calc(2.5rem+var(--djon-safe-area-bottom))] sm:px-4"
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}

@@ -355,10 +355,10 @@ export function Navigation() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] as const }}
-            className="djon-scroll fixed inset-x-0 bottom-0 top-[var(--djon-public-header-offset)] z-40 overflow-y-auto border-t border-djon-text/10 bg-djon-page md:hidden"
+            className="djon-scroll fixed inset-x-0 bottom-0 top-[var(--djon-public-header-offset)] z-40 touch-pan-y overflow-y-auto overscroll-contain border-t border-djon-text/10 bg-djon-page md:hidden"
             data-lenis-prevent
           >
-            <div className="min-h-full space-y-5 px-4 py-6 pb-10 sm:px-6">
+            <div className="min-h-full space-y-5 px-4 py-6 pb-[calc(2.5rem+var(--djon-safe-area-bottom))] sm:px-6">
               {navLinks.map((item, i) => (
                 <motion.button
                   key={item.label}

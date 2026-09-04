@@ -62,6 +62,9 @@ test("agenda waits for fresh data on navigation without a cache expiry interval"
     await page.clock.setFixedTime(new Date("2026-09-10T12:00:01-03:00"));
     await page.locator('a[href="/dashboard/agenda"]').first().click();
     await expect.poll(() => requests).toBe(2);
+    await expect(page.getByRole("banner")).toBeVisible();
+    await expect(page.getByRole("status")).toHaveCount(1);
+    await expect(page.getByRole("status")).toBeVisible();
     release();
     await expect(page.getByRole("button", { name: `16:00 ${currentUser.name}`, exact: true })).toBeVisible();
     expect(requests).toBeGreaterThanOrEqual(2);
