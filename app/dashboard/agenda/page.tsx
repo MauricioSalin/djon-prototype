@@ -780,6 +780,12 @@ export default function AgendaPage() {
     setLoadError(null);
     void store
       .bootstrap()
+      .then(async (user) => {
+        if (user) {
+          await store.synchronize(["users", "bookings", "units", "equipments"]);
+        }
+        return user;
+      })
       .then((user) => {
         if (!mounted) return;
         if (!user) {

@@ -89,6 +89,12 @@ export default function AdminPage() {
     let mounted = true
     setLoadError(null)
     void store.bootstrap()
+      .then(async (authenticatedUser) => {
+        if (hasPermission(authenticatedUser, "admin.access")) {
+          await store.synchronize(["users", "bookings", "events"])
+        }
+        return authenticatedUser
+      })
       .then((authenticatedUser) => {
         if (!mounted || !hasPermission(authenticatedUser, "admin.access")) return
         const allUsers = store.getUsers()

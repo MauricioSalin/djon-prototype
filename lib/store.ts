@@ -1036,6 +1036,7 @@ class ApiStore {
   private eventsPromise: Promise<DJEvent[]> | null = null;
   private materialsPromise: Promise<Material[]> | null = null;
   private materialCategoriesPromise: Promise<CategoryRecord[]> | null = null;
+  private synchronizePromises = new Map<string, Promise<void>>();
   private portalHeroPromises = new Map<
     PortalHeroKey,
     Promise<PortalHeroContent>
@@ -1124,7 +1125,7 @@ class ApiStore {
   }
 
   private async loadAll(authenticatedUser?: User, resources: readonly PortalResource[] = PORTAL_RESOURCES): Promise<User | null> {
-    const epoch = dataEpoch();
+    const epoch = dataEpoch(resources);
     const includes = (resource: PortalResource) => resources.includes(resource);
     const me = authenticatedUser ?? (await this.restoreSession());
     if (!me) return null;
@@ -1153,7 +1154,7 @@ class ApiStore {
         ? request<ApiRecord[]>("/leads")
         : null,
     ]);
-    if (epoch !== dataEpoch()) return this.loadAll(await this.restoreSession(true) ?? undefined, resources);
+    if (epoch !== dataEpoch(resources)) return this.loadAll(await this.restoreSession(true) ?? undefined, resources);
     this.currentUser = me;
     if (userItems) this.users = this.uniqueUsers([...userItems.map(normalizeUser), me]);
     if (eventItems) this.events = eventItems.map(normalizeEvent);
@@ -1178,11 +1179,26 @@ class ApiStore {
   }
 
   async synchronize(resources: readonly PortalResource[]) {
-    if (!this.hasSession()) return;
-    if (this.bootstrapPromise) await this.bootstrapPromise;
-    if (resources.includes("portal-content")) this.portalHeroes.clear();
-    const me = await this.restoreSession(resources.includes("users"));
-    if (me) await this.loadAll(me, resources);
+    const normalizedResources = [...new Set(resources)].sort();
+    const key = normalizedResources.join("|");
+    const pending = this.synchronizePromises.get(key);
+    if (pending) return pending;
+
+    const synchronizePromise = (async () => {
+      if (!this.hasSession()) return;
+      if (this.bootstrapPromise) await this.bootstrapPromise;
+      if (normalizedResources.includes("portal-content")) this.portalHeroes.clear();
+      const me = await this.restoreSession(normalizedResources.includes("users"));
+      if (me) await this.loadAll(me, normalizedResources);
+    })();
+    this.synchronizePromises.set(key, synchronizePromise);
+    try {
+      await synchronizePromise;
+    } finally {
+      if (this.synchronizePromises.get(key) === synchronizePromise) {
+        this.synchronizePromises.delete(key);
+      }
+    }
   }
 
   getCurrentUser = () => this.currentUser;
@@ -2587,6 +2603,7 @@ class ApiStore {
     this.eventsPromise = null;
     this.materialsPromise = null;
     this.materialCategoriesPromise = null;
+    this.synchronizePromises.clear();
   }
 
   getPortalHeroContent(key: PortalHeroKey) {

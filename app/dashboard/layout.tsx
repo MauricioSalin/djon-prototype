@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { isRetryableLoadError, useLoadRecovery } from "@/hooks/use-load-recovery";
 import { usePortalSync } from "@/hooks/use-portal-sync";
 import { usePortalRevision } from "@/hooks/use-portal-revision";
-import { PORTAL_RESOURCES, publishData } from "@/lib/portal-data";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -283,12 +282,16 @@ export default function DashboardLayout({
   const searchPanelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchTimerRef = useRef<number | null>(null);
-
   const redirectToLogin = useCallback(() => {
+    const currentPathname = window.location.pathname;
     router.replace(
-      buildLoginHref(pathname, window.location.search, window.location.hash),
+      buildLoginHref(
+        currentPathname,
+        window.location.search,
+        window.location.hash,
+      ),
     );
-  }, [pathname, router]);
+  }, [router]);
 
   const updateDesktopNavState = useCallback(() => {
     const navigation = desktopNavRef.current;
@@ -373,7 +376,6 @@ export default function DashboardLayout({
         }
         setUser(authenticatedUser);
         setPortalReady(true);
-        publishData(PORTAL_RESOURCES);
       })
       .catch((error) => {
         if (!active) return;
@@ -388,7 +390,7 @@ export default function DashboardLayout({
     return () => {
       active = false;
     };
-  }, [bootstrapVersion, redirectToLogin, pathname]);
+  }, [bootstrapVersion, redirectToLogin]);
 
   useEffect(() => {
     setUser(store.getCurrentUser());

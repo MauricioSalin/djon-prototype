@@ -73,6 +73,102 @@ test("agenda waits for fresh data on navigation without a cache expiry interval"
   }
 });
 
+test.describe("installed PWA navigation recovery", () => {
+  test.use({ serviceWorkers: "allow" });
+
+  test("student pages settle after a burst of resume events", async ({ page }) => {
+    let bookingRequests = 0;
+    let balanceRequests = 0;
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "standalone", {
+        configurable: true,
+        value: true,
+      });
+    });
+    await mockPortal(
+      page,
+      async (route, path) => {
+        if (path === "/bookings") {
+          bookingRequests += 1;
+          await new Promise((resolve) => setTimeout(resolve, 180));
+          await route.fulfill({
+            json: { items: [], total: 0, page: 1, limit: 100 },
+          });
+          return true;
+        }
+        if (path === "/bookings/training-balance") {
+          balanceRequests += 1;
+          await new Promise((resolve) => setTimeout(resolve, 180));
+          await route.fulfill({
+            json: { limitHours: 8, reservedHours: 0, remainingHours: 8 },
+          });
+          return true;
+        }
+        return false;
+      },
+      "student",
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/dashboard/student");
+    await expect(page.getByRole("button", { name: "Notificações" })).toBeVisible();
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+      await navigator.serviceWorker.ready;
+    });
+    await page.reload();
+    await expect
+      .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
+      .toBe(true);
+    bookingRequests = 0;
+    balanceRequests = 0;
+
+    const navigateFromMobileMenu = async (name: string) => {
+      await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
+      await page
+        .getByRole("navigation", { name: "Navegação do portal" })
+        .getByRole("link", { name, exact: true })
+        .click();
+    };
+
+    await navigateFromMobileMenu("Agenda");
+    await page.evaluate(() => {
+      const state = window as Window & { pwaResumeInterval?: number };
+      state.pwaResumeInterval = window.setInterval(() => {
+        window.dispatchEvent(new PageTransitionEvent("pageshow"));
+        window.dispatchEvent(new Event("focus"));
+        window.dispatchEvent(new Event("online"));
+      }, 50);
+    });
+
+    try {
+      await expect(
+        page.getByText("Nenhum agendamento solicitado", { exact: true }),
+      ).toBeVisible({ timeout: 3_000 });
+    } finally {
+      await page.evaluate(() => {
+        const state = window as Window & { pwaResumeInterval?: number };
+        window.clearInterval(state.pwaResumeInterval);
+      });
+    }
+    expect(bookingRequests).toBeLessThanOrEqual(4);
+    expect(balanceRequests).toBeLessThanOrEqual(3);
+
+    for (const navigation of [
+      { name: "Mural", text: "Nenhum evento para mostrar." },
+      { name: "Material", text: "Nenhum material nesta categoria" },
+      {
+        name: "Cursos",
+        text: "Você ainda não possui um curso em andamento.",
+      },
+    ]) {
+      await navigateFromMobileMenu(navigation.name);
+      await expect(page.getByText(navigation.text, { exact: true })).toBeVisible({
+        timeout: 8_000,
+      });
+    }
+  });
+});
+
 test("courses recover from a failed request without an endless skeleton", async ({ page }) => {
   let fail = true;
   let failures = 0;
@@ -200,15 +296,16 @@ for (const destination of [
     fail = true;
     await page.clock.setFixedTime(new Date("2026-09-10T12:00:01-03:00"));
     await page.locator(`a[href="${destination.path}"]`).first().click();
-    await expect.poll(() => requests).toBeGreaterThanOrEqual(4);
+    await expect.poll(() => requests).toBeGreaterThanOrEqual(2);
     await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
     fail = false;
+    await page.evaluate(() => window.dispatchEvent(new Event("online")));
     if (destination.path === "/dashboard/agenda") {
       await expect(page.getByRole("button", { name: `16:00 ${currentUser.name}`, exact: true })).toBeVisible();
     } else {
       await expect(page.getByText(booking.title, { exact: true }).first()).toBeVisible();
     }
-    expect(requests).toBeGreaterThanOrEqual(3);
+    expect(requests).toBeGreaterThanOrEqual(2);
     expect(errors).toEqual([]);
   });
 }

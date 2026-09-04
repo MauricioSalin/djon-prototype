@@ -11,6 +11,7 @@ export function usePortalSync(enabled: boolean) {
     let stopped = false;
     let running = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let resumeTimer: ReturnType<typeof setTimeout> | undefined;
     let retryDelay = 2_000;
     const pending = new Set<PortalResource>();
     const flush = async () => {
@@ -38,7 +39,9 @@ export function usePortalSync(enabled: boolean) {
       timer = setTimeout(() => { void flush(); }, 100);
     });
     const resume = () => {
-      if (document.visibilityState === "visible" && navigator.onLine) invalidateData();
+      clearTimeout(resumeTimer);
+      if (document.visibilityState !== "visible" || !navigator.onLine) return;
+      resumeTimer = setTimeout(() => invalidateData(), 100);
     };
     const changedSession = (event: StorageEvent) => {
       if (event.key === TOKEN_KEY) window.location.reload();
@@ -52,6 +55,7 @@ export function usePortalSync(enabled: boolean) {
     return () => {
       stopped = true;
       clearTimeout(timer);
+      clearTimeout(resumeTimer);
       closeStream();
       unsubscribe();
       window.removeEventListener("focus", resume);
