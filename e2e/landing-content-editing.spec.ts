@@ -100,6 +100,32 @@ async function mockLanding(
   });
 }
 
+for (const width of [390, 1280]) {
+  test(`titulos usam a fonte do time em ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockLanding(page, () => undefined);
+    await page.goto("/");
+    const team = page.locator("#time h2");
+    await expect(team).toBeAttached();
+    const reference = await team.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { family: style.fontFamily, weight: style.fontWeight };
+    });
+    const headings = [
+      page.locator("#historia h2"),
+      page.locator("#contato h2"),
+      page.getByRole("heading", { name: /A FRONTEIRA ENTRE O SONHO/ }),
+    ];
+    for (const heading of headings) {
+      await expect(heading).toHaveCSS("font-family", reference.family);
+      await expect(heading).toHaveCSS("font-weight", reference.weight);
+      await heading.scrollIntoViewIfNeeded();
+      await expect(heading).toBeVisible();
+      expect(await heading.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+    }
+  });
+}
+
 test("edita as sete seções e mantém o contato derivado da unidade", async ({ page }) => {
   const updates: Array<{ key: LandingSectionKey; data: unknown }> = [];
   await mockLanding(page, (key, data) => updates.push({ key, data }));

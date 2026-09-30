@@ -29,6 +29,7 @@ import { formatPhone, phoneMatchesSearch, whatsappUrl } from "@/lib/phone";
 import { formatCpf } from "@/lib/cpf";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 
 const inp =
   "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all";
@@ -81,16 +82,11 @@ export default function AlunosPage() {
       .finally(() => setLoading(false));
   }, [dataRevision]);
 
-  useEffect(() => {
-    if (!removingUser || removalAction) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setRemovingUser(null);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [removalAction, removingUser]);
-
   useBodyScrollLock(showForm || Boolean(removingUser));
+  useModalEscape(showForm, () => setShowForm(false));
+  useModalEscape(Boolean(removingUser) && !removalAction, () =>
+    setRemovingUser(null),
+  );
 
   const openNew = () => {
     setForm({ ...emptyForm, unitId: units[0]?.id ?? "" });
@@ -232,7 +228,9 @@ export default function AlunosPage() {
                   {editingId ? "Editar Aluno" : "Cadastrar Aluno"}
                 </h2>
                 <button
+                  type="button"
                   onClick={() => setShowForm(false)}
+                  aria-label="Fechar modal"
                   className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />

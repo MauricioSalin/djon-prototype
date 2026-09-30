@@ -87,7 +87,7 @@ test("Spline session cancels download without allocating a runtime", async () =>
   expect(f.events).not.toContain("error")
 })
 
-test("Spline session waits for cancelled decoding and ignores stale callbacks", async () => {
+test("Spline session releases cancelled decoding without allowing stale callbacks", async () => {
   const gate = deferred()
   const first = fixture(gate.promise)
   const skipped = fixture()
@@ -102,13 +102,13 @@ test("Spline session waits for cancelled decoding and ignores stale callbacks", 
     expect(first.isLost()).toBe(true)
     expect(first.canvas.getContext("webgl2")).toBeNull()
     expect(first.events).not.toContain("dispose")
-    expect(next.events).not.toContain("construct")
+    await c.settled
+    expect(next.events).toContain("on-load")
     gate.resolve()
-    await Promise.all([a.settled, b.settled, c.settled])
+    await Promise.all([a.settled, b.settled])
     expect(first.events).not.toContain("on-load")
     expect(first.events).toContain("dispose")
     expect(skipped.events).not.toContain("construct")
-    expect(next.events).toContain("on-load")
     expect(first.events).not.toContain("error")
   } finally {
     gate.resolve()

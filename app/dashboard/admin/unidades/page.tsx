@@ -23,6 +23,7 @@ import { useConfirmation } from "@/components/confirmation-provider";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { formatPhone } from "@/lib/phone";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 import { academyLocations } from "@/lib/locations";
 
 const field =
@@ -51,6 +52,7 @@ export default function UnitsAdminPage() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   useBodyScrollLock(open);
+  useModalEscape(open, () => setOpen(false));
 
   const sync = useCallback(() => setUnits(store.getUnits()), []);
   const load = useCallback(async () => {
@@ -209,6 +211,7 @@ export default function UnitsAdminPage() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
+                aria-label="Fechar modal"
                 className="text-djon-text opacity-40 transition-opacity hover:opacity-100"
               >
                 <X size={18} />

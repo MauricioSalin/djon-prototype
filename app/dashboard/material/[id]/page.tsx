@@ -27,6 +27,7 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { usePageTitle } from "@/components/page-title-manager";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0 },
@@ -80,6 +81,7 @@ function PDFViewer({
           </button>
           <button
             onClick={onClose}
+            aria-label="Fechar visualizador"
             className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:brightness-110 flex items-center justify-center transition-colors"
           >
             <X size={16} className="text-djon-text" />
@@ -137,6 +139,7 @@ function ImageLightbox({
         </button>
         <button
           onClick={onClose}
+          aria-label="Fechar visualizador"
           className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 hover:brightness-110 flex items-center justify-center transition-colors"
         >
           <X size={16} className="text-djon-text" />
@@ -183,6 +186,7 @@ export default function MaterialDetailPage() {
   const [loaded, setLoaded] = useState(false);
   const [viewer, setViewer] = useState<MaterialAttachment | null>(null);
   useBodyScrollLock(Boolean(viewer));
+  useModalEscape(Boolean(viewer), () => setViewer(null));
   const [coverError, setCoverError] = useState(false);
 
   usePageTitle(material?.title);

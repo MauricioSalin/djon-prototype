@@ -24,6 +24,7 @@ import { store, type Unit, type User as AppUser } from "@/lib/store";
 import { formatPhone, phoneMatchesSearch } from "@/lib/phone";
 import { formatCpf } from "@/lib/cpf";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 import {
   ListPagination,
   useListPagination,
@@ -64,6 +65,7 @@ export default function ProfessorAlunosPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [units, setUnits] = useState<Unit[]>([]);
   useBodyScrollLock(showForm);
+  useModalEscape(showForm, () => setShowForm(false));
 
   const load = () => setStudents(store.getStudents());
 
@@ -199,9 +201,10 @@ export default function ProfessorAlunosPage() {
                   </h2>
                 </div>
                 <button
-                  onClick={() => setShowForm(false)}
-                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                   type="button"
+                  onClick={() => setShowForm(false)}
+                  aria-label="Fechar modal"
+                  className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />
                 </button>

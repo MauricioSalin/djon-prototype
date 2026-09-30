@@ -249,7 +249,9 @@ export default function DashboardLayout({
   const [bootstrapVersion, setBootstrapVersion] = useState(0);
   const [bootstrapError, setBootstrapError] = useState<unknown>(null);
   useLoadRecovery(bootstrapError, setBootstrapVersion);
-  usePortalSync(portalReady);
+  // Subscribe before reading the initial snapshot, so live changes cannot fall
+  // into a gap between bootstrap and the synchronization stream.
+  usePortalSync(store.hasSession());
   const dataRevision = usePortalRevision("users", "bookings", "notifications");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -380,6 +382,12 @@ export default function DashboardLayout({
       .catch((error) => {
         if (!active) return;
         setBootstrapError(error);
+        const authenticatedUser = store.getCurrentUser();
+        if (authenticatedUser) {
+          setUser(authenticatedUser);
+          setPortalReady(true);
+          return;
+        }
         setPortalReady(false);
         setSessionError(
           error instanceof Error
@@ -932,7 +940,7 @@ export default function DashboardLayout({
               width={111}
               height={28}
               priority
-              className="h-5 w-[79px] min-[360px]:h-6 min-[360px]:w-[95px] sm:h-7 sm:w-[111px]"
+              className="h-auto w-[79px] min-[360px]:w-[95px] sm:w-[111px]"
             />
             <span className="text-djon-caption text-djon-accent font-black tracking-[0.2em] uppercase hidden sm:block">
               Portal
@@ -1241,6 +1249,7 @@ export default function DashboardLayout({
                       />
                       {searchQuery && (
                         <button
+                          aria-label="Limpar busca"
                           onClick={() => {
                             setSearchQuery("");
                             setSearchResults([]);

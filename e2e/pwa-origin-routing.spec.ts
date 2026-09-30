@@ -73,7 +73,7 @@ for (const mode of ["ios", "android"] as const) {
     await page.getByRole("button", { name: "Abrir menu", exact: true }).click()
     const portal = page.getByRole("link", { name: "ACESSAR PORTAL", exact: true })
     await expect(portal).toHaveAttribute("href", "/dashboard/student")
-    await expect(page.locator('iframe[title="Sincronização da sessão do portal"]')).toHaveAttribute("src", "/session-bridge")
+    await expect(page.locator('iframe[title="Sincronização da sessão do portal"]')).toHaveAttribute("src", `${portalOrigin}/session-bridge`)
     await page.getByRole("button", { name: "SAIR", exact: true }).click()
     await page.getByRole("button", { name: "Abrir menu", exact: true }).click()
     await expect(page.getByRole("link", { name: "LOGIN", exact: true }).filter({ visible: true })).toBeVisible()
@@ -81,6 +81,30 @@ for (const mode of ["ios", "android"] as const) {
     await expect(page).toHaveURL(new RegExp(`^${publicOrigin}/login(?:\\?|$)`))
   })
 }
+
+test("public PWA restores a session that already exists on the portal origin", async ({ page }) => {
+  await standalone(page, "ios")
+  await page.addInitScript(() => {
+    if (window.location.hostname === "portal.localhost") {
+      window.localStorage.setItem("djon_access_token", "portal-origin-token")
+    }
+  })
+  await mockApi(page)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto(publicOrigin)
+
+  expect(await page.evaluate(() => localStorage.getItem("djon_access_token"))).toBeNull()
+  await expect(page.locator('iframe[title="Sincronização da sessão do portal"]')).toHaveAttribute(
+    "src",
+    `${portalOrigin}/session-bridge`,
+  )
+  await page.getByRole("button", { name: "Abrir menu", exact: true }).click()
+  await expect(page.getByRole("link", { name: "ACESSAR PORTAL", exact: true })).toHaveAttribute(
+    "href",
+    "/dashboard/student",
+  )
+  await expect(page.getByRole("link", { name: "LOGIN", exact: true }).filter({ visible: true })).toHaveCount(0)
+})
 
 test("portal-installed PWA keeps login and dashboard on the portal origin", async ({ page }) => {
   await standalone(page, "ios")
@@ -141,9 +165,10 @@ test.describe("installed service worker", () => {
         await navigator.serviceWorker.ready
       })
       await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true)
+      const requestsBeforeControlledNavigation = loginRequests
       await page.goto(`${origin}/login`)
       await expect(page).toHaveURL(`${origin}/login`)
-      expect(loginRequests).toBe(2)
+      expect(loginRequests).toBe(requestsBeforeControlledNavigation + 1)
     } finally {
       await page.goto("about:blank")
       server.closeAllConnections()

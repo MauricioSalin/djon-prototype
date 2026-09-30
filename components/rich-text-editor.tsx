@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { store, type UploadedFile } from "@/lib/store"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
+import { useModalEscape } from "@/hooks/use-modal-escape"
 
 interface RichTextEditorProps {
   value: string
@@ -437,6 +438,12 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
   const [embedError, setEmbedError] = useState("")
   const [selectedVideoKind, setSelectedVideoKind] = useState<"youtube" | "embed">("youtube")
   useBodyScrollLock(Boolean(embedModalKind))
+  const dismissEmbedModal = useCallback(() => {
+    setEmbedModalKind(null)
+    setEmbedValue("")
+    setEmbedError("")
+  }, [])
+  useModalEscape(Boolean(embedModalKind), dismissEmbedModal)
 
   const rememberSelection = useCallback(() => {
     const editor = editorRef.current
@@ -531,18 +538,6 @@ export function RichTextEditor({ value, onChange, placeholder, onFileUploaded }:
     document.addEventListener("selectionchange", updateToolbarState)
     return () => document.removeEventListener("selectionchange", updateToolbarState)
   }, [updateToolbarState])
-
-  useEffect(() => {
-    if (!embedModalKind) return
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return
-      setEmbedModalKind(null)
-      setEmbedValue("")
-      setEmbedError("")
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [embedModalKind])
 
   const emit = useCallback(() => {
     if (!editorRef.current) return

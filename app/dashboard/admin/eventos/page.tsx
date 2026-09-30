@@ -3,12 +3,14 @@
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Trash2, Edit2, X, Music2, MapPin, Clock, Instagram, Star, GraduationCap } from "lucide-react"
+import { Plus, Trash2, Edit2, Music2, MapPin, Clock, Instagram, Star, GraduationCap } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
+import { useModalEscape } from "@/hooks/use-modal-escape"
+import { ModalCloseButton } from "@/components/modal-close-button"
 import {
   ADMIN_EVENTS_HERO,
   EVENTS_HERO_SECTIONS,
@@ -28,6 +30,7 @@ export default function AdminEventosPage() {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [tab, setTab] = useState<DJEvent["type"]>("djOn")
   useBodyScrollLock(showForm)
+  useModalEscape(showForm, () => setShowForm(false))
 
   const load = () => {
     const all = store.getEvents().sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -112,7 +115,7 @@ export default function AdminEventosPage() {
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}>
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-black text-djon-text tracking-tighter">{editingId ? "Editar Evento" : "Novo Evento"}</h2>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"><X size={18} /></button>
+                <ModalCloseButton onClick={() => setShowForm(false)} />
               </div>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Type selector */}

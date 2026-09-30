@@ -1,9 +1,17 @@
 import { apiBase, SESSION_EXPIRED_EVENT, TOKEN_KEY } from "@/lib/store";
-import { invalidateData, PORTAL_RESOURCES, type PortalResource } from "@/lib/portal-data";
+import {
+  invalidateData,
+  markPortalStreamReady,
+  markPortalStreamUnavailable,
+  portalSnapshotCoversInitialReady,
+  PORTAL_RESOURCES,
+  type PortalResource,
+} from "@/lib/portal-data";
 
 // fetch keeps credentials in the Authorization header, unlike EventSource URLs.
 export function openPortalStream() {
   let stopped = false;
+  let hasConnected = false;
   let controller: AbortController | undefined;
   let reconnect: ReturnType<typeof setTimeout> | undefined;
   let watchdog: ReturnType<typeof setTimeout> | undefined;
@@ -29,7 +37,10 @@ export function openPortalStream() {
         window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
         return;
       }
-      if (!response.ok || !response.headers.get("content-type")?.includes("text/event-stream") || !response.body) return;
+      if (!response.ok || !response.headers.get("content-type")?.includes("text/event-stream") || !response.body) {
+        markPortalStreamUnavailable();
+        return;
+      }
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -47,8 +58,18 @@ export function openPortalStream() {
           const data = lines.filter((line) => line.startsWith("data:")).map((line) => line.slice(5).trim()).join("\n");
           if (event === "ready") {
             delay = 1_000;
-            // Includes everything missed while suspended, disconnected or deploying.
-            invalidateData();
+            if (hasConnected) {
+              // A reconnection can have missed changes while the stream was down.
+              invalidateData();
+            } else {
+              hasConnected = true;
+              markPortalStreamReady();
+              // Let bootstrap resume first. If it had to start before the stream
+              // became ready, revalidate once to close that subscription gap.
+              setTimeout(() => {
+                if (!stopped && !portalSnapshotCoversInitialReady()) invalidateData();
+              }, 0);
+            }
           } else if (event === "invalidate") {
             const payload = JSON.parse(data) as { resources?: string[] };
             const resources = payload.resources?.filter((resource): resource is PortalResource => PORTAL_RESOURCES.includes(resource as PortalResource));
@@ -60,6 +81,7 @@ export function openPortalStream() {
       }
     } catch {
       // Reconnect to the change stream, then revalidate the complete snapshot.
+      markPortalStreamUnavailable();
     } finally {
       if (controller !== activeController) return;
       clearTimeout(watchdog);

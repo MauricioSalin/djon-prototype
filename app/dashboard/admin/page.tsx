@@ -91,7 +91,7 @@ export default function AdminPage() {
     void store.bootstrap()
       .then(async (authenticatedUser) => {
         if (hasPermission(authenticatedUser, "admin.access")) {
-          await store.synchronize(["users", "bookings", "events"])
+          await store.synchronize(["bookings", "events"])
         }
         return authenticatedUser
       })

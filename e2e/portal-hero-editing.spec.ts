@@ -203,6 +203,24 @@ async function mockPortalHero(
   });
 }
 
+for (const width of [390, 1280]) {
+  test(`icone editar alinhado ao texto dos heroes em ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockPortalHero(page, () => undefined, admin);
+    for (const path of ["/dashboard/admin", "/dashboard/admin/eventos", "/dashboard/mural"]) {
+      await page.goto(path);
+      const hero = page.locator(".djon-portal-hero");
+      const icon = hero.getByRole("button", { name: "EDITAR", exact: true }).locator("svg");
+      await expect(icon).toBeVisible();
+      const iconBox = await icon.boundingBox();
+      const descriptionBox = await hero.locator("p").first().boundingBox();
+      expect(iconBox).not.toBeNull();
+      expect(descriptionBox).not.toBeNull();
+      expect(Math.abs(iconBox!.x - descriptionBox!.x)).toBeLessThanOrEqual(1);
+    }
+  });
+}
+
 test("edita as seções da home com um único banner", async ({ page }) => {
   const saved: Array<{ key: HeroKey; payload: HeroPayload }> = [];
   await mockPortalHero(page, (key, payload) => {

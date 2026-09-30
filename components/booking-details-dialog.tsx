@@ -18,6 +18,7 @@ import { BookingDateTimeFields } from "@/components/booking-date-time-fields";
 import { useConfirmation } from "@/components/confirmation-provider";
 import { DjonSelect } from "@/components/djon-select";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 import {
   store,
   type Booking,
@@ -99,6 +100,7 @@ export function BookingDetailsDialog({
 }) {
   const { confirm } = useConfirmation();
   useBodyScrollLock(true);
+  useModalEscape(true, onClose);
   const mountedRef = useRef(true);
   const [editing, setEditing] = useState(false);
   const [reviewing, setReviewing] = useState<"accept" | "reject" | null>(null);

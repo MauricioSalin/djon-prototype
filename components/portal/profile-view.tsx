@@ -709,7 +709,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 <SectionHeading eyebrow="NOVIDADE" title="Último Lançamento" isOwner={isOwner && !user.passwordChangeRequired} onEdit={() => startEditing("release")} />
                 <div className="max-w-3xl overflow-hidden rounded-3xl border border-djon-text/10 bg-djon-surface-2 shadow-djon-soft sm:flex">
                   <div className="relative aspect-square w-full shrink-0 overflow-hidden sm:w-64">
-                    <Image loader={({ src }) => src} unoptimized src={user.latestRelease?.cover || DEFAULT_RELEASE_COVER} alt={`Capa de ${user.latestRelease?.title || "último lançamento"}`} fill sizes="(min-width: 640px) 256px, 100vw" className="object-cover" />
+                    <Image loader={({ src }) => src} unoptimized src={user.latestRelease?.cover || DEFAULT_RELEASE_COVER} alt={`Capa de ${user.latestRelease?.title || "último lançamento"}`} fill sizes="(min-width: 640px) 256px, 100vw" className="object-cover" preload />
                   </div>
                   <div className="flex min-w-0 flex-1 flex-col justify-center p-6 sm:p-8">
                     <span className="mb-3 text-xs font-black tracking-[0.2em] text-djon-accent">LANÇAMENTO MAIS RECENTE</span>

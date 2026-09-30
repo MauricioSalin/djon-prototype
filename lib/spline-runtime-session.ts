@@ -2,6 +2,17 @@ import type { Application } from "@splinetool/runtime"
 
 type RuntimeModule = Pick<typeof import("@splinetool/runtime"), "Application">
 
+export type SplineRuntimePhase =
+  | "queued"
+  | "slot-acquired"
+  | "fetching"
+  | "buffered"
+  | "runtime-loaded"
+  | "application-created"
+  | "starting"
+  | "started"
+  | "aborted"
+
 // Hold the mobile slot until cancelled decoding finishes and its runtime is disposed.
 export function createSplineSlotQueue() {
   let tail = Promise.resolve()
@@ -27,6 +38,8 @@ type SessionOptions = {
   exclusive: boolean
   onLoad: (application: Application) => void
   onError: (error: unknown) => void
+  onPhase?: (phase: SplineRuntimePhase) => void
+  maxDevicePixelRatio?: number
   loadRuntime?: () => Promise<RuntimeModule>
   fetchScene?: typeof fetch
 }
@@ -37,6 +50,8 @@ export function createSplineRuntimeSession({
   exclusive,
   onLoad,
   onError,
+  onPhase = () => undefined,
+  maxDevicePixelRatio,
   loadRuntime = () => import("@splinetool/runtime"),
   fetchScene = fetch,
 }: SessionOptions) {
@@ -65,6 +80,11 @@ export function createSplineRuntimeSession({
     }
   }
 
+  const releaseExclusiveSlot = () => {
+    releaseSlot?.()
+    releaseSlot = null
+  }
+
   const cleanup = () => {
     if (cleaned) return
     cleaned = true
@@ -80,26 +100,55 @@ export function createSplineRuntimeSession({
       canvas.height = 1
       canvas.remove()
       canvas.getContext = originalGetContext
-      releaseSlot?.()
-      releaseSlot = null
+      releaseExclusiveSlot()
     }
   }
 
   const settled = (async () => {
+    onPhase("queued")
     if (exclusive) releaseSlot = await acquireMobileSlot(signal)
     if (signal.aborted) return
+    onPhase("slot-acquired")
     // Cancelled downloads allocate no Application or GPU resources.
+    onPhase("fetching")
     const response = await fetchScene(scene, { signal, cache: "force-cache" })
     if (!response.ok) throw new Error(`Unable to load Spline scene: ${response.status}`)
     let data: ArrayBuffer | null = await response.arrayBuffer()
     if (signal.aborted) return
+    onPhase("buffered")
     const runtime = await loadRuntime()
     if (signal.aborted) return
+    onPhase("runtime-loaded")
     application = new runtime.Application(canvas, { renderMode: "auto" })
+    onPhase("application-created")
     // Runtime 1.12.98 start() is async, although its declaration returns void.
-    const starting = application.start(data)
-    data = null
-    await starting
+    onPhase("starting")
+    const shouldClampPixelRatio = maxDevicePixelRatio !== undefined
+      && typeof window !== "undefined"
+      && window.devicePixelRatio > maxDevicePixelRatio
+    const originalPixelRatio = shouldClampPixelRatio
+      ? Object.getOwnPropertyDescriptor(window, "devicePixelRatio")
+      : undefined
+    if (shouldClampPixelRatio) {
+      Object.defineProperty(window, "devicePixelRatio", {
+        configurable: true,
+        value: maxDevicePixelRatio,
+      })
+    }
+    try {
+      const starting = application.start(data)
+      data = null
+      await starting
+    } finally {
+      if (shouldClampPixelRatio) {
+        if (originalPixelRatio) {
+          Object.defineProperty(window, "devicePixelRatio", originalPixelRatio)
+        } else {
+          Reflect.deleteProperty(window, "devicePixelRatio")
+        }
+      }
+    }
+    onPhase("started")
     if (!signal.aborted) onLoad(application)
   })().catch((error: unknown) => {
     if (!signal.aborted) onError(error)
@@ -115,6 +164,7 @@ export function createSplineRuntimeSession({
     dispose() {
       if (signal.aborted) return
       controller.abort()
+      onPhase("aborted")
       try {
         application?.stop()
       } catch (error) {
@@ -123,6 +173,9 @@ export function createSplineRuntimeSession({
         // Release GPU resources now; late decode callbacks cannot revive this canvas.
         releaseContext()
         canvas.remove()
+        // Once the context is synchronously lost, a decoder that ignores abort
+        // can no longer consume the exclusive GPU slot or block the next scene.
+        releaseExclusiveSlot()
         if (!loading) cleanup()
       }
     },

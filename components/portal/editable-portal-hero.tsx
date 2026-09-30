@@ -362,7 +362,7 @@ export function EditablePortalHero({
               <button
                 type="button"
                 onClick={() => handleOpenChange(true)}
-                className="mt-5 flex w-fit cursor-pointer items-center gap-2 rounded-full bg-djon-black/40 px-5 py-2.5 text-xs font-bold text-djon-text opacity-75 backdrop-blur-md transition-[opacity,transform,filter] duration-200 ease-out hover:-translate-y-0.5 hover:opacity-100 hover:brightness-110 active:translate-y-0 active:scale-[0.98]"
+                className="mt-5 flex w-fit cursor-pointer items-center gap-2 rounded-full bg-djon-black/40 pl-0 pr-5 py-2.5 text-xs font-bold text-djon-text opacity-75 backdrop-blur-md transition-[opacity,transform,filter] duration-200 ease-out hover:-translate-y-0.5 hover:opacity-100 hover:brightness-110 active:translate-y-0 active:scale-[0.98]"
               >
                 <Pencil size={13} /> EDITAR
               </button>

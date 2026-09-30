@@ -38,6 +38,7 @@ const barlowCondensed = Barlow_Condensed({
 
 const siteUrl = new URL(publicSiteOrigin)
 const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION?.trim()
+const analyticsAvailable = process.env.VERCEL === "1"
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
@@ -138,7 +139,7 @@ export default function RootLayout({
         <PageTitleManager />
         <PWARegister />
         <AppToaster />
-        <Analytics />
+        {analyticsAvailable ? <Analytics /> : null}
       </body>
     </html>
   )

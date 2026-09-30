@@ -30,14 +30,20 @@ test("PWA resume refreshes the visible profile and new editors, preserving an ac
   await page.goto("/dashboard/student/perfil");
   await expectProfile(page);
   currentProfile = { ...profile, projectName: "Projeto atualizado", bio: "Biografia atualizada no servidor." };
-  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("blur"));
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
   await expect(page.getByRole("heading", { name: currentProfile.projectName, exact: true })).toBeVisible();
   await page.getByRole("button", { name: "EDITAR PERFIL", exact: true }).click();
   await expect(page.locator("#profile-editor input").nth(1)).toHaveValue(currentProfile.projectName);
   await expect(page.locator("#profile-editor textarea")).toHaveValue(currentProfile.bio);
   await page.locator("#profile-editor textarea").fill("Edicao em andamento");
   currentProfile = { ...currentProfile, projectName: "Projeto mais recente", bio: "Outra alteracao externa." };
-  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("offline"));
+    window.dispatchEvent(new Event("online"));
+  });
   await expect(page.getByRole("heading", { name: currentProfile.projectName, exact: true })).toBeVisible();
   await expect(page.locator("#profile-editor textarea")).toHaveValue("Edicao em andamento");
   expect(meRequests).toBe(3);
@@ -73,7 +79,10 @@ test("PWA finishes refreshing the profile after a temporary connection failure",
   });
   await page.goto("/dashboard/student/perfil");
   await expectProfile(page);
-  await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event("blur"));
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
   await expect(page.getByRole("heading", { name: updatedProfile.projectName, exact: true })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
   expect(meRequests).toBe(5);

@@ -53,33 +53,41 @@ export default function MuralPage() {
   const [filter, setFilter] = useState<"todos" | "djOn" | "alunos" | "professores">("todos")
   const [search, setSearch] = useState("")
   const [eventsLoaded, setEventsLoaded] = useState(() => store.hasLoadedPortalData())
-  const [eventLoadError, setEventLoadError] = useState(false)
+  const [eventLoadError, setEventLoadError] = useState<string | null>(null)
   const [reloadVersion, setReloadVersion] = useState(0)
   const hasLoadedEvents = useRef(store.hasLoadedPortalData())
+  const handledReloadVersion = useRef(0)
 
   useEffect(() => {
     let active = true
-    const syncEvents = async (initialLoad = false) => {
-      if (initialLoad && !hasLoadedEvents.current) setEventLoadError(false)
+    const syncEvents = async (force = false) => {
       try {
-        const events = await store.refreshEvents()
+        const events = await store.refreshEvents(force)
         if (!active) return
         setDJOnEvents(sortUpcomingFirst(events.filter((event) => event.type === "djOn")))
         setStudentEvents(sortUpcomingFirst(events.filter((event) => event.type === "student")))
         setProfessorEvents(sortUpcomingFirst(events.filter((event) => event.type === "professor")))
         hasLoadedEvents.current = true
         setEventsLoaded(true)
-        setEventLoadError(false)
-      } catch {
+        setEventLoadError(null)
+      } catch (error) {
         // Uma falha nunca pode ser interpretada visualmente como uma lista vazia.
-        if (active && !hasLoadedEvents.current) setEventLoadError(true)
+        if (active && !hasLoadedEvents.current) {
+          setEventLoadError(
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar os eventos.",
+          )
+        }
       }
     }
     const refreshWhenVisible = () => {
       if (document.visibilityState === "visible") void syncEvents()
     }
 
-    void syncEvents(true)
+    const force = handledReloadVersion.current !== reloadVersion
+    handledReloadVersion.current = reloadVersion
+    void syncEvents(force)
     window.addEventListener("focus", refreshWhenVisible)
     document.addEventListener("visibilitychange", refreshWhenVisible)
     return () => {
@@ -110,7 +118,7 @@ export default function MuralPage() {
       <main className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
         <Music2 size={42} className="mb-4 text-djon-text/10" />
         <p className="text-lg font-bold text-djon-text/35">
-          Não foi possível carregar os eventos.
+          {eventLoadError}
         </p>
         <p className="mt-2 max-w-md text-sm text-djon-text/25">
           A lista não será exibida como vazia enquanto a consulta não for concluída.

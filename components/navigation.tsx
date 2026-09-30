@@ -58,14 +58,19 @@ export function Navigation() {
   const standalone = useStandalonePwa()
   const [scrolled, setScrolled] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [localUser, setLocalUser] = useState<User | null>(null)
+  const [portalUser, setPortalUser] = useState<User | null>(null)
   const [sessionBridgeEnabled, setSessionBridgeEnabled] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement>(null)
   const navigationRef = useRef<HTMLElement>(null)
   const sessionBridgeRef = useRef<HTMLIFrameElement>(null)
+  const sessionBridgeActive = standalone || sessionBridgeEnabled
+  const sessionBridgeHref = portalHref("/session-bridge")
+  const user = localUser ?? portalUser
 
   useEffect(() => {
+    if (standalone) return
     const enableSessionBridge = () => setSessionBridgeEnabled(true)
 
     window.addEventListener("pointerdown", enableSessionBridge, { once: true })
@@ -74,13 +79,33 @@ export function Navigation() {
       window.removeEventListener("pointerdown", enableSessionBridge)
       window.removeEventListener("keydown", enableSessionBridge)
     }
-  }, [])
+  }, [standalone])
 
   useEffect(() => {
-    if (!sessionBridgeEnabled) return
+    if (!sessionBridgeActive) return
+
+    let active = true
+    if (!store.hasSession()) {
+      setLocalUser(null)
+      return
+    }
+    void store.restoreSession(true)
+      .then((authenticatedUser) => {
+        if (active) setLocalUser(authenticatedUser)
+      })
+      .catch(() => {
+        if (active) setLocalUser(null)
+      })
+    return () => {
+      active = false
+    }
+  }, [sessionBridgeActive])
+
+  useEffect(() => {
+    if (!sessionBridgeActive) return
 
     const bridgeOrigin = new URL(
-      portalHref("/session-bridge", standalone),
+      sessionBridgeHref,
       window.location.href,
     ).origin
     const requestSession = () => {
@@ -101,7 +126,7 @@ export function Navigation() {
         return
       }
       if (!isPortalSessionResponse(event.data)) return
-      setUser(event.data.user)
+      setPortalUser(event.data.user)
     }
 
     window.addEventListener("message", handleMessage)
@@ -110,11 +135,11 @@ export function Navigation() {
       window.removeEventListener("message", handleMessage)
       window.removeEventListener("focus", requestSession)
     }
-  }, [sessionBridgeEnabled, standalone])
+  }, [sessionBridgeActive, sessionBridgeHref])
 
   const requestPortalSession = () => {
     const bridgeOrigin = new URL(
-      portalHref("/session-bridge", standalone),
+      sessionBridgeHref,
       window.location.href,
     ).origin
     sessionBridgeRef.current?.contentWindow?.postMessage(
@@ -180,7 +205,7 @@ export function Navigation() {
 
   const handleLogout = () => {
     const bridgeOrigin = new URL(
-      portalHref("/session-bridge", standalone),
+      sessionBridgeHref,
       window.location.href,
     ).origin
     sessionBridgeRef.current?.contentWindow?.postMessage(
@@ -188,7 +213,8 @@ export function Navigation() {
       bridgeOrigin,
     )
     store.logout()
-    setUser(null)
+    setLocalUser(null)
+    setPortalUser(null)
     setAccountOpen(false)
     setMobileMenuOpen(false)
   }
@@ -203,10 +229,10 @@ export function Navigation() {
 
   return (
     <>
-      {sessionBridgeEnabled ? (
+      {sessionBridgeActive ? (
         <iframe
           ref={sessionBridgeRef}
-          src={portalHref("/session-bridge", standalone)}
+          src={sessionBridgeHref}
           title="Sincronização da sessão do portal"
           className="hidden"
           tabIndex={-1}
@@ -226,7 +252,12 @@ export function Navigation() {
         }`}
       >
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between sm:px-6">
-        <button onClick={() => scrollToSection("#hero")} className="flex min-h-11 cursor-pointer items-center transition-opacity hover:opacity-80">
+        <button
+          type="button"
+          aria-label="Voltar ao início"
+          onClick={() => scrollToSection("#hero")}
+          className="flex min-h-11 cursor-pointer items-center transition-opacity hover:opacity-80"
+        >
           <motion.div
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring" as const, stiffness: 400, damping: 17 }}
@@ -236,7 +267,7 @@ export function Navigation() {
               alt="DJ ON Academy"
               width={126}
               height={32}
-              className="h-8 w-[126px]"
+              className="h-auto w-[126px]"
               preload
             />
           </motion.div>

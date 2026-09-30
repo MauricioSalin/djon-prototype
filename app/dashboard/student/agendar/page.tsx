@@ -31,6 +31,7 @@ import {
 import { useConfirmation } from "@/components/confirmation-provider";
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 import {
   ADMIN_HOME_HERO,
   STUDENT_BOOKINGS_HERO,
@@ -78,6 +79,7 @@ export default function AgendarPage() {
   const [loadAttempt, setLoadAttempt] = useState(0);
   useLoadRecovery(loadError, setLoadAttempt);
   useBodyScrollLock(showForm);
+  useModalEscape(showForm, () => setShowForm(false));
   const [form, setForm] = useState({
     title: "",
     date: "",
@@ -300,7 +302,9 @@ export default function AgendarPage() {
                   </h2>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowForm(false)}
+                  aria-label="Fechar modal"
                   className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:brightness-110 transition-all"
                 >
                   <X size={16} />
@@ -651,7 +655,9 @@ export default function AgendarPage() {
                   </div>
                   {b.status !== "cancelado" && b.status !== "recusado" && (
                     <button
+                      type="button"
                       onClick={() => void handleCancel(b)}
+                      aria-label={`Cancelar agendamento ${b.title} de ${fmt(b.date)}`}
                       className="cursor-pointer text-djon-text opacity-10 transition-opacity hover:opacity-100"
                     >
                       <Trash2 size={13} />

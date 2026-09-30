@@ -45,6 +45,7 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { notifyRequestError } from "@/lib/feedback";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 import type { Cohort } from "@/lib/store";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -541,6 +542,7 @@ function MonthView({
                   </div>
                   <button
                     onClick={() => setMoreDay(null)}
+                    aria-label="Fechar eventos do dia"
                     className="cursor-pointer text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   >
                     <X size={14} />
@@ -729,6 +731,7 @@ export default function AgendaPage() {
   });
 
   useBodyScrollLock(showNewForm);
+  useModalEscape(showNewForm, () => setShowNewForm(false));
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("todos");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(today.getFullYear());
@@ -1231,7 +1234,9 @@ export default function AgendaPage() {
                   </h2>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowNewForm(false)}
+                  aria-label="Fechar modal"
                   className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />

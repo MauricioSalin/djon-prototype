@@ -32,6 +32,7 @@ import { notifyError, notifyUndoable } from "@/lib/feedback";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { usePageTitle } from "@/components/page-title-manager";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0 },
@@ -96,6 +97,7 @@ export default function NovoMaterialPage() {
   const [loaded, setLoaded] = useState(false);
   const [exitModalOpen, setExitModalOpen] = useState(false);
   useBodyScrollLock(exitModalOpen);
+  useModalEscape(exitModalOpen, () => setExitModalOpen(false));
   const [initialSnapshot, setInitialSnapshot] = useState("");
   const draftIdsRef = useRef(new Set<string>());
   const committedRef = useRef(false);
@@ -729,6 +731,7 @@ export default function NovoMaterialPage() {
                       <button
                         type="button"
                         onClick={() => void removeAttachment(attachment.id)}
+                        aria-label={`Remover anexo ${attachment.name}`}
                         className="cursor-pointer w-7 h-7 rounded-full bg-djon-warning-red/10 hover:brightness-110 flex items-center justify-center transition-colors shrink-0"
                       >
                         <X size={13} className="text-djon-warning-red" />

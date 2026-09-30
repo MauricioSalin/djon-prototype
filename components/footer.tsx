@@ -115,7 +115,7 @@ export function Footer() {
           transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as const }}
           className="text-center mb-14"
         >
-          <h2 className="djon-section-title font-black text-djon-text">
+          <h2 className="djon-section-title font-black text-djon-text" style={{ fontFamily: "var(--djon-font-sans)", fontWeight: 900 }}>
             <motion.span
               className="block"
               initial={{ y: 100 }}

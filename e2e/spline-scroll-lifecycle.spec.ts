@@ -37,15 +37,44 @@ async function metrics(page: Page) {
 const scene = (page: Page, id: string) => page.locator(`[data-spline-scene*="${id}"]:visible`)
 
 async function scrollToScene(page: Page, id: string) {
-  await scene(page, id).evaluate((element) => {
-    const rect = element.getBoundingClientRect()
-    window.scrollTo({ top: window.scrollY + rect.top + rect.height / 2 - window.innerHeight / 2, behavior: "instant" })
-  })
-  await expect(scene(page, id)).toBeInViewport()
+  const target = scene(page, id)
+  const viewportHeight = page.viewportSize()!.height
+  let stableSamples = 0
+  let previousCenter: number | null = null
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const box = await target.boundingBox()
+    if (box) {
+      const center = box.y + box.height / 2
+      const visibleHeight = Math.max(
+        0,
+        Math.min(box.y + box.height, viewportHeight) - Math.max(box.y, 0),
+      )
+      if (visibleHeight / box.height >= 0.5) {
+        stableSamples = previousCenter !== null && Math.abs(center - previousCenter) < 2
+          ? stableSamples + 1
+          : 0
+        previousCenter = center
+        if (stableSamples >= 5) break
+        await page.waitForTimeout(100)
+        continue
+      }
+      stableSamples = 0
+      previousCenter = center
+      const distance = center - viewportHeight / 2
+      await page.mouse.wheel(0, Math.sign(distance) * Math.min(700, Math.max(120, Math.abs(distance))))
+    }
+    await page.waitForTimeout(100)
+  }
+  await expect(scene(page, id)).toBeInViewport({ ratio: 0.5 })
 }
 
 async function waitReady(page: Page, id: string) {
-  await expect(scene(page, id)).toHaveAttribute("data-spline-state", "ready", { timeout: 45_000 })
+  try {
+    await expect(scene(page, id)).toHaveAttribute("data-spline-state", "ready", { timeout: 45_000 })
+  } catch (error) {
+    const phase = await scene(page, id).getAttribute("data-spline-phase").catch(() => null)
+    throw new Error(`Spline ${id} stopped at phase ${phase ?? "unknown"}`, { cause: error })
+  }
   await expect(scene(page, id).locator("canvas")).toBeVisible()
   await expect(scene(page, id).locator("canvas")).toHaveCSS("opacity", "1")
   await expect(scene(page, id).locator("..")).toHaveCSS("opacity", "1", { timeout: 30_000 })
@@ -54,11 +83,15 @@ async function waitReady(page: Page, id: string) {
     return {
       width: element.clientWidth, height: element.clientHeight,
       canvasWidth: canvas.clientWidth, canvasHeight: canvas.clientHeight,
+      bitmapPixels: canvas.width * canvas.height,
     }
   })
   // CSS may scale the section, but changing Spline's layout frame changes its camera.
   expect(frame.canvasWidth).toBe(frame.width)
   expect(frame.canvasHeight).toBe(frame.height)
+  if (page.viewportSize()!.width < 500) {
+    expect(frame.bitmapPixels).toBeLessThanOrEqual(1_500_000)
+  }
 }
 
   test.describe("Spline scroll lifecycle - iPhone", () => {
@@ -71,7 +104,9 @@ async function waitReady(page: Page, id: string) {
     })
 
     test("automatically reloads on reverse scroll with at most one live WebGL scene", async ({ page }, testInfo) => {
-      test.setTimeout(180_000)
+      // Six bounded scene loads plus real Lenis scrolling can exceed the sum
+      // of the individual 45 s guards on a software-rendered CI GPU.
+      test.setTimeout(300_000)
       const errors: string[] = []
       page.on("pageerror", (error) => errors.push(error.message))
       page.on("console", (message) => {

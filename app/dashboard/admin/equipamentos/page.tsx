@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { store, type Equipment, type Unit } from "@/lib/store";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 
 const field =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none placeholder:text-djon-text/25 focus:border-djon-accent/50";
@@ -68,6 +69,10 @@ export default function EquipmentsAdminPage() {
   const [unavailableUntil, setUnavailableUntil] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
   useBodyScrollLock(open || Boolean(availabilityTarget));
+  useModalEscape(open, () => setOpen(false));
+  useModalEscape(Boolean(availabilityTarget), () =>
+    setAvailabilityTarget(null),
+  );
 
   const sync = useCallback(() => setEquipments(store.getEquipments()), []);
   const load = useCallback(async () => {
@@ -288,6 +293,7 @@ export default function EquipmentsAdminPage() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
+                aria-label="Fechar modal"
                 className="text-djon-text opacity-40 transition-opacity hover:opacity-100"
               >
                 <X size={18} />

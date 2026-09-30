@@ -90,7 +90,8 @@ export function LifestyleSection() {
             </motion.div>
 
             <motion.h2
-            className="djon-section-title font-black text-djon-ink pb-1"
+              className="djon-section-title font-black text-djon-ink pb-1"
+              style={{ fontFamily: "var(--djon-font-sans)", fontWeight: 900 }}
               initial={{ y: 80, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}

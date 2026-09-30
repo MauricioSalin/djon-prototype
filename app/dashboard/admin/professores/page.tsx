@@ -32,6 +32,7 @@ import {
 import { DjonSelect } from "@/components/djon-select";
 import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 
 const inp =
   "w-full bg-djon-text/5 border border-djon-text/10 rounded-xl px-4 py-2.5 text-djon-text text-sm placeholder:text-djon-text/20 focus:outline-none focus:border-djon-accent/50 transition-all";
@@ -175,6 +176,11 @@ export default function ProfessoresAdminPage() {
   useBodyScrollLock(
     showForm || Boolean(permissionTarget) || Boolean(removingUser),
   );
+  useModalEscape(showForm, () => setShowForm(false));
+  useModalEscape(Boolean(permissionTarget), () => setPermissionTarget(null));
+  useModalEscape(Boolean(removingUser) && !removalAction, () =>
+    setRemovingUser(null),
+  );
 
   const load = () => setProfessors(store.getProfessors());
 
@@ -187,15 +193,6 @@ export default function ProfessoresAdminPage() {
       })
       .finally(() => setLoading(false));
   }, [dataRevision]);
-
-  useEffect(() => {
-    if (!removingUser || removalAction) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setRemovingUser(null);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [removalAction, removingUser]);
 
   const openNew = () => {
     setForm(emptyForm);
@@ -358,7 +355,9 @@ export default function ProfessoresAdminPage() {
                   {editingId ? "Editar Professor" : "Cadastrar Professor"}
                 </h2>
                 <button
+                  type="button"
                   onClick={() => setShowForm(false)}
+                  aria-label="Fechar modal"
                   className="cursor-pointer text-djon-text opacity-40 transition-opacity hover:opacity-100"
                 >
                   <X size={18} />

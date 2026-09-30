@@ -19,6 +19,7 @@ import { DashboardPageSkeleton } from "@/components/loading-skeletons";
 import { useLoadRecovery } from "@/hooks/use-load-recovery";
 import { notifyError } from "@/lib/feedback";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 import {
   canAuthorMaterials,
   store,
@@ -141,6 +142,12 @@ export default function CoursesPage() {
     setCourseForm(emptyCourse);
     setTemporaryCoverId("");
   };
+  useModalEscape(Boolean(editorCourse), () => {
+    if (!saving) void closeEditor();
+  });
+  useModalEscape(Boolean(deleteCourse), () => {
+    if (!saving) setDeleteCourse(null);
+  });
 
   const chooseCover = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-
-const Toaster = dynamic(
-  () => import("sonner").then((module) => module.Toaster),
-  { ssr: false },
-);
+import { Toaster } from "sonner";
 
 export function AppToaster() {
   const [enabled, setEnabled] = useState(false);

@@ -11,6 +11,54 @@ const invalidators = new Set<(resources: PortalResource[]) => void>();
 const writes = new Set<Promise<void>>();
 const failedReads = new Set<PortalResource>();
 let retryTimer: ReturnType<typeof setTimeout> | undefined;
+let streamReady = false;
+let resolveStreamReady: ((ready: boolean) => void) | undefined;
+let streamReadyPromise: Promise<boolean> = Promise.resolve(false);
+let snapshotStartedAfterStreamReady = false;
+
+export function preparePortalStream() {
+  if (streamReady || resolveStreamReady) return;
+  streamReadyPromise = new Promise<boolean>((resolve) => {
+    resolveStreamReady = resolve;
+  });
+}
+
+export function resetPortalStreamSession() {
+  streamReady = false;
+  resolveStreamReady?.(false);
+  resolveStreamReady = undefined;
+  streamReadyPromise = Promise.resolve(false);
+  snapshotStartedAfterStreamReady = false;
+}
+
+export function markPortalStreamReady() {
+  streamReady = true;
+  resolveStreamReady?.(true);
+  resolveStreamReady = undefined;
+}
+
+export function markPortalStreamUnavailable() {
+  resolveStreamReady?.(false);
+  resolveStreamReady = undefined;
+}
+
+export async function waitForPortalStreamReady(timeoutMs = 3_000) {
+  if (streamReady) return true;
+  return Promise.race([
+    streamReadyPromise,
+    new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(false), timeoutMs);
+    }),
+  ]);
+}
+
+export function markPortalSnapshotStart(startedAfterReady: boolean) {
+  snapshotStartedAfterStreamReady = startedAfterReady;
+}
+
+export function portalSnapshotCoversInitialReady() {
+  return snapshotStartedAfterStreamReady;
+}
 
 export function retryDataRead(resources: PortalResource[]) {
   resources.forEach((resource) => failedReads.add(resource));
@@ -19,8 +67,12 @@ export function retryDataRead(resources: PortalResource[]) {
     retryTimer = undefined;
     const retry = [...failedReads];
     failedReads.clear();
-    invalidateData(retry);
+    if (retry.length) invalidateData(retry);
   }, 2_000);
+}
+
+export function markDataReadSucceeded(resources: readonly PortalResource[]) {
+  resources.forEach((resource) => failedReads.delete(resource));
 }
 
 export function resourcesForPath(path: string): PortalResource[] {
@@ -48,6 +100,12 @@ export function invalidateData(resources: readonly PortalResource[] = PORTAL_RES
   invalidators.forEach((listener) => listener([...affected]));
 }
 
+function advanceDataEpoch(resources: readonly PortalResource[]) {
+  for (const resource of resources) {
+    epochs.set(resource, (epochs.get(resource) ?? 0) + 1);
+  }
+}
+
 export function publishData(resources: readonly PortalResource[]) {
   for (const resource of resources) versions.set(resource, (versions.get(resource) ?? 0) + 1);
   listeners.forEach((listener) => listener());
@@ -63,14 +121,20 @@ export function onDataInvalidated(listener: (resources: PortalResource[]) => voi
   return () => { invalidators.delete(listener); };
 }
 
-export function beginDataWrite(resources: PortalResource[]) {
+export function beginDataWrite(
+  resources: PortalResource[],
+  options: { notifyInvalidators?: boolean } = {},
+) {
   let complete!: () => void;
   const pending = new Promise<void>((resolve) => { complete = resolve; });
   writes.add(pending);
-  invalidateData(resources);
+  const invalidate = options.notifyInvalidators === false
+    ? () => advanceDataEpoch(resources)
+    : () => invalidateData(resources);
+  invalidate();
   return () => {
     writes.delete(pending);
-    invalidateData(resources);
+    invalidate();
     complete();
   };
 }

@@ -417,11 +417,10 @@ async function expectContainedModal(
   expect(geometry.right).toBeLessThanOrEqual(geometry.viewportWidth + 1);
   expect(["auto", "scroll"]).toContain(geometry.overflowY);
 
-  await panel
-    .locator("button")
-    .filter({ has: page.locator("svg.lucide-x") })
-    .first()
-    .click();
+  await expect(
+    panel.getByRole("button", { name: /Fechar/i }).first(),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
   await expect(heading).toBeHidden();
   await expect
     .poll(() => page.evaluate(() => document.body.style.overflow))
@@ -633,15 +632,17 @@ test.describe("PWA real", () => {
         get: () => false,
       });
     });
-    page.on("pageerror", (error) => errors.push(error.message));
-    page.on("console", (message) => {
+    const onPageError = (error: Error) => errors.push(error.message);
+    const onConsole = (message: { type(): string; text(): string }) => {
       if (
         (message.type() === "error" || message.type() === "warning") &&
         message.text() !== "Failed to load resource: net::ERR_FAILED"
       ) {
         errors.push(message.text());
       }
-    });
+    };
+    page.on("pageerror", onPageError);
+    page.on("console", onConsole);
 
     await page.goto("/login");
     await expect
@@ -655,8 +656,7 @@ test.describe("PWA real", () => {
     expect(serviceWorker.headers()["content-type"]).toContain("application/javascript");
     expect(serviceWorker.headers()["cache-control"]).toContain("no-store");
     const serviceWorkerSource = await serviceWorker.text();
-    expect(serviceWorkerSource).not.toContain('addEventListener("fetch"');
-    expect(serviceWorkerSource).not.toContain("respondWith");
+    expect(serviceWorkerSource).toContain('const SW_VERSION = "djon-pwa-v7"');
 
     const manifestResponse = await request.get("/manifest.webmanifest");
     expect(manifestResponse.ok()).toBe(true);
@@ -678,7 +678,22 @@ test.describe("PWA real", () => {
     expect(manifest.screenshots).toEqual([
       expect.objectContaining({ src: "/djon-screenshot2.png", sizes: "1280x577" }),
     ]);
+
+    await expect
+      .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
+      .toBe(true);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Acessar Portal" })).toBeVisible();
     expect(errors).toEqual([]);
+    page.off("pageerror", onPageError);
+    page.off("console", onConsole);
+    await page.context().setOffline(true);
+    try {
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { name: "Acessar Portal" })).toBeVisible();
+    } finally {
+      await page.context().setOffline(false);
+    }
   });
 });
 

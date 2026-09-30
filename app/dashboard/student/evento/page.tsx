@@ -3,12 +3,14 @@
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Plus, Trash2, MapPin, Clock, Instagram, Music2, X, Edit2 } from "lucide-react"
+import { Plus, Trash2, MapPin, Clock, Instagram, Music2, Edit2 } from "lucide-react"
 import { store, type DJEvent } from "@/lib/store"
 import { ListPagination, useListPagination } from "@/components/list-pagination"
 import { useConfirmation } from "@/components/confirmation-provider"
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
+import { useModalEscape } from "@/hooks/use-modal-escape"
+import { ModalCloseButton } from "@/components/modal-close-button"
 import {
   EVENTS_HERO_SECTIONS,
   PROFESSOR_EVENTS_HERO,
@@ -35,6 +37,7 @@ export default function StudentEventPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
   useBodyScrollLock(showForm)
+  useModalEscape(showForm, () => setShowForm(false))
 
   const load = () => {
     const u = store.getCurrentUser()
@@ -130,9 +133,11 @@ export default function StudentEventPage() {
                     {editingId ? "Editar Evento" : "Cadastrar Evento"}
                   </h2>
                 </div>
-                <button onClick={() => setShowForm(false)} className="cursor-pointer w-9 h-9 rounded-full bg-djon-text/8 flex items-center justify-center text-djon-text/50 hover:brightness-110 transition-all">
-                  <X size={16} />
-                </button>
+                <ModalCloseButton
+                  onClick={() => setShowForm(false)}
+                  size={16}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-djon-text/8 opacity-50 hover:brightness-110"
+                />
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">

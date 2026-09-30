@@ -37,6 +37,7 @@ import { MaterialCourseView } from "@/components/material-course-view";
 import { usePageTitle } from "@/components/page-title-manager";
 import { EditablePortalHero } from "@/components/portal/editable-portal-hero";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 
 const DRAFTS_CATEGORY = "Rascunhos";
 const COURSES_CATEGORY = "Cursos";
@@ -131,6 +132,8 @@ export default function MaterialPage() {
   useBodyScrollLock(
     Boolean(categoryModal) || Boolean(categoryDelete) || Boolean(deleteId),
   );
+  useModalEscape(Boolean(categoryModal), () => setCategoryModal(null));
+  useModalEscape(Boolean(categoryDelete), () => setCategoryDelete(null));
   const listScrollPosition = useRef(0);
   const selectedCourseRef = useRef<string | null>(null);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
@@ -782,6 +785,7 @@ export default function MaterialPage() {
                 </div>
                 <button
                   onClick={() => setCategoryModal(null)}
+                  aria-label="Fechar modal"
                   className="cursor-pointer text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   type="button"
                 >
@@ -857,6 +861,7 @@ export default function MaterialPage() {
                 </div>
                 <button
                   onClick={() => setCategoryDelete(null)}
+                  aria-label="Fechar modal"
                   className="cursor-pointer text-djon-text opacity-30 transition-opacity hover:opacity-100"
                   type="button"
                 >

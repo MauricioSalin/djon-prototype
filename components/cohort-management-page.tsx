@@ -42,6 +42,7 @@ import {
 } from "@/lib/store";
 import { notifyError, notifyRequestError } from "@/lib/feedback";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { useModalEscape } from "@/hooks/use-modal-escape";
 
 const field =
   "w-full rounded-xl border border-djon-text/10 bg-djon-text/5 px-3 py-2.5 text-sm text-djon-text outline-none placeholder:text-djon-text/25 focus:border-djon-accent/50";
@@ -247,14 +248,15 @@ export function CohortManagementPage() {
   const [detail, setDetail] = useState<Cohort | null>(null);
   const [editingCohort, setEditingCohort] = useState<Cohort | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [deletingCohort, setDeletingCohort] = useState<Cohort | null>(null);
   useBodyScrollLock(
     cohortModal ||
       Boolean(newCohort) ||
       Boolean(configuring) ||
       Boolean(detail) ||
-      Boolean(editingCohort),
+      Boolean(editingCohort) ||
+      Boolean(deletingCohort),
   );
-  const [deletingCohort, setDeletingCohort] = useState<Cohort | null>(null);
   const [saving, setSaving] = useState(false);
 
   const canCreateCohort = user?.role === "admin" || user?.role === "professor";
@@ -317,6 +319,20 @@ export function CohortManagementPage() {
     setStudentSearch("");
     setStudentFilter("all");
   };
+  useModalEscape(cohortModal, closeCohortModal);
+  useModalEscape(Boolean(newCohort) || Boolean(configuring), () => {
+    if (saving) return;
+    setNewCohort(null);
+    setConfiguring(null);
+    setScheduleConflicts([]);
+  });
+  useModalEscape(Boolean(detail), () => setDetail(null));
+  useModalEscape(Boolean(editingCohort), () => {
+    if (!saving) setEditingCohort(null);
+  });
+  useModalEscape(Boolean(deletingCohort), () => {
+    if (!saving) setDeletingCohort(null);
+  });
 
   const professors = users.filter(
     (person) =>

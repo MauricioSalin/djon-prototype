@@ -103,6 +103,10 @@ export function SplineScene({
       canvas,
       scene,
       exclusive,
+      maxDevicePixelRatio: exclusive ? 1.5 : undefined,
+      onPhase: (phase) => {
+        wrapperRef.current?.setAttribute("data-spline-phase", phase)
+      },
       onError: (error) => {
         console.error("[Spline] Scene lifecycle failed", scene, error)
         if (!session.signal.aborted) setState({ version, scene, status: "error" })

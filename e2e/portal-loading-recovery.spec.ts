@@ -179,7 +179,7 @@ test("courses recover from a failed request without an endless skeleton", async 
     return true;
   });
   await page.goto("/dashboard/cursos");
-  await expect.poll(() => failures).toBeGreaterThanOrEqual(6);
+  await expect.poll(() => failures).toBe(3);
   await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
   await expect(page.getByText("Nenhum curso cadastrado", { exact: true })).toHaveCount(0);
   fail = false;
@@ -201,7 +201,7 @@ for (const routeCase of [
       return true;
     }, routeCase.role);
     await page.goto(routeCase.page);
-    await expect.poll(() => failures).toBeGreaterThanOrEqual(6);
+    await expect.poll(() => failures).toBe(3);
     await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
     await expect(page.getByText(routeCase.empty, { exact: true })).toHaveCount(0);
     fail = false;
@@ -224,7 +224,7 @@ for (const detail of [
       return true;
     });
     await page.goto(`/dashboard/${detail.path}/${detailId}`);
-    await expect.poll(() => failures).toBeGreaterThanOrEqual(6);
+    await expect.poll(() => failures).toBe(3);
     await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
     await expect(page.getByText(detail.missing, { exact: true })).toHaveCount(0);
     fail = false;
@@ -299,7 +299,10 @@ for (const destination of [
     await expect.poll(() => requests).toBeGreaterThanOrEqual(2);
     await expect(page.getByRole("button", { name: "TENTAR NOVAMENTE" })).toHaveCount(0);
     fail = false;
-    await page.evaluate(() => window.dispatchEvent(new Event("online")));
+    await page.evaluate(() => {
+      window.dispatchEvent(new Event("offline"));
+      window.dispatchEvent(new Event("online"));
+    });
     if (destination.path === "/dashboard/agenda") {
       await expect(page.getByRole("button", { name: `16:00 ${currentUser.name}`, exact: true })).toBeVisible();
     } else {

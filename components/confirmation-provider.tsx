@@ -1,9 +1,10 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertTriangle, X } from "lucide-react"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
+import { useModalEscape } from "@/hooks/use-modal-escape"
 
 type ConfirmationOptions = {
   title: string
@@ -29,6 +30,7 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
     resolver.current = null
     setOptions(null)
   }, [])
+  useModalEscape(Boolean(options), () => close(false))
 
   const confirm = useCallback((nextOptions: ConfirmationOptions) => {
     resolver.current?.(false)
@@ -39,15 +41,6 @@ export function ConfirmationProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(() => ({ confirm }), [confirm])
-
-  useEffect(() => {
-    if (!options) return
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") close(false)
-    }
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [close, options])
 
   return (
     <ConfirmationContext.Provider value={value}>

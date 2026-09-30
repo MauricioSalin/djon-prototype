@@ -20,6 +20,7 @@ import {
 import { LockedCoverOverlay } from "@/components/locked-cover-overlay"
 import { canEditMaterial, type Course, type Material, type User } from "@/lib/store"
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock"
+import { useModalEscape } from "@/hooks/use-modal-escape"
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0 },
@@ -86,6 +87,9 @@ export function MaterialCourseView({
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   useBodyScrollLock(Boolean(deleteId))
+  useModalEscape(Boolean(deleteId), () => {
+    if (!deleting) setDeleteId(null)
+  })
   const pagination = useListPagination(lessons, course.id)
 
   const removeLesson = async () => {

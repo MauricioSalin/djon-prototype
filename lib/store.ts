@@ -1,6 +1,6 @@
 "use client";
 
-import { beginDataWrite, dataEpoch, invalidateData, PORTAL_RESOURCES, resourcesForPath, retryDataRead, waitForDataWrites, type PortalResource } from "@/lib/portal-data";
+import { beginDataWrite, dataEpoch, invalidateData, markDataReadSucceeded, markPortalSnapshotStart, PORTAL_RESOURCES, publishData, resetPortalStreamSession, resourcesForPath, retryDataRead, waitForDataWrites, waitForPortalStreamReady, type PortalResource } from "@/lib/portal-data";
 
 import {
   notifyRequestError,
@@ -945,12 +945,19 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
   showError = true,
+  scheduleResourceRetry = true,
 ): Promise<T> {
   const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
   const method = (options.method ?? "GET").toUpperCase();
   const resources = resourcesForPath(path);
   const read = method === "GET";
-  const finishWrite = !read && resources.length ? beginDataWrite(resources) : undefined;
+  const authoritativePortalWrite =
+    method === "PATCH" && path.startsWith("/portal-content/");
+  const finishWrite = !read && resources.length
+    ? beginDataWrite(resources, {
+        notifyInvalidators: !authoritativePortalWrite,
+      })
+    : undefined;
   const headers = new Headers(options.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (options.body && !(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
@@ -989,10 +996,11 @@ async function request<T>(
       if (payload === undefined && response.status !== 204) {
         throw new ApiError("O servidor retornou uma resposta incompleta.", 503);
       }
+      if (read) markDataReadSucceeded(resources);
       return payload as T;
     }
   } catch (error) {
-    if (read && error instanceof ApiError && (error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500)) retryDataRead(resources);
+    if (scheduleResourceRetry && read && error instanceof ApiError && (error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500)) retryDataRead(resources);
     if (showError) notifyRequestError(error);
     throw error;
   } finally {
@@ -1034,6 +1042,9 @@ class ApiStore {
   private notificationsPromise: Promise<Notification[]> | null = null;
   private bookingsPromise: Promise<Booking[]> | null = null;
   private eventsPromise: Promise<DJEvent[]> | null = null;
+  private eventsEpoch: string | null = null;
+  private eventsError: unknown = null;
+  private eventsErrorEpoch: string | null = null;
   private materialsPromise: Promise<Material[]> | null = null;
   private materialCategoriesPromise: Promise<CategoryRecord[]> | null = null;
   private synchronizePromises = new Map<string, Promise<void>>();
@@ -1088,6 +1099,8 @@ class ApiStore {
   }
 
   private async bootstrapPortal(force: boolean) {
+    const streamWasReady = await waitForPortalStreamReady();
+    markPortalSnapshotStart(streamWasReady);
     clearPortalCache();
     const me = await this.restoreSession(force);
     if (!me) return null;
@@ -1099,7 +1112,9 @@ class ApiStore {
     if (!this.hasSession()) return null;
     if (this.restoreSessionPromise) return this.restoreSessionPromise;
 
-    this.restoreSessionPromise = request<ApiRecord>("/users/me", {}, false)
+    // Bootstrap owns its recovery cycle. Scheduling a second resource retry here
+    // would race it and issue two successful identity reads after one outage.
+    this.restoreSessionPromise = request<ApiRecord>("/users/me", {}, false, false)
       .then((raw) => {
         const user = normalizeUser(raw);
         this.currentUser = user;
@@ -1143,7 +1158,7 @@ class ApiStore {
       leads,
     ] = await Promise.all([
       includes("users") ? this.fetchAllPages(usersPath) : null,
-      includes("events") ? this.fetchAllPages("/events") : null,
+      includes("events") ? this.loadEvents() : null,
       includes("bookings") ? this.fetchAllPages("/bookings") : null,
       includes("materials") ? this.fetchAllPages("/materials") : null,
       includes("materials") ? request<ApiRecord[]>("/materials/categories") : null,
@@ -1157,7 +1172,7 @@ class ApiStore {
     if (epoch !== dataEpoch(resources)) return this.loadAll(await this.restoreSession(true) ?? undefined, resources);
     this.currentUser = me;
     if (userItems) this.users = this.uniqueUsers([...userItems.map(normalizeUser), me]);
-    if (eventItems) this.events = eventItems.map(normalizeEvent);
+    if (eventItems) this.events = eventItems;
     if (bookingItems) this.bookings = bookingItems.map(normalizeBooking);
     if (materialItems) this.materials = materialItems.map(normalizeMaterial);
     if (categories) this.categories = categories.map((item) => ({
@@ -1210,16 +1225,34 @@ class ApiStore {
     this.users.find((user) => user.id === id) ?? null;
   getEvents = () => [...this.events];
 
-  async refreshEvents() {
+  private async loadEvents(force = false) {
+    const epoch = dataEpoch(["events"]);
+    if (!force && this.eventsEpoch === epoch) return this.getEvents();
     if (this.eventsPromise) return this.eventsPromise;
-    const load = this.fetchAllPages("/events").then((items) => {
-      this.events = items.map(normalizeEvent);
-      return this.getEvents();
-    });
+    if (!force && this.eventsError && this.eventsErrorEpoch === epoch) {
+      throw this.eventsError;
+    }
+    const load = this.fetchAllPages("/events")
+      .then((items) => {
+        this.events = items.map(normalizeEvent);
+        this.eventsEpoch = dataEpoch(["events"]);
+        this.eventsError = null;
+        this.eventsErrorEpoch = null;
+        return this.getEvents();
+      })
+      .catch((error: unknown) => {
+        this.eventsError = error;
+        this.eventsErrorEpoch = epoch;
+        throw error;
+      });
     this.eventsPromise = load.finally(() => {
       this.eventsPromise = null;
     });
     return this.eventsPromise;
+  }
+
+  async refreshEvents(force = false) {
+    return this.loadEvents(force);
   }
 
   async requestPasswordReset(email: string) {
@@ -2579,6 +2612,7 @@ class ApiStore {
 
   private reset() {
     clearPortalCache();
+    resetPortalStreamSession();
     this.currentUser = null;
     this.currentUserHydrated = false;
     this.users = [];
@@ -2601,6 +2635,9 @@ class ApiStore {
     this.notificationsPromise = null;
     this.bookingsPromise = null;
     this.eventsPromise = null;
+    this.eventsEpoch = null;
+    this.eventsError = null;
+    this.eventsErrorEpoch = null;
     this.materialsPromise = null;
     this.materialCategoriesPromise = null;
     this.synchronizePromises.clear();
@@ -2650,6 +2687,7 @@ class ApiStore {
       ),
     );
     this.portalHeroes.set(key, content);
+    publishData(["portal-content"]);
     if (!options.silent) {
       notifySuccess(
         "Hero atualizado",
