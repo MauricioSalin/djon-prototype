@@ -12,6 +12,7 @@ import {
 import { store, type Unit } from "@/lib/store"
 import { LandingEditButton } from "@/components/landing/landing-edit-button"
 import { useLandingSection } from "@/components/landing/landing-content-provider"
+import { sectionTitleClassName } from "@/lib/section-title-font"
 
 
 const containerVariants = {
@@ -97,8 +98,7 @@ export function SocialSection() {
                 {data.label}
               </motion.span>
               <motion.h2
-                className="djon-section-title font-black text-djon-ink mt-2 pb-1"
-                style={{ fontFamily: "var(--djon-font-sans)", fontWeight: 900 }}
+                className={`${sectionTitleClassName} text-djon-ink mt-2 pb-1`}
                 initial={{ y: 80, opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}

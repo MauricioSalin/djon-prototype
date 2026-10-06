@@ -14,6 +14,7 @@ import {
 } from "@/lib/locations"
 import { formatPhone, phoneDigits } from "@/lib/phone"
 import { store, type Unit } from "@/lib/store"
+import { sectionTitleClassName } from "@/lib/section-title-font"
 
 
 const containerVariants = {
@@ -115,7 +116,7 @@ export function Footer() {
           transition={{ duration: 0.8, ease: [0.25, 0.4, 0.25, 1] as const }}
           className="text-center mb-14"
         >
-          <h2 className="djon-section-title font-black text-djon-text" style={{ fontFamily: "var(--djon-font-sans)", fontWeight: 900 }}>
+          <h2 className={`${sectionTitleClassName} text-djon-text`}>
             <motion.span
               className="block"
               initial={{ y: 100 }}

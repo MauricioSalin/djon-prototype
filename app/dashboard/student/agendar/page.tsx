@@ -1,5 +1,7 @@
 "use client";
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -480,7 +482,7 @@ export default function AgendarPage() {
                 PRÓXIMOS
               </motion.span>
               <motion.h2
-                className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2"
+                className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2`}
                 {...fadeUp(0.1)}
               >
                 Próximos Agendamentos
@@ -616,7 +618,7 @@ export default function AgendarPage() {
               HISTÓRICO
             </motion.span>
             <motion.h2
-              className="text-3xl md:text-5xl font-black text-djon-text/50 tracking-tighter mb-2"
+              className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text/50 tracking-tighter mb-2`}
               {...fadeUp(0.1)}
             >
               Histórico

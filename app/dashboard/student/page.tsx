@@ -1,5 +1,7 @@
 "use client"
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
@@ -117,7 +119,7 @@ export default function StudentPage() {
               <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
                 AGENDAMENTOS
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter" {...fadeUp(0.1)}>
+              <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter`} {...fadeUp(0.1)}>
                 Próximos Agendamentos
               </motion.h2>
               <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.2)} />
@@ -189,7 +191,7 @@ export default function StudentPage() {
               <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
                 MEUS EVENTOS
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter" {...fadeUp(0.1)}>
+              <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter`} {...fadeUp(0.1)}>
                 Onde Você Vai Tocar
               </motion.h2>
               <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.2)} />

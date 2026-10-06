@@ -204,6 +204,35 @@ async function mockPortalHero(
 }
 
 for (const width of [390, 1280]) {
+  for (const user of [admin, professor, student]) {
+    test(`titulos de secao da home ${user.role} usam Raleway real em ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await mockPortalHero(page, () => undefined, user);
+      await page.goto(`/dashboard/${user.role}`);
+      const headings = page.locator("h2").filter({ hasText: /Visão Geral|Gerenciar|Próximos Agendamentos|Onde Você Vai Tocar/ });
+      await expect(headings.first()).toBeAttached();
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send("DOM.enable");
+      await cdp.send("CSS.enable");
+      for (const heading of await headings.all()) {
+        await heading.scrollIntoViewIfNeeded();
+        await expect(heading).toHaveCSS("opacity", "1");
+        await expect(heading).toHaveCSS("font-weight", "900");
+        await page.evaluate(() => document.fonts.ready);
+        await heading.evaluate((element) => element.setAttribute("data-font-check", "target"));
+        const { root } = await cdp.send("DOM.getDocument");
+        const { nodeId } = await cdp.send("DOM.querySelector", {
+          nodeId: root.nodeId,
+          selector: '[data-font-check="target"]',
+        });
+        const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
+        expect(fonts.length).toBeGreaterThan(0);
+        expect(fonts.every((font) => font.isCustomFont && font.familyName.includes("Raleway"))).toBe(true);
+        await heading.evaluate((element) => element.removeAttribute("data-font-check"));
+      }
+      await cdp.detach();
+    });
+  }
   test(`icone editar alinhado ao texto dos heroes em ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await mockPortalHero(page, () => undefined, admin);

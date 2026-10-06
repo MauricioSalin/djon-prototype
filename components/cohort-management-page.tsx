@@ -1,5 +1,7 @@
 "use client";
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font";
+
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
@@ -663,7 +665,7 @@ export function CohortManagementPage() {
                 <p className="text-xs font-black uppercase tracking-[0.22em] text-djon-accent">
                   SUA JORNADA
                 </p>
-                <h2 className="mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl">
+                <h2 className={`${sectionTitleFontClassName} mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl`}>
                   Em andamento
                 </h2>
                 <div className="mt-3 h-[3px] w-10 rounded-full bg-djon-accent" />
@@ -692,7 +694,7 @@ export function CohortManagementPage() {
                 <p className="text-xs font-black uppercase tracking-[0.22em] text-djon-accent">
                   CONTINUE EVOLUINDO
                 </p>
-                <h2 className="mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl">
+                <h2 className={`${sectionTitleFontClassName} mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl`}>
                   Outros cursos
                 </h2>
                 <p className="mt-3 max-w-2xl text-sm leading-relaxed text-djon-text/40">
@@ -745,7 +747,7 @@ export function CohortManagementPage() {
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-djon-accent">
                     HISTÓRICO
                   </p>
-                  <h2 className="mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl">
+                  <h2 className={`${sectionTitleFontClassName} mt-2 text-3xl font-black tracking-tighter text-djon-text sm:text-4xl`}>
                     Concluídos
                   </h2>
                 </motion.div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -74,7 +76,7 @@ export function UpcomingEventsSection({
               COMUNIDADE
             </motion.span>
             <motion.h2
-              className="text-3xl font-black tracking-tighter text-djon-text md:text-5xl"
+              className={`${sectionTitleFontClassName} text-3xl font-black tracking-tighter text-djon-text md:text-5xl`}
               {...fadeUp(0.1)}
             >
               Próximos Eventos

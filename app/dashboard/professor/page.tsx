@@ -1,5 +1,7 @@
 "use client";
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -243,7 +245,7 @@ export default function ProfessorHomePage() {
             NÚMEROS
           </motion.span>
           <motion.h2
-            className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2"
+            className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2`}
             {...fadeUp(0.1)}
           >
             Visão Geral
@@ -291,7 +293,7 @@ export default function ProfessorHomePage() {
             ACESSO RÁPIDO
           </motion.span>
           <motion.h2
-            className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2"
+            className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2`}
             {...fadeUp(0.1)}
           >
             Navegar
@@ -342,7 +344,7 @@ export default function ProfessorHomePage() {
                 AGENDA
               </motion.span>
               <motion.h2
-                className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter"
+                className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter`}
                 {...fadeUp(0.1)}
               >
                 Próximos Agendamentos

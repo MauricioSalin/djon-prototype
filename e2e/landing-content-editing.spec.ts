@@ -106,23 +106,52 @@ for (const width of [390, 1280]) {
     await mockLanding(page, () => undefined);
     await page.goto("/");
     const team = page.locator("#time h2");
-    await expect(team).toBeAttached();
+    await team.scrollIntoViewIfNeeded();
+    await expect(team).toHaveCSS("opacity", "1");
+    await page.evaluate(() => document.fonts.ready);
     const reference = await team.evaluate((element) => {
       const style = getComputedStyle(element);
-      return { family: style.fontFamily, weight: style.fontWeight };
+      return {
+        family: style.fontFamily,
+        weight: style.fontWeight,
+        size: style.fontSize,
+        spacing: style.letterSpacing,
+        lineHeight: style.lineHeight,
+      };
     });
+    expect(reference.weight).toBe("900");
+    expect(reference.size).toBe(width < 768 ? "30px" : "48px");
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("DOM.enable");
+    await cdp.send("CSS.enable");
     const headings = [
       page.locator("#historia h2"),
       page.locator("#contato h2"),
       page.getByRole("heading", { name: /A FRONTEIRA ENTRE O SONHO/ }),
     ];
-    for (const heading of headings) {
+    for (const heading of [team, ...headings]) {
       await expect(heading).toHaveCSS("font-family", reference.family);
       await expect(heading).toHaveCSS("font-weight", reference.weight);
+      await expect(heading).toHaveCSS("font-size", reference.size);
+      await expect(heading).toHaveCSS("letter-spacing", reference.spacing);
+      await expect(heading).toHaveCSS("line-height", reference.lineHeight);
       await heading.scrollIntoViewIfNeeded();
       await expect(heading).toBeVisible();
+      await expect(heading).toHaveCSS("opacity", "1");
+      await page.evaluate(() => document.fonts.ready);
+      await heading.evaluate((element) => element.setAttribute("data-font-check", "target"));
+      const { root } = await cdp.send("DOM.getDocument");
+      const { nodeId } = await cdp.send("DOM.querySelector", {
+        nodeId: root.nodeId,
+        selector: '[data-font-check="target"]',
+      });
+      const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
+      expect(fonts.length).toBeGreaterThan(0);
+      expect(fonts.every((font) => font.isCustomFont && font.familyName.includes("Raleway"))).toBe(true);
+      await heading.evaluate((element) => element.removeAttribute("data-font-check"));
       expect(await heading.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
     }
+    await cdp.detach();
   });
 }
 

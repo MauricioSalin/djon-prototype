@@ -1,5 +1,7 @@
 "use client"
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import { motion, useInView } from "framer-motion"
 import { useRef, useState } from "react"
 import Image from "next/image"
@@ -9,6 +11,7 @@ import { LandingEditButton } from "@/components/landing/landing-edit-button"
 import { useLandingSection } from "@/components/landing/landing-content-provider"
 import { LandingIconView } from "@/components/landing/landing-options"
 import { landingColor, type TeamLandingData } from "@/lib/landing-content"
+import { sectionTitleClassName } from "@/lib/section-title-font"
 import {
   passthroughImageLoader,
   shouldBypassImageOptimization,
@@ -100,7 +103,7 @@ export function ActivationsSection() {
                 >
                   {showcase.data.label}
                 </motion.span>
-                <h2 className="text-3xl md:text-5xl font-black text-djon-ink tracking-tighter mt-2 leading-[0.9]">
+                <h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-ink tracking-tighter mt-2 leading-[0.9]`}>
                   {showcase.data.title}
                 </h2>
               </div>
@@ -220,7 +223,7 @@ export function ActivationsSection() {
               {team.data.label}
             </motion.span>
             <motion.h2
-              className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2"
+              className={`${sectionTitleClassName} text-djon-text mt-2`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

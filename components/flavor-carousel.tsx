@@ -1,5 +1,7 @@
 "use client"
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import type React from "react"
 import { motion, AnimatePresence, useSpring } from "framer-motion"
 import { useEffect, useState } from "react"
@@ -102,7 +104,7 @@ export function FlavorCarousel() {
             NOSSOS CURSOS
           </motion.span>
           <motion.h2
-            className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2"
+            className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2`}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

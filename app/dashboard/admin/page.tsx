@@ -1,5 +1,7 @@
 "use client"
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useEffect, useState } from "react"
 import { AnimatePresence, motion } from "framer-motion"
@@ -165,7 +167,7 @@ export default function AdminPage() {
           <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
             NÚMEROS
           </motion.span>
-          <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2" {...fadeUp(0.1)}>
+          <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2`} {...fadeUp(0.1)}>
             Visão Geral
           </motion.h2>
           <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" {...fadeUp(0.15)} />
@@ -196,7 +198,7 @@ export default function AdminPage() {
           <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
             ACESSO RÁPIDO
           </motion.span>
-          <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2" {...fadeUp(0.1)}>
+          <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2`} {...fadeUp(0.1)}>
             Gerenciar
           </motion.h2>
           <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" {...fadeUp(0.15)} />
@@ -236,7 +238,7 @@ export default function AdminPage() {
               <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>
                 AGENDA
               </motion.span>
-              <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter" {...fadeUp(0.1)}>
+              <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter`} {...fadeUp(0.1)}>
                 Próximos Agendamentos
               </motion.h2>
               <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mt-3" {...fadeUp(0.15)} />

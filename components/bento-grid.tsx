@@ -1,5 +1,7 @@
 "use client"
 
+import { sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import type React from "react"
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
 import { useRef, useState } from "react"
@@ -131,7 +133,7 @@ export function BentoGrid() {
             {data.label}
           </motion.span>
           <motion.h2
-            className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2"
+            className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mt-2`}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0 }}

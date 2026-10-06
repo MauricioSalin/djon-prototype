@@ -56,6 +56,44 @@ const profile = {
   latestRelease: { title: "Set completo", link: "https://example.com/set", cover: "/images/latest-release-default.jpg" },
 }
 
+for (const width of [390, 1280]) {
+  test(`profile names share the new font and left alignment at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.addInitScript(() => localStorage.setItem("djon_access_token", "profile-font-token"));
+    await page.context().route("**/api/v1/**", async (route) => {
+      const path = new URL(route.request().url()).pathname.replace(/^\/api\/v1/, "");
+      if (path === "/users/me") return route.fulfill({ json: profile });
+      if (["/users", "/events", "/bookings", "/materials"].includes(path)) {
+        return route.fulfill({ json: { items: [], total: 0, page: 1, limit: 100 } });
+      }
+      if (path.startsWith("/portal-content/")) return route.fulfill({ json: null });
+      return route.fulfill({ json: [] });
+    });
+    await page.goto("/dashboard/student/perfil");
+    const artisticName = page.getByRole("heading", { name: profile.projectName, exact: true });
+    const realName = artisticName.locator("..").locator("p").filter({ hasText: profile.name });
+    await expect(artisticName).toHaveCSS("opacity", "1");
+    await expect(realName).toBeVisible();
+    await expect(artisticName).toHaveCSS("font-weight", "900");
+    await expect(realName).toHaveCSS("font-family", await artisticName.evaluate((element) => getComputedStyle(element).fontFamily));
+    const artisticBox = await artisticName.locator("span").first().boundingBox();
+    const realBox = await realName.boundingBox();
+    expect(artisticBox).not.toBeNull();
+    expect(realBox).not.toBeNull();
+    expect(Math.abs(artisticBox!.x - realBox!.x)).toBeLessThanOrEqual(1);
+    await page.evaluate(() => document.fonts.ready);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("DOM.enable");
+    await cdp.send("CSS.enable");
+    const { root } = await cdp.send("DOM.getDocument");
+    const { nodeId } = await cdp.send("DOM.querySelector", { nodeId: root.nodeId, selector: "h1" });
+    const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
+    expect(fonts.length).toBeGreaterThan(0);
+    expect(fonts.every((font) => font.isCustomFont && font.familyName.includes("Raleway"))).toBe(true);
+    await cdp.detach();
+  });
+}
+
 test("PWA finishes refreshing the profile after a temporary connection failure", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   let meRequests = 0;

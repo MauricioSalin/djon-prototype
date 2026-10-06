@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { LandingEditButton } from "@/components/landing/landing-edit-button"
 import { useLandingSection } from "@/components/landing/landing-content-provider"
+import { sectionTitleClassName } from "@/lib/section-title-font"
 import {
   passthroughImageLoader,
   shouldBypassImageOptimization,
@@ -90,8 +91,7 @@ export function LifestyleSection() {
             </motion.div>
 
             <motion.h2
-              className="djon-section-title font-black text-djon-ink pb-1"
-              style={{ fontFamily: "var(--djon-font-sans)", fontWeight: 900 }}
+              className={`${sectionTitleClassName} text-djon-ink pb-1`}
               initial={{ y: 80, opacity: 0 }}
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}

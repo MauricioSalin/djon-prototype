@@ -1,5 +1,7 @@
 "use client"
 
+import { sectionTitleClassName, sectionTitleFontClassName } from "@/lib/section-title-font"
+
 import { usePortalRevision } from "@/hooks/use-portal-revision";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { motion } from "framer-motion"
@@ -482,7 +484,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
             </div>
 
             {/* Info — grows to fill available width */}
-            <div className="flex-1 min-w-0 pb-2">
+            <div className="flex-1 min-w-0 pb-2 text-left">
               <motion.div
                 className="inline-block bg-djon-accent/15 text-djon-accent text-djon-label font-black tracking-[0.2em] px-3 py-1 rounded-full mb-2"
                 initial={{ opacity: 0, y: 10 }}
@@ -492,7 +494,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                 {ROLE_LABELS[user.role] ?? "DJ ON Academy"}
               </motion.div>
               <motion.h1
-                className="djon-section-title flex items-center gap-3 font-black text-djon-text"
+                className={`${sectionTitleClassName} m-0 flex items-center justify-start gap-3 p-0 text-djon-text`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
@@ -506,7 +508,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
                   />
                 )}
               </motion.h1>
-              {user.projectName && <p className="mt-1 text-sm font-bold text-djon-text/40">{user.name}</p>}
+              {user.projectName && <p className={`${sectionTitleFontClassName} m-0 mt-1 p-0 text-sm text-djon-text/40`}>{user.name}</p>}
             </div>
 
             {/* Account actions — pinned to the right, aligned to bottom of row */}
@@ -801,7 +803,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         <section className="py-16 bg-djon-page sm:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <motion.span className="block text-djon-accent text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>PRÓXIMOS</motion.span>
-            <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2" {...fadeUp(0.1)}>Eventos Futuros</motion.h2>
+            <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-2`} {...fadeUp(0.1)}>Eventos Futuros</motion.h2>
             <motion.div className="h-[3px] w-10 bg-djon-accent rounded-full mb-10" {...fadeUp(0.15)} />
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {upcomingEvents.map((ev, i) => (
@@ -817,7 +819,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
         <section className="py-16 bg-djon-muted-panel sm:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <motion.span className="block text-djon-text/30 text-xs tracking-widest font-black uppercase mb-2" {...fadeUp(0)}>HISTÓRICO</motion.span>
-            <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text/60 tracking-tighter mb-2" {...fadeUp(0.1)}>Eventos Passados</motion.h2>
+            <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text/60 tracking-tighter mb-2`} {...fadeUp(0.1)}>Eventos Passados</motion.h2>
             <motion.div className="h-[3px] w-10 bg-djon-text/20 rounded-full mb-10" {...fadeUp(0.15)} />
             <div className="space-y-3">
               {historyPagination.paginatedItems.map((ev, i) => (
@@ -856,7 +858,7 @@ export function ProfileView({ user, isOwner = false, onUserUpdate }: ProfileView
       {isOwner && user.role !== "admin" && (
         <section className="py-16 bg-djon-page border-t border-djon-text/6 sm:py-20">
           <div className="max-w-7xl mx-auto px-4 text-center sm:px-6">
-            <motion.h2 className="text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-6" {...fadeUp(0)}>
+            <motion.h2 className={`${sectionTitleFontClassName} text-3xl md:text-5xl font-black text-djon-text tracking-tighter mb-6`} {...fadeUp(0)}>
               {user.role === "professor" ? "Pronto para a próxima aula?" : "Pronto para o próximo set?"}
             </motion.h2>
             <motion.div className="flex flex-wrap items-center justify-center gap-3" {...fadeUp(0.2)}>
@@ -917,7 +919,7 @@ function StudentObservationsView({
               ACOMPANHAMENTO
             </span>
             <div className="flex items-center gap-3">
-              <h2 className="text-3xl font-black tracking-tighter text-djon-text md:text-5xl">
+              <h2 className={`${sectionTitleFontClassName} text-3xl font-black tracking-tighter text-djon-text md:text-5xl`}>
                 Observações
               </h2>
               <MessageSquareText size={24} className="shrink-0 text-djon-light-purple" />
@@ -984,7 +986,7 @@ function EditorHeading({ title, onCancel }: { title: string; onCancel?: () => vo
     <div className="mb-10 flex items-start justify-between gap-4">
       <div>
         <span className="mb-2 block text-xs font-black uppercase tracking-widest text-djon-accent">EDITAR</span>
-        <h2 className="text-3xl font-black tracking-tighter text-djon-text md:text-5xl">{title}</h2>
+        <h2 className={`${sectionTitleFontClassName} text-3xl font-black tracking-tighter text-djon-text md:text-5xl`}>{title}</h2>
         <div className="mt-2 h-[3px] w-10 rounded-full bg-djon-accent" />
       </div>
       {onCancel && (
@@ -1012,7 +1014,7 @@ function SectionHeading({ eyebrow, title, isOwner, onEdit }: { eyebrow: string; 
     <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <motion.span className="mb-2 block text-xs font-black uppercase tracking-widest text-djon-accent" {...fadeUp(0)}>{eyebrow}</motion.span>
-        <motion.h2 className="text-3xl font-black tracking-tighter text-djon-text md:text-5xl" {...fadeUp(0.1)}>{title}</motion.h2>
+        <motion.h2 className={`${sectionTitleFontClassName} text-3xl font-black tracking-tighter text-djon-text md:text-5xl`} {...fadeUp(0.1)}>{title}</motion.h2>
         <motion.div className="mt-2 h-[3px] w-10 rounded-full bg-djon-accent" {...fadeUp(0.15)} />
       </div>
       {isOwner && (
